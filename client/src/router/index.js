@@ -22,8 +22,8 @@ const router = createRouter({
     routes: [
         { path: '/', component: LandingPageView},
 
-        { path: 'login', component: LoginView},
-        { path: 'register', component: RegisterView},
+        { path: '/login', component: LoginView},
+        { path: '/register', component: RegisterView},
         //reszte pododajemy na biezaco bo mi sie nie chce przepisywac aktualnie oki
     ]
 })
