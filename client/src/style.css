@@ -11,6 +11,27 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Zmienne - kolory i gradienty */
+  --frame-gradient: linear-gradient(135deg, #ff9f1c ,#9b5de5);
+
+  /* Tryb Ciemny */
+  /* (tryb jasny będzie dodany w przyszłości) */
+  --bg-main: #0f0a1f;
+  --bg-hero: radial-gradient(1200px circle at 15% 10%, #2B1E4A 0%, #1a1230 45%, #0b0718 100%);
+  --bg-about: #0b0718;
+
+  --text-main: #ffffff;
+  --text-muted: #cfcfe0;
+
+  --accent-purple: #9B5DE5;
+  --accent-orange: #FF9F1C;
+  --accent-soft: #FFD191;
+
+  --card-bg: radial-gradient(circle at 50% 30%, #2a1b33 0%, #1a1122 70%, #120b18 100%);
+
+  --frame-grad: linear-gradient(145deg, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
+  --ring-grad: radial-gradient(circle, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
 }
 
 a {
@@ -27,7 +48,6 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -59,9 +79,8 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
