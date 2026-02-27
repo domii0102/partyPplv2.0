@@ -1,4 +1,5 @@
 <template>
+    <div class="neon-line"></div>
     <section class="hero">
         <div class="hero-inner container">
             <!-- lewa karta -->
@@ -9,7 +10,7 @@
                 </p>
 
                 <div class="hero-buttons">
-                    <a class="btn btn-hero-primary">Join us!</a>
+                    <RouterLink to="/register" class="btn btn-hero-primary">Join us!</RouterLink>
                     <a class="btn btn-hero-secondary">Learn more</a>
                 </div>
             </div>
@@ -19,7 +20,8 @@
 
                 <!-- duże koło -->
                 <div class="circle-big neon-ring"
-                    style="background-image:url('/src/assets/party1.png')"></div>
+                    style="background-image:url('/src/assets/party1.png')">
+                </div>
 
                 <!-- małe prawe górne -->
                 <div class="circle-small top-right neon-ring"
@@ -32,6 +34,7 @@
             </div>
         </div>
     </section>
+    <div class="neon-line"></div>
     <section class="about">
         <div class="container">
             <h2 class="about-title">About Us</h2>
@@ -50,7 +53,9 @@
 <style scoped>
 .hero{
     background: var(--bg-hero);
-    min-height: 70vh;
+    min-height: 500px;
+    height: 70vh;
+    max-height: 900px;
     display: flex;
     align-items: center;
     padding: 80px 0;
@@ -63,7 +68,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: center;
-    gap: 80px;
+    padding: 0 5rem;
 }
 
 .hero-card{
@@ -79,7 +84,10 @@
     -webkit-backdrop-filter: blur(10px);
 }
 
-@media (max-width: 992px) {
+@media (max-width: 900px) {
+    .hero{
+        height: auto;
+    }
     .hero-inner {
         grid-template-columns: 1fr;
         text-align: center;
@@ -88,12 +96,8 @@
     }
 
     .hero-circles {
-        width: 420px;
-        height: 360px;
-        margin-top: 10px;
+        display: none;
     }
-
-    .circle-big { left: 60px; }
 }
 
 .hero-card-title {
@@ -155,9 +159,9 @@
 .btn-hero-primary,
 .btn-hero-secondary {
     display: inline-block;
-    padding: 9px 18px;
+    padding: 0.5rem 1rem;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: medium;
     text-decoration: none;
     transition: .25s;
     border: 1.5px solid transparent;
@@ -167,6 +171,7 @@
     color: var(--text-main);
     border-color: var(--accent-soft);
     background: transparent;
+    font-weight: bold;
     box-shadow: 0 0 12px rgba(255, 209, 145, 0.35);
 }
 .btn-hero-primary:hover {
@@ -176,19 +181,21 @@
 
 .btn-hero-secondary {
     color: var(--text-main);
-    border-color: var(--accent-soft);
+    border-color: var(--accent-purple);
     background: transparent;
     opacity: .9;
 }
 .btn-hero-secondary:hover {
     opacity: 1;
     box-shadow: 0 0 14px rgba(155, 93, 229, 0.45);
+    background-color: var(--accent-purple);
 }
 
 .hero-circles {
     position: relative;
-    width: 520px;
-    height: 420px;
+    height: 100%;
+    width: 100%;
+    min-height: 420px;
 }
 
 .neon-ring {
@@ -210,39 +217,43 @@
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    background: var(--ring-grad);
     z-index: -1;
     filter: blur(6px);
     opacity: 0.8;
 }
 
 .circle-big {
-    width: 300px;
-    height: 300px;
-    left: 90px;
-    top: 30px;
+    width: 60%;
+    height: auto;
+    aspect-ratio: 1/1;
+    left: 0;
+    top: 2rem;
+    animation: float 6s ease-in-out infinite;
 }
 
 .circle-small {
-    width: 150px;
-    height: 150px;
+    width: 30%;
+    height: auto;
+    aspect-ratio: 1/1;
 }
 
 .circle-small.top-right {
-    right: -40px;
-    top: 40px;
+    right: 0;
+    top: 3rem;
+        animation: float 5s ease-in-out infinite;
 }
 
 .circle-small.bottom-right {
-    right: 20px;
-    bottom: 20px;
+    right: 2.5rem;
+    bottom: 2.5rem;
+        animation: float 5.5s ease-in-out infinite;
 }
 
 .about {
-    background: var(--bg-about);
+    background: var(--bg-main);
     padding: 50px 0 70px;
-    border-top: 2px solid rgba(255, 159, 28, 0.6);
     text-align: start;
+    border-bottom: none;
 }
 
 .about-title {
@@ -263,5 +274,30 @@
     max-width: 900px;
     line-height: 1.7;
     font-size: 14px;
+}
+
+@keyframes float {
+	0% {
+		transform: translatey(0px);
+	}
+	50% {
+		transform: translatey(-20px);
+	}
+	100% {
+		transform: translatey(0px);
+	}
+}
+.neon-line{
+    height: 2px;
+    width: 100%;
+    background: var(--line-gradient);
+    background-size: 400%;
+    background-repeat: repeat-x;
+    animation: gradient-scroll 10s linear infinite;
+}
+@keyframes gradient-scroll {
+    0%   { background-position: 0 0; }
+    50%  { background-position: 100% 0; }
+    100% { background-position: 0 0; }   
 }
 </style>

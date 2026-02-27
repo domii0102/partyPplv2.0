@@ -12,8 +12,12 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  min-height: 100vh;
+  background-color: var(--bg-main);
+
   /* Zmienne - kolory i gradienty */
   --frame-gradient: linear-gradient(135deg, #ff9f1c ,#9b5de5);
+  --line-gradient: linear-gradient(90deg,#ff9f1c ,#9b5de5);
 
   /* Tryb Ciemny */
   /* (tryb jasny będzie dodany w przyszłości) */
