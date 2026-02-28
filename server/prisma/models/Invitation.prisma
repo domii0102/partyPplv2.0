@@ -1,0 +1,17 @@
+model Invitation {
+  invitationId Int     @id @default(autoincrement())
+  eventId      Int
+  receiverId   String
+  isAccepted   Boolean
+  isExpired    Boolean
+
+  event           Event           @relation(fields: [eventId], references: [eventId])
+  userCredentials UserCredentials @relation(fields: [receiverId], references: [userId])
+
+  @@index([eventId])
+  @@index([receiverId])
+
+  @@unique([eventId, receiverId]) // jeden użytkownik może mieć jedno zaproszenie na dane wydarzenie
+
+  @@map("Invitation")
+}

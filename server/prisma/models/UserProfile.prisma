@@ -1,0 +1,13 @@
+model UserProfile {
+  profileId   Int      @id @default(autoincrement())
+  userId      String   @unique
+  nickname    String   @db.VarChar(64)
+  name        String   @db.VarChar(64)
+  surname     String   @db.VarChar(64)
+  dateOfBirth DateTime
+  avatarPath  String?
+
+  userCredentials UserCredentials @relation(fields: [userId], references: [userId])
+
+  @@map("UserProfile")
+}

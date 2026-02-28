@@ -1,0 +1,28 @@
+model Event {
+  eventId          Int             @id @default(autoincrement())
+  organizerId      String
+  eventName        String          @db.VarChar(64)
+  description      String          @db.VarChar(512)
+  imagePath        String          @db.VarChar(128)
+  isPublic         Boolean
+  eventDateTime    DateTime        
+  locationLatitude Float?
+  locationLongitude Float?
+  ageRestriction   Int?
+  eventStatus      String          @db.VarChar(32)
+  createdAt        DateTime        @default(now())
+  deletedAt        DateTime?
+
+
+  userCredentials UserCredentials @relation(fields: [organizerId], references: [userId])
+  invitations     Invitation[]
+  eventGuests     EventGuest[]
+  reports         Report[]
+  hashtags        Hashtag[]       @relation("EventHashtags")
+  accessTokens    AccessToken[]
+  eventLikes      EventLike[]
+  forum           Forum?
+
+  @@index([organizerId])
+  @@map("Event")
+}

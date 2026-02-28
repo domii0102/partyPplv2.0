@@ -1,0 +1,19 @@
+model Post {
+  postId     Int      @id @default(autoincrement())
+  forumId    Int
+  authorId   String
+  createdAt  DateTime @default(now())
+  textContent String  @db.VarChar(512)
+
+  forum           Forum           @relation(fields: [forumId], references: [forumId])
+  userCredentials UserCredentials @relation(fields: [authorId], references: [userId])
+  images          Image[]
+  comments        Comment[]
+  postLikes       PostLike[]
+
+  @@index([forumId])
+  @@index([authorId])
+  @@index([createdAt])
+
+  @@map("Post")
+}

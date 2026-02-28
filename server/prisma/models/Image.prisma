@@ -1,0 +1,11 @@
+model Image {
+  imageId Int    @id @default(autoincrement())
+  postId  Int
+  publicId    String @db.VarChar(32)
+  url       String @db.VarChar(128)
+
+  post Post @relation(fields: [postId], references: [postId])
+
+  @@index([postId])
+  @@map("Image")
+}

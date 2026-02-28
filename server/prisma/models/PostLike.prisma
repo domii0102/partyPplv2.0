@@ -1,0 +1,14 @@
+model PostLike {
+    likeId    Int      @id @default(autoincrement())
+    authorId  String
+    postId    Int
+    createdAt DateTime @default(now())
+
+    userCredentials UserCredentials @relation(fields: [authorId], references: [userId])
+    post            Post            @relation(fields: [postId], references: [postId])
+
+    @@unique([authorId, postId])
+    @@index([authorId])
+    @@index([postId])
+    @@map("PostLike")
+}

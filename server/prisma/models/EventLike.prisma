@@ -1,0 +1,15 @@
+model EventLike {
+  likeId    Int      @id @default(autoincrement())
+  authorId  String
+  eventId   Int
+  createdAt DateTime @default(now())
+
+  userCredentials UserCredentials @relation(fields: [authorId], references: [userId])
+  event           Event           @relation(fields: [eventId], references: [eventId])
+
+  @@unique([authorId, eventId])  
+  @@index([authorId])
+  @@index([eventId])
+
+  @@map("EventLike")
+}

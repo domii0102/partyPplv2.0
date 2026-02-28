@@ -1,0 +1,9 @@
+model Hashtag {
+  hashtagId Int     @id @default(autoincrement())
+  name      String  @db.VarChar(32)
+
+  events Event[] @relation("EventHashtags")
+
+  @@unique([name]) 
+  @@map("Hashtag")
+}
