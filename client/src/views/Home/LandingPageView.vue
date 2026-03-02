@@ -51,6 +51,9 @@
 </script>
 
 <style scoped>
+h1, h2{
+    font-weight: 400;
+}
 .hero{
     background: var(--bg-hero);
     min-height: 500px;

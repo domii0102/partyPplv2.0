@@ -17,7 +17,7 @@
 <style scoped>
 header{
     padding: 1rem 0;
-    background: var(--bg-main);
+    background: none;
 }
 .brand-logo, .link-container{
     cursor: pointer;
@@ -29,6 +29,7 @@ header{
     cursor: pointer;
     transition: color 0.5s;
     text-decoration: none;
+    font-weight: 400;
 }
 .link-container{
     display: flex;

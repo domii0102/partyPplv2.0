@@ -1,7 +1,7 @@
 <template>
     <div class="app-layout">
-        <AppHeader/>
         <main class="content">
+            <AppHeader/>
             <slot></slot>
         </main>
     </div>
@@ -12,4 +12,8 @@
 </script>
 
 <style scoped>
+.content{
+    background: var(--bg-main);
+    color: var(--text-main)
+}
 </style>

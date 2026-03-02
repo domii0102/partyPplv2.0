@@ -36,6 +36,9 @@
 
   --frame-grad: linear-gradient(145deg, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
   --ring-grad: radial-gradient(circle, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
+
+  --border: rgba(187, 120, 255, 0.18);
+  --border2: rgba(120, 72, 255, 0.22);
 }
 
 a {

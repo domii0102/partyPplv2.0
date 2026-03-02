@@ -10,7 +10,7 @@ import VerifyEmailView from '../views/Account/VerifyEmailView.vue'
 import VerifyResetCodeView from '../views/Account/VerifyResetCodeView.vue'
 
 import CreateEventView from '../views/Event/CreateEventView.vue'
-import EventDashboard from '../views/Event/EventDashboard.vue'
+import EventDashboardView from '../views/Event/EventDashboardView.vue'
 import EventListView from '../views/Event/EventListView.vue'
 
 import LandingPageView from '../views/Home/LandingPageView.vue'
@@ -24,6 +24,12 @@ const router = createRouter({
 
         { path: '/login', component: LoginView},
         { path: '/register', component: RegisterView},
+
+        { path: '/event/create', component: CreateEventView},
+        { path: '/event/list', component: EventListView},
+        { path: '/event/dashboard', component: EventDashboardView },
+
+        { path: '/profile', component: ProfileView},
         //reszte pododajemy na biezaco bo mi sie nie chce przepisywac aktualnie oki
     ]
 })
