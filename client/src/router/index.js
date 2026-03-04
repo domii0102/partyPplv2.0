@@ -22,15 +22,22 @@ const router = createRouter({
     routes: [
         { path: '/', component: LandingPageView},
 
+        //auth
         { path: '/login', component: LoginView},
         { path: '/register', component: RegisterView},
+        { path: '/password/forgot', component: ForgotPasswordView },
+        { path: '/password/reset', component: ResetPasswordView },
+        { path: '/password/code', component: VerifyResetCodeView},
+        { path: '/email/verify', component: VerifyEmailView},
 
+        //event
         { path: '/event/create', component: CreateEventView},
         { path: '/event/list', component: EventListView},
         { path: '/event/dashboard', component: EventDashboardView },
 
+        //profile
         { path: '/profile', component: ProfileView},
-        //reszte pododajemy na biezaco bo mi sie nie chce przepisywac aktualnie oki
+        { path: '/profile/create', component: FillInProfileInfoView}
     ]
 })
 
