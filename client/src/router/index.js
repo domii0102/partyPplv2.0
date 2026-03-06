@@ -29,12 +29,14 @@ const router = createRouter({
         { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true }},
         { path: '/verify-reset-code', component: VerifyResetCodeView, meta: { hideHeader: true }},
 
+        //event
         { path: '/event/create', component: CreateEventView},
         { path: '/event/list', component: EventListView},
         { path: '/event/dashboard', component: EventDashboardView },
 
+        //profile
         { path: '/profile', component: ProfileView},
-        //reszte pododajemy na biezaco bo mi sie nie chce przepisywac aktualnie oki
+        { path: '/profile/create', component: FillInProfileInfoView}
     ]
 })
 
