@@ -1,7 +1,7 @@
 <template>
     <div class="app-layout">
         <main class="content">
-            <AppHeader/>
+            <AppHeader v-if="!route.meta.hideHeader" />
             <slot></slot>
         </main>
     </div>
@@ -9,6 +9,9 @@
 
 <script setup>
     import AppHeader from '../navigation/AppHeader.vue';
+    import { useRoute } from 'vue-router';
+
+    const route = useRoute();
 </script>
 
 <style scoped>

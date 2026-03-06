@@ -22,8 +22,12 @@ const router = createRouter({
     routes: [
         { path: '/', component: LandingPageView},
 
-        { path: '/login', component: LoginView},
-        { path: '/register', component: RegisterView},
+        { path: '/login', component: LoginView, meta: { hideHeader: true } },
+        { path: '/register', component: RegisterView, meta: { hideHeader: true }},
+        { path: '/forgot-password', component: ForgotPasswordView, meta: { hideHeader: true }},
+        { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true }},
+        { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true }},
+        { path: '/verify-reset-code', component: VerifyResetCodeView, meta: { hideHeader: true }},
 
         { path: '/event/create', component: CreateEventView},
         { path: '/event/list', component: EventListView},
