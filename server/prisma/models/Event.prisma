@@ -3,7 +3,7 @@ model Event {
   organizerId      String
   eventName        String          @db.VarChar(64)
   description      String          @db.VarChar(512)
-  imagePath        String          @db.VarChar(128)
+  imageId        String          @db.VarChar(128)
   isPublic         Boolean
   eventDateTime    DateTime        
   locationLatitude Float?

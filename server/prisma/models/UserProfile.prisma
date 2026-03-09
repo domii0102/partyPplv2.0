@@ -5,7 +5,7 @@ model UserProfile {
   name        String   @db.VarChar(64)
   surname     String   @db.VarChar(64)
   dateOfBirth DateTime
-  avatarPath  String?
+  avatarId  String?
 
   userCredentials UserCredentials @relation(fields: [userId], references: [userId])
 

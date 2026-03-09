@@ -6,6 +6,8 @@ import 'dotenv/config';
 import { createServer } from 'node:http';
 import './db.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
+import accountRouter from './routes/account.js';
+import userRouter from './routes/user.js';
 
 
 
@@ -34,7 +36,9 @@ app.get(["/","/home"], (req, res) => {
   res.send("<h2>Strona główna</h2>");
 })*/
 
+app.use("/api/account", accountRouter);
 app.use(authMiddleware); 
+app.use("/api/user", userRouter);
 
 
 app.use((req, res) => {

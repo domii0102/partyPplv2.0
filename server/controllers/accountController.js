@@ -2,10 +2,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import * as z from "zod";
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db.js";
 import { credentialsSchema } from "../schemas/credentialsSchema.js";
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 
@@ -37,14 +37,17 @@ export async function register(req, res) {
 
         const newUser = await prisma.userCredentials.create({
             data: {
-                email,
-                passwordHash,
-                role: "User",
+                email: email,
+                emailConfirmed: false,
+                emailConfirmationToken: null,
+                passwordHash: passwordHash,
+                userRole: "User",
+                createdAt: new Date()
             },
         });
 
         const token = jwt.sign(
-            { userId: newUser.userId, email, role: "User" },
+            { userId: newUser.userId, email, userRole: "User", emailConfirmed: newUser.emailConfirmed },
             JWT_SECRET,
             { expiresIn: "1h" }
         );
@@ -69,34 +72,7 @@ export async function register(req, res) {
 }
 
 
-export async function deleteCredentials(req, res) {
-    const { userId } = req.params;
 
-    try {
-        const user = await prisma.userCredentials.findUnique({
-            where: { userId },
-        });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: "Credentials not found",
-            });
-        }
-
-        await prisma.userCredentials.delete({
-            where: { userId },
-        });
-
-        return res.status(204).send();
-    } catch (err) {
-        console.error("Delete credentials error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Failed to delete credentials",
-        });
-    }
-}
 
 
 export async function login(req, res) {
@@ -143,7 +119,8 @@ export async function login(req, res) {
             {
                 userId: user.userId,
                 email: user.email,
-                role: user.role,
+                userRole: user.userRole,
+                emailConfirmed: user.emailConfirmed 
             },
             JWT_SECRET,
             { expiresIn: "1h" }
@@ -156,7 +133,7 @@ export async function login(req, res) {
             maxAge: 1000 * 60 * 60 * 24,
         });
 
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, token: token }); //token zwracany na potrzeby testów, potem usunąć
     } catch (err) {
         console.error("Login error:", err);
         return res.status(500).json({
@@ -185,6 +162,35 @@ export async function logout(req, res) {
         return res.status(500).json({
             success: false,
             error: "Logout failed",
+        });
+    }
+}
+
+export async function deleteCredentials(req, res) {
+    const { userId } = req.params;
+
+    try {
+        const user = await prisma.userCredentials.findUnique({
+            where: { userId },
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: "Credentials not found",
+            });
+        }
+
+        await prisma.userCredentials.delete({
+            where: { userId },
+        });
+
+        return res.status(204).send();
+    } catch (err) {
+        console.error("Delete credentials error:", err);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to delete credentials",
         });
     }
 }
