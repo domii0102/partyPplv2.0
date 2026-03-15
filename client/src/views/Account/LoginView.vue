@@ -3,7 +3,7 @@
     <div class="form-container">
       <h2 class="display-6">Sign in</h2>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleLogin" novalidate>
         <div class="form-group">
           <label for="email">Email</label>
           <input 
@@ -11,7 +11,6 @@
             type="email" 
             id="email" 
             placeholder="Enter your Email" 
-            required 
           />
           <span v-if="errors.email" class="text-danger">{{ errors.email }}</span>
         </div>
@@ -23,7 +22,6 @@
             type="password" 
             id="password" 
             placeholder="Enter your password" 
-            required 
           />
           <span v-if="errors.password" class="text-danger">{{ errors.password }}</span>
         </div>
@@ -33,7 +31,7 @@
             <input v-model="loginData.rememberMe" type="checkbox" /> 
             Keep me logged in
           </label>
-          <router-link to="/forgot-password">Forgot your password?</router-link>
+          <router-link to="/forgot-password">Forgot password?</router-link>
         </div>
 
         <button type="submit" class="gradient-btn" :disabled="loading">
@@ -64,19 +62,44 @@ const errors = reactive({
   password: null
 });
 
-const handleLogin = async () => {
-  loading.value = true;
+const validate = () => {
+  let isValid = true;
   errors.email = null;
   errors.password = null;
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!loginData.email) {
+    errors.email = "Email is required.";
+    isValid = false;
+  } else if (!emailRegex.test(loginData.email)) {
+    errors.email = "Please enter a valid email.";
+    isValid = false;
+  }
+
+  if (!loginData.password) {
+    errors.password = "Password is required.";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+const handleLogin = async () => {
+  if (!validate()) return;
+
+  loading.value = true;
   try {
-    console.log('Dane do wysyłki:', loginData);
-    
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    alert('Zalogowano pomyślnie!');
+    // Symulacja błędu logowania (np. jeśli e-mail to nie 'admin@test.com')
+    if (loginData.email !== 'admin@test.com' || loginData.password !== 'password123') {
+      throw new Error('invalid_credentials');
+    }
+
+    console.log('Success!');
   } catch (err) {
-    errors.email = "Błędne dane logowania.";
+    // Tutaj dodajemy błąd "po nieudanym logowaniu"
+    errors.email = "Email or password is incorrect.";
   } finally {
     loading.value = false;
   }
@@ -85,126 +108,123 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   background: url('../../assets/user-form-bg.jpg') no-repeat center center;
   background-size: cover;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  background-attachment: fixed;
+  padding: 1.25rem;
 }
 
 .form-container {
-  width: 520px;
-  padding: 45px 55px;
+  width: 100%;
+  max-width: 32.5rem;
+  padding: 2.8125rem 3.4375rem;
   background: rgba(0, 0, 0, 0.55);
-  border: 3px solid var(--primary-orange, #ff8c00); 
-  border-radius: 25px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.45);
+  border: 0.1875rem solid var(--primary-orange, #ff8c00); 
+  border-radius: 1.5625rem;
+  backdrop-filter: blur(1rem);
+  box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45);
   color: #fff;
-  z-index: 1; 
-  
 }
+
 h2 {
   text-align: center;
-  margin-bottom: 25px;
-  font-size: 32px;
+  margin-bottom: 1.5625rem;
+  font-size: 2rem;
 }
 
 .form-group {
-  margin-bottom: 22px;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
 label {
-  font-size: 14px;
-  margin-bottom: 6px;
-  display: block;
-  text-align: left;
+  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
 }
 
 input[type="email"],
 input[type="password"] {
   width: 100%;
-  padding: 13px 14px;
-  border-radius: 999px;
+  padding: 0.8125rem 0.875rem;
+  border-radius: 62.4375rem;
   border: none;
   background: rgba(12, 1, 1, 0.562);
   color: #fff;
-  font-size: 15px;
+  font-size: 0.9375rem;
   outline: none;
-}
-
-input::placeholder {
-  color: #616161;
 }
 
 .options-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
-  margin-bottom: 20px;
+  font-size: 0.875rem;
+  margin: 1.25rem 0;
 }
 
 .remember {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
 .gradient-btn {
   width: 100%;
-  padding: 12px 0;
+  padding: 0.875rem 0;
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 62.4375rem;
   background: linear-gradient(45deg, var(--primary-orange), var(--primary-purple), var(--primary-orange));
   color: white;
   background-size: 200% 200%;
-  transition: background-position 0.3s, filter 0.3s;
+  transition: 0.3s;
 }
 
 .gradient-btn:hover:not(:disabled) {
   background-position: 100% 100%;
-  filter: brightness(1.1);
-}
-
-.gradient-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.signup-text {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
-}
-
-a, .router-link {
-  color: #d8aaff;
-}
-
-a:hover, .router-link:hover {
-  text-decoration: underline;
 }
 
 .text-danger {
   color: #ff4d4d;
-  font-size: 12px;
-  margin-top: 5px;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  margin-left: 1rem;
   display: block;
+}
+
+.signup-text {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+}
+
+a, .router-link {
+  color: #d8aaff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    padding: 1.5rem;
+  }
+  .options-row {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
 }
 </style>
