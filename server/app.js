@@ -8,6 +8,7 @@ import './db.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 import accountRouter from './routes/account.js';
 import userRouter from './routes/user.js';
+import eventRouter from './routes/event.js';
 
 
 
@@ -39,6 +40,7 @@ app.get(["/","/home"], (req, res) => {
 app.use("/api/account", accountRouter);
 app.use(authMiddleware); 
 app.use("/api/user", userRouter);
+app.use("/api/event", eventRouter);
 
 
 app.use((req, res) => {

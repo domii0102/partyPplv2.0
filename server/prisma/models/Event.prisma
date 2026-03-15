@@ -3,7 +3,6 @@ model Event {
   organizerId      String
   eventName        String          @db.VarChar(64)
   description      String          @db.VarChar(512)
-  imageId        String          @db.VarChar(128)
   isPublic         Boolean
   eventDateTime    DateTime        
   locationLatitude Float?
@@ -22,6 +21,7 @@ model Event {
   accessTokens    AccessToken[]
   eventLikes      EventLike[]
   forum           Forum?
+  image Image? @relation("ImageToEvent")
 
   @@index([organizerId])
   @@map("Event")

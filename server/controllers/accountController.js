@@ -8,6 +8,7 @@ import { emailVerificationSchema, emailVerificationResendSchema, passwordChangeS
 import { sendEmail } from "../services/mailService.js";
 import { randomInt } from "crypto";
 import { error } from "console";
+import { userRoleOptions } from "../enums.js";
 
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -48,13 +49,13 @@ export async function register(req, res) {
                 emailConfirmed: false, // vvv
                 emailConfirmationToken: verifyTokenHash,
                 passwordHash: passwordHash,
-                userRole: "User", // vvv
+                userRole: userRoleOptions.USER, // vvv
                 createdAt: new Date() //Czy tych rzeczy nie mozna skipnc skoro sa ustawione defaulty w schemacie?
             },
         });
 
         const token = jwt.sign(
-            { userId: newUser.userId, email, userRole: "User", emailConfirmed: newUser.emailConfirmed },
+            { userId: newUser.userId, email, userRole: userRoleOptions.USER, emailConfirmed: newUser.emailConfirmed },
             JWT_SECRET,
             { expiresIn: "1h" }
         );
@@ -107,8 +108,8 @@ export async function login(req, res) {
         }
 
         if (!user.emailConfirmed) { //Front powinien wtedy odsylac do weryfikacji maila (chyba)
-            return res.status(403).json({ 
-                success: false, 
+            return res.status(403).json({
+                success: false,
                 error: "Email not verified"
             });
         }
@@ -134,7 +135,7 @@ export async function login(req, res) {
                 userId: user.userId,
                 email: user.email,
                 userRole: user.userRole,
-                emailConfirmed: user.emailConfirmed 
+                emailConfirmed: user.emailConfirmed
             },
             JWT_SECRET,
             { expiresIn: "1h" }
@@ -214,7 +215,7 @@ export async function deleteCredentials(req, res) {
 export async function verifyEmail(req, res) {
     const result = emailVerificationSchema.safeParse(req.body);
 
-    if(!result.success) {
+    if (!result.success) {
         return res.status(400).json({
             success: false,
             error: z.flattenError(result.error)
@@ -236,9 +237,9 @@ export async function verifyEmail(req, res) {
         }
 
         if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({ 
-                success: false, 
-                error: "No token to verify" 
+            return res.status(400).json({
+                success: false,
+                error: "No token to verify"
             });
         }
 
@@ -323,7 +324,7 @@ export async function resendVerificationCode(req, res) {
         // Adresat, typ maila, token
         await sendEmail(email, "verify", verifyToken);
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true
         });
     } catch (err) {
@@ -339,7 +340,7 @@ export async function resendVerificationCode(req, res) {
 export async function requestPasswordReset(req, res) {
     const result = emailVerificationSchema.safeParse(req.body);
 
-    if(!result.success) {
+    if (!result.success) {
         return res.status(400).json({
             success: false,
             error: z.flattenError(result.error)
@@ -361,9 +362,9 @@ export async function requestPasswordReset(req, res) {
         }
 
         if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({ 
-                success: false, 
-                error: "No token to verify" 
+            return res.status(400).json({
+                success: false,
+                error: "No token to verify"
             });
         }
 
@@ -395,9 +396,9 @@ export async function requestPasswordReset(req, res) {
 
 
 export async function resetPassword(req, res) {
-    const result = passwordChangeSchema .safeParse(req.body);
+    const result = passwordChangeSchema.safeParse(req.body);
 
-    if(!result.success) {
+    if (!result.success) {
         return res.status(400).json({
             success: false,
             error: z.flattenError(result.error)
@@ -419,9 +420,9 @@ export async function resetPassword(req, res) {
         }
 
         if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({ 
-                success: false, 
-                error: "No token to verify" 
+            return res.status(400).json({
+                success: false,
+                error: "No token to verify"
             });
         }
 
