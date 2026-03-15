@@ -1,0 +1,15 @@
+model Comment {
+  commentId  Int      @id @default(autoincrement())
+  postId     Int
+  authorId   String
+  createdAt  DateTime @default(now())
+  textContent String  @db.VarChar(256)
+
+  post            Post            @relation(fields: [postId], references: [postId])
+  userCredentials UserCredentials @relation(fields: [authorId], references: [userId])
+
+  @@index([postId])
+  @@index([authorId])
+
+  @@map("Comment")
+}

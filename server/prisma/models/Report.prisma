@@ -1,0 +1,13 @@
+model Report {
+  reportId    Int      @id @default(autoincrement())
+  eventId     Int
+  senderId    String
+  createdAt   DateTime @default(now())
+  textContent String?  @db.VarChar(256)
+  isExamined  Boolean
+
+  event            Event           @relation(fields: [eventId], references: [eventId])
+  userCredentials  UserCredentials @relation(fields: [senderId], references: [userId])
+
+  @@map("Report")
+}

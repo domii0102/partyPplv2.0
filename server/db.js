@@ -1,15 +1,9 @@
-import pkg from "pg";
 import "dotenv/config"
-const {Pool} = pkg;
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 
-const pool = new Pool({
-    connectionString:  process.env.DATABASE_URI
-});
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
+export default prisma;
 
-const test = async () => {
-  const res = await pool.query("SELECT NOW()");
-  console.log(res.rows);
-};
-
-test();

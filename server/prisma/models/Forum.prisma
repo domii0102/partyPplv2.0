@@ -1,0 +1,11 @@
+model Forum {
+  forumId Int    @id @default(autoincrement())
+  eventId Int
+
+  event Event  @relation(fields: [eventId], references: [eventId])
+  posts Post[]
+
+  @@index([eventId])
+  @@unique([eventId])
+  @@map("Forum")
+}

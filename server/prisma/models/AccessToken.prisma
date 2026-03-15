@@ -1,0 +1,14 @@
+model AccessToken {
+  tokenId     Int      @id @default(autoincrement())
+  accessToken String
+  eventId     Int
+  createdAt   DateTime @default(now())
+  isAccepted  Boolean
+  isActive    Boolean
+
+  event Event @relation(fields: [eventId], references: [eventId])
+
+  @@index([eventId])
+  @@unique([eventId, accessToken]) // jeden token dla danego wydarzenia nie może się powtarzać
+  @@map("AccessToken")
+}

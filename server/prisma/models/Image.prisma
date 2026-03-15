@@ -1,0 +1,17 @@
+model Image {
+  imageId Int    @id @default(autoincrement())
+  postId  Int?  //do relacji z postem
+  profileId Int?  @unique//do relacji z profilem (avatar)
+  eventId Int?  @unique//do relacji z eventem
+  publicId    String @db.VarChar(32)
+  url       String @db.VarChar(128)
+
+  post Post? @relation(fields: [postId], references: [postId])
+  event   Event?       @relation("ImageToEvent", fields: [eventId], references: [eventId])
+  profile UserProfile? @relation(fields: [profileId], references: [profileId])
+
+  @@index([postId])
+  @@index([eventId])
+  @@index([profileId])
+  @@map("Image")
+}
