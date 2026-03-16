@@ -31,7 +31,7 @@ const routes = [
   { 
     path: '/event/create', 
     component: CreateEventView, 
-    meta: { requiresAuth: true, requiresVerification: true } 
+    meta: { requiresAuth: false, requiresVerification: false } //ZMIENIAM TYMCZASOWO BO LOGOWANIE EJSCZE NIE DZIALA 
   },
   { 
     path: '/event/feed', 

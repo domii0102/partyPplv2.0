@@ -255,15 +255,6 @@ input[type="password"] {
   font-size: 0.875rem; 
 }
 
-.error-text {
-  color: #ff4d4d; 
-  font-size: 0.75rem; 
-  margin-top: 0.3125rem; 
-  margin-left: 0.9375rem; 
-  font-weight: 500;
-  display: block; 
-}
-
 .terms-error {
   margin-left: 1.625rem; 
   margin-top: 0.3125rem; 
