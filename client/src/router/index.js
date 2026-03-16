@@ -7,7 +7,7 @@ import LoginView from '../views/Account/LoginView.vue'
 import RegisterView from '../views/Account/RegisterView.vue'
 import ResetPasswordView from '../views/Account/ResetPasswordView.vue'
 import VerifyEmailView from '../views/Account/VerifyEmailView.vue'
-
+import EnterEmailView from '../views/Account/EnterEmailView.vue'
 import CreateEventView from '../views/Event/CreateEventView.vue'
 import EventDashboardView from '../views/Event/EventDashboardView.vue'
 import EventFeedView from '../views/Event/EventFeedView.vue'
@@ -24,6 +24,7 @@ const routes = [
   { path: '/register', component: RegisterView, meta: { hideHeader: true } },
   { path: '/forgot-password', component: ForgotPasswordView, meta: { hideHeader: true } },
   { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
+ { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
   { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
 
   // Event

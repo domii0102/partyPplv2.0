@@ -135,7 +135,7 @@ const handleRegister = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    router.push('/verify-email');
+    router.push('/enter-email');
   } catch (err) {
     console.error(err);
   } finally {
