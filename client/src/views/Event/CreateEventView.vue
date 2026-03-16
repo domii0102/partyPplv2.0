@@ -27,9 +27,9 @@
                             <div class="col-md-4">
                                 <label class="event-label">Visibility</label>
                                 <div class="event-radio mt-2">
-                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" value="false" checked>
+                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" :value="false" checked>
                                     <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
-                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" value="true">
+                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" :value="true">
                                     <label for="public">Public</label>
                                 </div>
                             </div>
@@ -154,19 +154,19 @@ import defaultImage from '../../assets/user-form-bg.jpg';
   const successMessage = ref('')
 
   const formData = reactive({
-    status: '',
+    status: 'ACTIVE',
     eventName: '',
     description: '',
     isPublic: false,
     eventDate: '',
     eventTime: '',
-    endDate: '', //do dodania do bazki
-    endTime: '', //do dodania do bazki
-    ageRestriction: '',
-    guestsLimit: '', //do dodania do bazki
-    locationName: '', //do dodania do bazki
-    eventAddress: '', //do dodania do bazki
-    hashtags: [''],
+    endDate: null, //do dodania do bazki
+    endTime: null, //do dodania do bazki
+    ageRestriction: null,
+    guestsLimit: null, //do dodania do bazki
+    locationName: null, //do dodania do bazki
+    eventAddress: null, //do dodania do bazki
+    hashtags: null,
     image: ''
   });
 
@@ -223,8 +223,35 @@ import defaultImage from '../../assets/user-form-bg.jpg';
     return isValid;
   };
 
-  const handleRegister = async () => {
-    if (!validateForm()) return; 
+  const hashtagParser = () => {
+    const hashtagString = formData.hashtags
+    const hashtagArr = hashtagString.match(/#[^\s#]+/g);
+    return hashtagArr ? hashtagArr.map(tag => tag.slice(1)) : [];
+  }
+
+  async function handleRegister(){
+    if (!validateForm()) return;
+
+    const _eventDateTime = `${formData.eventDate}T${formData.eventTime}:00`;
+    const _endDateTime = formData.endDate ? `${formData.endDate}T${formData.endTime ? formData.endTime : '00:00'}:00` : null;
+    const _hashtags = hashtagParser();
+
+    const payload = {
+      eventName: formData.eventName,
+      description: formData.description,
+      isPublic: formData.isPublic,
+      eventDateTime: _eventDateTime,
+      endDateTime: _endDateTime,
+      ageRestriction: formData.ageRestriction,
+      guestsLimit: formData.guestsLimit,
+      locationName: formData.locationName,
+      eventAddress: formData.eventAddress,
+      hashtags: _hashtags,
+      eventStatus: formData.status,
+      image: formData.image
+    }
+
+    console.log(payload)
   };
 
   // logika wklejania zdjecia i podgladu
