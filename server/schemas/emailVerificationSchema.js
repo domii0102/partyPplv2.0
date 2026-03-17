@@ -19,3 +19,7 @@ export const passwordChangeSchema = z.object({
     token: z.string().length(6),
     password: z.string().min(6)
 });
+
+export const VerifyEmailSchema = z.object({
+    token: z.string().length(6)
+});

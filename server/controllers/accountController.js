@@ -212,6 +212,7 @@ export async function deleteCredentials(req, res) {
 
 
 export async function verifyEmail(req, res) {
+
     const result = emailVerificationSchema.safeParse(req.body);
 
     if(!result.success) {
@@ -228,6 +229,20 @@ export async function verifyEmail(req, res) {
             where: { email }
         });
 
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                error: "No user found"
+            });
+        }
+
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+
         if (existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -239,13 +254,6 @@ export async function verifyEmail(req, res) {
             return res.status(400).json({ 
                 success: false, 
                 error: "No token to verify" 
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
@@ -446,7 +454,8 @@ export async function resetPassword(req, res) {
         await prisma.userCredentials.update({
             where: { email },
             data: {
-                passwordHash: passwordHash
+                passwordHash: passwordHash,
+                emailConfirmationToken: null
             }
         });
 

@@ -25,6 +25,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^8.0.2",
     "pg": "^8.19.0",
+    "pinia": "^3.0.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
