@@ -6,52 +6,36 @@
       <form @submit.prevent="handleRegister" novalidate>
         <div class="form-group">
           <label for="email">Email</label>
-          <input 
-            v-model="formData.email" 
-            type="email" 
-            id="email" 
-            placeholder="Enter your Email" 
-            :class="{ 'input-error': errors.email }"
-          />
+          <input v-model="formData.email" type="email" id="email" placeholder="Enter your Email"
+            :class="{ 'input-error': errors.email }" />
           <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
         </div>
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input 
-            v-model="formData.password" 
-            type="password" 
-            id="password" 
-            placeholder="Enter your password" 
-            :class="{ 'input-error': errors.password }"
-          />
+          <input v-model="formData.password" type="password" id="password" placeholder="Enter your password"
+            :class="{ 'input-error': errors.password }" />
           <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
         </div>
 
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input 
-            v-model="formData.confirmPassword" 
-            type="password" 
-            id="confirmPassword" 
-            placeholder="Confirm your password" 
-            :class="{ 'input-error': errors.confirmPassword }"
-          />
+          <input v-model="formData.confirmPassword" type="password" id="confirmPassword"
+            placeholder="Confirm your password" :class="{ 'input-error': errors.confirmPassword }" />
           <span v-if="errors.confirmPassword" class="error-text">{{ errors.confirmPassword }}</span>
         </div>
 
         <div class="options-row">
           <div class="terms-container">
             <label class="checkbox-label">
-              <input 
-                v-model="formData.agreeToTerms" 
-                type="checkbox" 
-              /> 
+              <input v-model="formData.agreeToTerms" type="checkbox" />
               <span>
-                By signing up you agree to our 
-                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1" target="_blank">Terms</a> 
-                and 
-                <a href="https://www.youtube.com/watch?v=4HSBCfCxy7U&list=RD4HSBCfCxy7U&start_radio=1" target="_blank">Privacy Policy</a>.
+                By signing up you agree to our
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1"
+                  target="_blank">Terms</a>
+                and
+                <a href="https://www.youtube.com/watch?v=4HSBCfCxy7U&list=RD4HSBCfCxy7U&start_radio=1"
+                  target="_blank">Privacy Policy</a>.
               </span>
             </label>
             <span v-if="errors.agreeToTerms" class="error-text terms-error">
@@ -67,7 +51,7 @@
       </form>
 
       <p class="signup-text">
-        Already a user? 
+        Already a user?
         <router-link to="/login">Sign in!</router-link>
       </p>
     </div>
@@ -76,7 +60,8 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router'; 
+import { useRouter } from 'vue-router';
+import { SERVER_BASE_URL } from '../../config/env.js';
 
 const router = useRouter();
 const loading = ref(false);
@@ -129,13 +114,34 @@ const validateForm = () => {
 };
 
 const handleRegister = async () => {
-  if (!validateForm()) return; 
+  if (!validateForm()) return;
 
   loading.value = true;
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    router.push('/verify-email');
+    const response = await fetch(`${SERVER_BASE_URL}/api/account/register`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password
+      })
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+
+    if (response.ok && data.success) {
+      router.push({ path: '/verify-email', query: { email: formData.email } });
+      return;
+    }
+
   } catch (err) {
     console.error(err);
   } finally {
@@ -161,43 +167,46 @@ const handleRegister = async () => {
 
 .form-container {
   width: 90%;
-  max-width: 32.5rem; 
-  padding: 2.8125rem 3.4375rem; 
+  max-width: 32.5rem;
+  padding: 2.8125rem 3.4375rem;
   background: rgba(0, 0, 0, 0.55);
-  border: 0.1875rem solid var(--primary-orange, #ff8c00); 
-  border-radius: 1.5625rem; 
-  backdrop-filter: blur(1rem); 
-  box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45); 
+  border: 0.1875rem solid var(--primary-orange, #ff8c00);
+  border-radius: 1.5625rem;
+  backdrop-filter: blur(1rem);
+  box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45);
   color: #fff;
-  z-index: 1; 
+  z-index: 1;
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 1.5625rem; 
-  font-size: 2rem; 
+  margin-bottom: 1.5625rem;
+  font-size: 2rem;
 }
 
 .form-group {
-  margin-bottom: 1.375rem; 
+  margin-bottom: 1.375rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
 label {
-  font-size: 0.875rem; 
-  margin-bottom: 0.375rem; 
+  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
   display: block;
 }
-a, .router-link {
+
+a,
+.router-link {
   color: #d8aaff;
 }
+
 input[type="email"],
-input[type="password"] { 
+input[type="password"] {
   width: 100%;
-  padding: 0.75rem 0.875rem; 
-  border-radius: 62.4375rem; 
+  padding: 0.75rem 0.875rem;
+  border-radius: 62.4375rem;
   border: none;
   background: rgba(12, 1, 1, 0.562);
   color: #fff;
@@ -207,7 +216,7 @@ input[type="password"] {
 
 .options-row {
   margin-bottom: 1.5625rem;
-  font-size: 0.8125rem; 
+  font-size: 0.8125rem;
   line-height: 1.4;
   width: 100%;
   display: flex;
@@ -216,16 +225,17 @@ input[type="password"] {
 
 .checkbox-label {
   display: flex;
-  align-items: flex-start; 
-  gap: 0.625rem; 
+  align-items: flex-start;
+  gap: 0.625rem;
   cursor: pointer;
   text-align: left;
 }
 
 .checkbox-label input {
-  margin-top: 0.1875rem; 
-  flex-shrink: 0; 
+  margin-top: 0.1875rem;
+  flex-shrink: 0;
 }
+
 .gradient-btn {
   width: 100%;
   padding: 12px;
@@ -251,28 +261,29 @@ input[type="password"] {
 
 .signup-text {
   text-align: center;
-  margin-top: 1.25rem; 
-  font-size: 0.875rem; 
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
 }
 
 .error-text {
-  color: #ff4d4d; 
-  font-size: 0.75rem; 
-  margin-top: 0.3125rem; 
-  margin-left: 0.9375rem; 
+  color: #ff4d4d;
+  font-size: 0.75rem;
+  margin-top: 0.3125rem;
+  margin-left: 0.9375rem;
   font-weight: 500;
-  display: block; 
+  display: block;
 }
 
 .terms-error {
-  margin-left: 1.625rem; 
-  margin-top: 0.3125rem; 
+  margin-left: 1.625rem;
+  margin-top: 0.3125rem;
 }
 
-.success-message, .error-message {
-  font-size: 0.875rem; 
+.success-message,
+.error-message {
+  font-size: 0.875rem;
   text-align: center;
-  margin-top: 0.9375rem; 
+  margin-top: 0.9375rem;
 }
 
 @media (max-width: 480px) {

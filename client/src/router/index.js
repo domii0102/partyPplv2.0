@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '../stores/user';
 
 // import widoków
 import FillInProfileInfoView from '../views/Account/FillInProfileInfoView.vue'
@@ -15,6 +16,13 @@ import EventFeedView from '../views/Event/EventFeedView.vue'
 import LandingPageView from '../views/Home/LandingPageView.vue'
 
 import ProfileView from '../views/Profile/ProfileView.vue'
+
+import { getActivePinia, setActivePinia, createPinia } from 'pinia'
+
+const pinia = getActivePinia() || createPinia()
+setActivePinia(pinia)
+
+const store = useUserStore();
 
 const routes = [
   { path: '/', component: LandingPageView },
@@ -61,7 +69,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
 
-  const isAuthenticated = !!localStorage.getItem('user_token');
+  const isAuthenticated = store.user != null;
   const isVerified = localStorage.getItem('user_verified') === 'true';
 
   if (to.meta.requiresVerification && !isVerified) {
