@@ -8,7 +8,6 @@ import { emailVerificationSchema, emailVerificationResendSchema, passwordChangeS
 import { emailSchema } from "../schemas/credentialsSchema.js";
 import { sendEmail } from "../services/mailService.js";
 import { randomInt } from "crypto";
-import { error } from "console";
 import { userRoleOptions } from "../enums.js";
 
 
@@ -57,19 +56,6 @@ export async function register(req, res) {
             },
         });
 
-        /*
-        const token = jwt.sign(
-            { userId: newUser.userId, email, userRole: userRoleOptions.USER, emailConfirmed: newUser.emailConfirmed },
-            JWT_SECRET,
-            { expiresIn: "1h" }
-        );
-
-        res.cookie("token", token, {
-            httpOnly: true,
-            sameSite: "lax",//przy hostowaniu "none"
-            secure: false, // zamienić potem na true
-        });
-*/
         // Adresat, typ maila, token
         await sendEmail(email, "verify", verifyToken);
 
@@ -187,7 +173,7 @@ export async function logout(req, res) {
 
 export async function checkAccount(req, res) {
 
-    const result = emailSchema.safeParse(req.params.email);
+    const result = emailSchema.safeParse(req.body);
 
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
@@ -208,10 +194,6 @@ export async function checkAccount(req, res) {
         profile = await prisma.userProfile.findUnique({
             where: { userId: accountData.userId }
         });
-
-        if (!accountData?.emailConfirmed) {
-            return res.status(404).json({ success: false, error: "User not found" });
-        }
     }
     catch (err) {
         console.error(err);
@@ -228,7 +210,7 @@ export async function checkAccount(req, res) {
 
 }
 
-
+/* bo nie mogę na to patrzeć, ale niech na razie zostanie
 export async function deleteCredentials(req, res) {
     const { userId } = req.params;
 
@@ -257,6 +239,7 @@ export async function deleteCredentials(req, res) {
         });
     }
 }
+    */
 
 
 export async function verifyEmail(req, res) {

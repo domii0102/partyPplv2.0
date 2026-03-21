@@ -3,7 +3,12 @@ import * as z from 'zod';
 export const eventSchema = z.object({
     eventName: z.string().trim().min(5).max(128),
     description: z.string().trim().min(8).max(512),
-    isPublic: z.coerce.boolean(),
+    isPublic: z.preprocess(val => {
+        if (typeof val === "string") {
+            return val.toLowerCase() === "true"; // "true" => true, wszystko inne => false
+        }
+        return Boolean(val);
+    }, z.boolean()),
     eventDateTime: z.iso.datetime({ offset: true }),
     locationLatitude: z.preprocess(val => {
         const num = parseFloat(val);
@@ -19,4 +24,3 @@ export const eventSchema = z.object({
     }, z.int().gte(13).lte(99).optional())
 });
 
-export const updateEventSchema = eventSchema.partial();
