@@ -94,6 +94,15 @@ button:focus-visible {
   text-align: center;
 }
 
+.error-text {
+  color: #ff4d4d; 
+  font-size: 0.75rem; 
+  margin-top: 0.3125rem; 
+  margin-left: 0.9375rem; 
+  font-weight: 500;
+  display: block; 
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

@@ -8,7 +8,7 @@ import LoginView from '../views/Account/LoginView.vue'
 import RegisterView from '../views/Account/RegisterView.vue'
 import ResetPasswordView from '../views/Account/ResetPasswordView.vue'
 import VerifyEmailView from '../views/Account/VerifyEmailView.vue'
-
+import EnterEmailView from '../views/Account/EnterEmailView.vue'
 import CreateEventView from '../views/Event/CreateEventView.vue'
 import EventDashboardView from '../views/Event/EventDashboardView.vue'
 import EventFeedView from '../views/Event/EventFeedView.vue'
@@ -32,6 +32,7 @@ const routes = [
   { path: '/register', component: RegisterView, meta: { hideHeader: true } },
   { path: '/forgot-password', component: ForgotPasswordView, meta: { hideHeader: true } },
   { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
+ { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
   { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
   { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true } },
 
@@ -39,7 +40,7 @@ const routes = [
   { 
     path: '/event/create', 
     component: CreateEventView, 
-    meta: { requiresAuth: true, requiresVerification: true } 
+    meta: { requiresAuth: false, requiresVerification: false } //ZMIENIAM TYMCZASOWO BO LOGOWANIE EJSCZE NIE DZIALA 
   },
   { 
     path: '/event/feed', 

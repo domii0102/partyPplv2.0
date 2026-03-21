@@ -15,104 +15,102 @@
 
                     <hr class="event-divider" />
 
-                    <form id="eventForm">
-                        <input type="hidden" name="eventStatus" value="ACTIVE"/>
+                    <form id="eventForm" @submit.prevent="handleRegister" novalidate>
+                        <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE"/>
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="event-label">Event name *</label>
-                                <input name="eventName" class="event-input" maxlength="64" required placeholder="Event name*"/>
-                                <div class="event-error">Event name is required (max 64 characters).</div>
+                                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required placeholder="Event name*"/>
+                                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="event-label">Visibility</label>
                                 <div class="event-radio mt-2">
-                                    <!-- Nie pamietam jak w modelu jest zapisywana widocznosc 
-                                     ale jezeli nie jest jako boolean to w przyszlosci mozna 
-                                     rozszerzyc o inne tryby widocznosci np nwm jakie ale mozna 
-                                     by bylo chyba ze jest boolean to nie -->
-                                    <input id="private" type="radio" name="isPublic" value="false" checked>
-                                    <label for="private">Private</label>
-                                    <input id="public" type="radio" name="isPublic" value="true">
+                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" value="false" checked>
+                                    <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
+                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" value="true">
                                     <label for="public">Public</label>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-3">
                             <label class="event-label">About *</label>
-                            <textarea name="description" class="event-textarea" maxlength="512" required
+                            <textarea v-model="formData.description" name="description" class="event-textarea" maxlength="512" required
                                     placeholder="Describe the event: what, where, rules, what to bring..."></textarea>
-                            <div class="event-error">About is required (max 512 characters).</div>
+                            <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
                         </div>
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
                                 <label class="event-label">Start date *</label>
-                                <input type="date" name="eventDate" class="event-input" required />
-                                <div class="event-error">Please choose a start date.</div>
+                                <input v-model="formData.eventDate" type="date" name="eventDate" class="event-input" required />
+                                <span v-if="errors.eventDate" class="error-text">{{ errors.eventDate }}</span>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="event-label">Start time *</label>
-                                <input type="time" name="eventTime" class="event-input" required />
-                                <div class="event-error">Please choose a start time.</div>
+                                <input v-model="formData.eventTime" type="time" name="eventTime" class="event-input" required />
+                                <span v-if="errors.eventTime" class="error-text">{{ errors.eventTime }}</span>
                             </div>
                         </div>
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
                                 <label class="event-label">End date</label>
-                                <input type="date" name="endDate" class="event-input" />
+                                <input v-model="formData.endDate" type="date" name="endDate" class="event-input" />
+                                <span v-if="errors.endDate" class="error-text">{{ errors.endDate }}</span>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="event-label">End time</label>
-                                <input type="time" name="endTime" class="event-input" />
+                                <input v-model="formData.endTime" type="time" name="endTime" class="event-input" />
+                                <span v-if="errors.endTime" class="error-text">{{ errors.endTime }}</span>
                             </div>
                         </div>
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
                                 <label class="event-label">Age restriction</label>
-                                <input type="number" name="ageRestriction" class="event-input" min="0" placeholder="e.g. 18" />
+                                <input v-model="formData.ageRestriction" type="number" name="ageRestriction" class="event-input" min="0" placeholder="e.g. 18" />
                             </div>
                             <div class="col-md-6">
                                 <label class="event-label">Guests limit</label>
-                                <input type="number" name="guestLimit" class="event-input" min="1" placeholder="e.g. 50" />
+                                <input v-model="formData.guestsLimit" type="number" name="guestLimit" class="event-input" min="1" placeholder="e.g. 50" />
                             </div>
                         </div>
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
                                 <label class="event-label">Location name</label>
-                                <input name="locationName" class="event-input" maxlength="80" placeholder="Event's location" />
+                                <input v-model="formData.locationName" name="locationName" class="event-input" maxlength="80" placeholder="Event's location" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="event-label">Address</label>
-                                <input name="locationAddress" class="event-input" maxlength="128" placeholder="Street, city (optional)" />
+                                <input v-model="formData.eventAddress" name="locationAddress" class="event-input" maxlength="128" placeholder="Street, city (optional)" />
                             </div>
                         </div>
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
-                                <label class="event-label">Hashtags</label>
-                                <input name="hashtags" class="event-input" maxlength="200" placeholder="e.g. birthday, party, friends" />
+                                <label class="event-label">Hashtags</label> <!--Todo: dodac parsowanie hashtagow-->
+                                <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200" placeholder="e.g. #birthday #party #friends" />
                             </div>
 
                             <div class="col-md-6">
                                 <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
                                 nwm jeszcze jak ma dzialac integracja ze spotify-->
                                 <label class="event-label">Playlist link</label>
-                                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="Spotify link (optional)" />
+                                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
                             </div>
                         </div>
 
                         <div class="mt-3">
                             <label class="event-label">Cover image *</label>
                             <button type="button" @click="uploadPhoto" class="btn-event btn-event-ghost">Upload Image</button>
-                            <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" required />
-                            <div class="event-error">Please upload a cover image.</div>
+                            <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
+                            <span v-if="errors.image" class="error-text">{{ errors.image }}</span>
                         </div>
 
                         <div class="event-preview-wrap mt-4">
@@ -145,8 +143,91 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import defaultImage from '../../assets/user-form-bg.jpg';
+
+  // walidacja formularza
+
+  const router = useRouter();
+  const loading = ref(false);
+  const successMessage = ref('')
+
+  const formData = reactive({
+    status: '',
+    eventName: '',
+    description: '',
+    isPublic: false,
+    eventDate: '',
+    eventTime: '',
+    endDate: '', //do dodania do bazki
+    endTime: '', //do dodania do bazki
+    ageRestriction: '',
+    guestsLimit: '', //do dodania do bazki
+    locationName: '', //do dodania do bazki
+    eventAddress: '', //do dodania do bazki
+    hashtags: [''],
+    image: ''
+  });
+
+  const errors = reactive({
+    eventName: '',
+    description: '',
+    eventDate: '',
+    eventTime: '',
+    endDate: '', //do dodania do bazki
+    endTime: '', //do dodania do bazki
+    ageRestriction: '',
+    guestsLimit: '', //do dodania do bazki
+    locationName: '', //do dodania do bazki
+    eventAddress: '', //do dodania do bazki
+    hashtags: '',
+    image: ''
+  });
+
+  const validateForm = () => {
+    let isValid = true;
+    Object.keys(errors).forEach(key => errors[key] = '');
+    const today = new Date();
+    if (!formData.eventName){
+      errors.eventName = "Event name is required"
+    }
+
+    if (!formData.description){
+      errors.description = "Description is required"
+    }
+
+    if (!formData.eventDate) {
+      errors.eventDate = "Event date is required";
+      isValid = false;
+    } else {
+      const eventDate = new Date(formData.eventDate);
+      eventDate.setHours(0,0,0,0);
+
+      if (eventDate <= today) {
+        errors.eventDate = "Event date must be in the future";
+        isValid = false;
+      } else if (formData.endDate && formData.endDate < formData.eventDate){
+      errors.endDate = "End date needs to be after start date"
+      } else if(formData.endTime && formData.endDate == formData.eventDate){
+        if(formData.endTime < formData.eventTime){
+          errors.endTime = "End time needs to be after start time"
+        }
+      }
+      }
+
+    if (!formData.eventTime){
+      errors.eventTime = "Event time is required"
+    }
+
+    return isValid;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) return; 
+  };
+
+  // logika wklejania zdjecia i podgladu
 
     const fileInput = ref(null);
     const photo = ref(null);
@@ -155,12 +236,34 @@ import defaultImage from '../../assets/user-form-bg.jpg';
 
     function uploadPhoto() {
         fileInput.value?.click();
-        console.log(import.meta.env)
     }
 
     function handleFileChange(event){
         const file = event.target.files[0];
         if (!file) return;
+
+        // Walidacja typu pliku
+        if (!file.type.startsWith('image/')) {
+            errors.image = 'Please upload a valid image file';
+            photo.value = null;
+            if (photoPreview.value) {
+                URL.revokeObjectURL(photoPreview.value);
+                photoPreview.value = null;
+            }
+            return;
+        }
+
+        // Walidacja rozmiaru (max 5MB)
+        const maxSizeMB = 5;
+        if (file.size / 1024 / 1024 > maxSizeMB) {
+            errors.image = `Image must be smaller than ${maxSizeMB}MB`;
+            photo.value = null;
+            if (photoPreview.value) {
+                URL.revokeObjectURL(photoPreview.value);
+                photoPreview.value = null;
+            }
+            return;
+        }
 
         if (photoPreview.value) {
         URL.revokeObjectURL(photoPreview.value);
@@ -169,6 +272,7 @@ import defaultImage from '../../assets/user-form-bg.jpg';
         photoPreview.value = URL.createObjectURL(file);
         photoError.value = '';
     }
+
 </script>
 
 <style scoped>
