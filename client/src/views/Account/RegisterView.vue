@@ -62,10 +62,12 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { SERVER_BASE_URL } from '../../config/env.js';
+import { useAccountStore } from '../../stores/account.js';
 
 const router = useRouter();
 const loading = ref(false);
 const successMessage = ref('');
+const accountStore = useAccountStore();
 
 const formData = reactive({
   email: '',
@@ -136,6 +138,8 @@ const handleRegister = async () => {
     if (data && data.error) {
       throw new Error(data.error);
     }
+
+    accountStore.setEmail(formData.email);
 
     if (response.ok && data.success) {
       router.push({ path: '/verify-email', query: { email: formData.email } });

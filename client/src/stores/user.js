@@ -46,7 +46,7 @@ export const useUserStore = defineStore('user', {
             }
         },
         logout() {
-            this.token = null;
+            this.token = null; // Nie powinno byc this.user = null??
         }
     }
 

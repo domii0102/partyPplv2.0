@@ -42,11 +42,13 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { SERVER_BASE_URL } from '../../config/env.js';
 import { useUserStore } from '../../stores/user';
+import { useAccountStore } from '../../stores/account.js';
 
 
 const router = useRouter();
 const store = useUserStore();
 let redirectDone = false;
+const accountStore = useAccountStore();
 
 const loginData = reactive({
   email: '',
@@ -89,7 +91,9 @@ const handleLogin = async () => {
 
   if (redirectDone) return;
   loading.value = true;
+  errors.backend = null;
   console.log(loginData.email);
+
   try {
 
     const res = await fetch(`${SERVER_BASE_URL}/api/account/checkAccount/${loginData.email}`, {
@@ -108,13 +112,14 @@ const handleLogin = async () => {
       if (serverData.data.emailConfirmed === false) {
         redirectDone = true;
         console.log("Przekierowanie na verify-email:", serverData.data.emailConfirmed === false);
+        accountStore.setEmail(serverData.data.email);
         router.push('/verify-email');
         return;
       }
-      else if (!serverData.data.hasProfile) {
+      else if (!serverData.data.hasProfile) { // Uzytkownik nie ma profilu, 
         redirectDone = true;
         console.log("Przekierowanie na profile/create", serverData.data.hasProfile === false);
-        router.push('/profile/create');
+        router.push('/create');
         return;
       }
       else {
@@ -149,7 +154,7 @@ const handleLogin = async () => {
         }
         catch (err) {
           console.log(err);
-          errors.value.backend = 'Server error. Try again later.';
+          errors.backend = 'Server error. Try again later.';
         }
 
 
@@ -159,7 +164,7 @@ const handleLogin = async () => {
 
   } catch (err) {
     // Tutaj dodajemy błąd "po nieudanym logowaniu"
-    errors.email = "Email or password is incorrect.";
+    errors.backend = "Email or password is incorrect.";
   } finally {
     loading.value = false;
   }

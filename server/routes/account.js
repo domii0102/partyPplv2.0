@@ -31,21 +31,21 @@ router.delete('/delete-credentials/:userId', deleteCredentials);
 //weryfikacja maila
 //INPUT: pola w body: email, token
 //OUTPUT: success: true LUB success: false, error
-router.post("/verifyEmail", verifyEmail);
+router.post("/verify-email", verifyEmail);
 
 //ponowne wysłanie kodu na maila
 //INPUT: pola w body: email
 //OUTPUT: success: true LUB success: false, error
-router.post("/resendVerificationCode", resendVerificationCode);
+router.post("/resend-verification-code", resendVerificationCode);
 
 //sprawdzanie poprawnosci kodu weryfikacyjnego
 //INPUT: pola w body: email, token
 //OUTPUT: success: true LUB success: false, error
-router.post("/requestPasswordReset", authMiddleware, requestPasswordReset);
+router.post("/request-password-reset", authMiddleware, requestPasswordReset);
 
 //zmiana hasła
 //INPUT: pola w body: email, token, password
 //OUTPUT: success: true LUB success: false, error
-router.post("/resetPassword", authMiddleware, resetPassword);
+router.post("/reset-password", authMiddleware, resetPassword);
 
 export default router;

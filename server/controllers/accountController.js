@@ -276,6 +276,13 @@ export async function verifyEmail(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+
         if (existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -287,13 +294,6 @@ export async function verifyEmail(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
@@ -401,6 +401,13 @@ export async function requestPasswordReset(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+
         if (!existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -412,13 +419,6 @@ export async function requestPasswordReset(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
@@ -459,6 +459,13 @@ export async function resetPassword(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+        
         if (!existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -470,13 +477,6 @@ export async function resetPassword(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 

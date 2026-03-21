@@ -50,6 +50,8 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAccountStore } from '../../stores/account';
+import { SERVER_BASE_URL } from '../../config/env';
 
 const router = useRouter();
 const verificationCode = ref('');
@@ -57,6 +59,7 @@ const loading = ref(false);
 const resendLoading = ref(false);
 const successMessage = ref('');
 const error = ref(null);
+const accountStore = useAccountStore();
 
 const validate = () => {
   error.value = null;
@@ -79,8 +82,24 @@ const handleVerify = async () => {
   successMessage.value = '';
 
   try {
-    // Symulacja weryfikacji kodu
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const res = await fetch(`${SERVER_BASE_URL}/api/account/verify-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email: accountStore.email,
+        token: verificationCode.value
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.success) {
+      throw new Error(data.error || "Verification failed");
+    }
+
     successMessage.value = "Account activated successfully!";
     
     setTimeout(() => {
@@ -99,7 +118,23 @@ const handleResend = async () => {
   successMessage.value = '';
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const res = await fetch(`${SERVER_BASE_URL}/api/account/resend-verification-code`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email: accountStore.email
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.success) {
+      throw new Error(data.error || "Problems occured while sending new verification code.");
+    }
+
     successMessage.value = "A new code has been sent to your email.";
   } catch (err) {
     error.value = "Could not resend code. Try again later.";
