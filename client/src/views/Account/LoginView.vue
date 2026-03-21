@@ -96,9 +96,15 @@ const handleLogin = async () => {
 
   try {
 
-    const res = await fetch(`${SERVER_BASE_URL}/api/account/checkAccount/${loginData.email}`, {
-      method: "GET",
-      cache: "no-store"
+    const res = await fetch(`${SERVER_BASE_URL}/api/account/check-account/${loginData.email}`, {
+      method: "POST",
+      credentials: 'include',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: loginData.email,
+      })
     });
 
     const serverData = await res.json();
@@ -146,7 +152,7 @@ const handleLogin = async () => {
             await store.loadUser();
             await localStorage.setItem('user_verified', serverData.data.emailConfirmed ? 'true' : 'false');
             redirectDone = true;
-            console.log("Przekierowanie na profile:", serverData.data.emailConfirmed === false, serverData.data.hasProfile === false );
+            console.log("Przekierowanie na profile:", serverData.data.emailConfirmed === false, serverData.data.hasProfile === false);
             router.push('/profile'); //to tak na razie, bo nie ma dashboardu
             return;
           }

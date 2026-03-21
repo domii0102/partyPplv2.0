@@ -19,4 +19,3 @@ export const eventSchema = z.object({
     }, z.int().gte(13).lte(99).optional())
 });
 
-export const updateEventSchema = eventSchema.partial();

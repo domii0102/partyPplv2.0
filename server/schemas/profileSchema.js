@@ -17,7 +17,6 @@ export function calculateAge(birthDate) {
 };
 
 export const profileSchema = z.object({
-    email: z.email().nonempty().trim().toLowerCase(),
     nickname: z.string().min(5).max(30).regex(/^[a-zA-Z0-9_]+$/, {
         message: "Nickname can consist of letters, numbers and \"_\" only"
     }),
@@ -36,3 +35,4 @@ export const profileSchema = z.object({
         })
     )
 });
+

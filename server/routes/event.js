@@ -6,14 +6,20 @@ import { getEvent, getEvents,  createEvent, deleteEvent, updateEvent } from '../
 
 const router = express.Router();
 
+//wyświetlenie konkretnego eventu
+//OUTPUT: success: true,  data - w tym obiekt z eventem i wewnątrz niego image (obiekt ze zdjęciem) LUB success: false, error
 router.get('/:id', getEvent);
 
+//wyświetlenie eventów
+//OUTPUT: success: true, data - w tym eventy ze zdjęciam w środku (tak jak wyżej) LUB success: false, error
 //tu można dać query "visibility", jak dacie w url ?visibility=public to zwróci wydarzenia publiczne (do dashboardu)
 //jak nic nie dacie, to zwróci te co są pod profilem chyba (te które się samemu stworzyło i te w których bierzemy udział)
 //ale logiki do brania udziału jeszcze nie ma więc to pójdzie do poprawy
 router.get("/", getEvents);
 
 /*
+tworzenie eventu
+INPUT:
 Oczekuje całości w multipart-formdata, czyli:
     * image (dokładnie jedno zdjęcie), pole ma się nazywać image
     * eventName 
@@ -23,12 +29,20 @@ Oczekuje całości w multipart-formdata, czyli:
     * locationLatitude (opcjonalne na razie)
     * locationLongitude (opcjonalne na razie)
     * ageRestriction 
+
+OUTPUT: success: true, data: {event, image} LUB success: false, error
 */
 router.post("/", upload.single('image'), createEvent);
-//taki sam format co w tworzeniu nowego profilu, tylko nie wszystkie pola muszą być, bo to patch (powinny być tylko te modyfikowane)
-router.patch("/:id", upload.single('image'), updateEvent);
+
+//modyfikowanie eventu
+//INPUT: taki sam format co w tworzeniu nowego eventu
+//OUTPUT: success: true, data - jeśli był update też ze zdjęciem to {event, image}
+// jeżeli nie to w data jest tylko obiekt z eventem LUB success: false, error
+router.put("/:id", upload.single('image'), updateEvent);
 
 
+//soft-delete eventu
+//OUTPUT: success: true, data - obiekt z usuniętym eventem LUB success: false, error
 router.delete("/:id", deleteEvent);
 
 

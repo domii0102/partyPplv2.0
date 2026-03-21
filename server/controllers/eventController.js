@@ -133,7 +133,7 @@ export async function updateEvent(req, res) {
 
     const userId = req.user.userId;
     const eventId = parseInt(req.params.id);
-    const result = updateEventSchema.safeParse(req.body);
+    const result = eventSchema.safeParse(req.body);
     const image = req.file || null;
 
     if (!result.success) {
@@ -209,7 +209,7 @@ export async function updateEvent(req, res) {
             data: { ...result.data },
             include: { image: true }
         });
-        return res.status(201).json({ success: true, data: updatedEvent });
+        return res.status(200).json({ success: true, data: updatedEvent });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, error: "An attempt to save changes in the database was unsuccessful" });
