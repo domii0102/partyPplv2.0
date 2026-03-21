@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '../stores/user';
 
 // import widoków
 import FillInProfileInfoView from '../views/Account/FillInProfileInfoView.vue'
@@ -16,6 +17,13 @@ import LandingPageView from '../views/Home/LandingPageView.vue'
 
 import ProfileView from '../views/Profile/ProfileView.vue'
 
+import { getActivePinia, setActivePinia, createPinia } from 'pinia'
+
+const pinia = getActivePinia() || createPinia()
+setActivePinia(pinia)
+
+//const store = useUserStore();
+
 const routes = [
   { path: '/', component: LandingPageView },
 
@@ -26,6 +34,7 @@ const routes = [
   { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
  { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
   { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
+  { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true } },
 
   // Event
   { 
@@ -48,11 +57,11 @@ const routes = [
     component: ProfileView, 
     meta: { requiresAuth: true, requiresVerification: true } 
   },
-  { 
-    path: '/profile/create', 
-    component: FillInProfileInfoView, 
-    meta: { requiresAuth: true, requiresVerification: true } 
-  }
+  // { tworzenie profilu nie powinno byc przy rejestracji?
+  //   path: '/profile/create', 
+  //   component: FillInProfileInfoView, 
+  //   meta: { requiresAuth: true, requiresVerification: true } 
+  // }
 ];
 
 const router = createRouter({
@@ -61,23 +70,26 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  const store = useUserStore(); // Gdy jest na poczatku to nie pobiera najnowszego stanu store, wiec nie sprawdza dobrze autentyfikacji i wywali blad (login nie pojdzie dalej)
 
-  const isAuthenticated = !!localStorage.getItem('user_token');
+  const isAuthenticated = store.user != null;
   const isVerified = localStorage.getItem('user_verified') === 'true';
 
-  if (to.meta.requiresVerification && !isVerified) {
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    return next('/login');
+  } 
+  
+  else if (to.meta.requiresVerification && !isVerified) { // Wywala tutaj przy logowaniu, jak jest confirmed ale bez profilu
     if (to.path === '/verify-email') {
-      next();
+      return next();
     } else {
-      next('/verify-email');
+      return next('/verify-email');
     }
   } 
-  else if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login');
-  } 
-  else {
-    next();
-  }
+  //else if (to.meta.requiresAuth && !isAuthenticated) {
+  //  next('/login');
+  //} 
+  next();
 });
 
 export default router;

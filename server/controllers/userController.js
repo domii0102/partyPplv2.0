@@ -8,11 +8,24 @@ import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
 
 
 
+export async function getCurrentUser(req, res) {
+    const userId = req.user.userId;
 
+    const user = await prisma.userProfile.findUnique({
+        where: { userId: userId }
+    });
+
+    if (!user) {
+        return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: { user }
+    });
+}
 
 export async function createProfile(req, res) {
-
-    const userId = req.user.userId;
 
     const result = profileSchema.safeParse(req.body);
 
@@ -20,10 +33,23 @@ export async function createProfile(req, res) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     };
 
-    const { nickname, name, surname, dateOfBirth } = result.data;
+    const { email, nickname, name, surname, dateOfBirth } = result.data;
+
+    const accountData = await prisma.userCredentials.findUnique({
+        where: {email: email},
+        select: {userId: true, emailConfirmed: true, userRole: true}
+    });
+
+    if (!accountData) {
+        return res.status(404).json({success: false, error: "Account not found"});
+    }
+
+    if (!accountData.emailConfirmed) {
+        return res.status(400).json({success: false, error: "Email is not confirmed"});
+    }
 
     const existingProfile = await prisma.userProfile.findUnique({
-        where: { userId: userId }
+        where: { userId: accountData.userId }
     });
 
     if (existingProfile) {
@@ -31,10 +57,10 @@ export async function createProfile(req, res) {
     }
 
     const existingNickname = await prisma.userProfile.findFirst({
-        where: {nickname: nickname}
+        where: { nickname: nickname }
     });
 
-    if (existingNickname){
+    if (existingNickname) {
         return res.status(409).json({ success: false, error: "This nickname is taken. Try something else" });
     }
 
@@ -61,24 +87,25 @@ export async function createProfile(req, res) {
     };
 
     let createdProfile;
+    let createdAvatar = null;
     try {
         createdProfile = await prisma.userProfile.create({
             data: newProfile
         });
         if (avatar) {
             try {
-                await prisma.image.create({
+                createdAvatar = await prisma.image.create({
                     data: {
                         profileId: createdProfile.profileId,
                         publicId: avatarId,
                         url: cloudinary.url(avatarId)
-                }
+                    }
                 });
             }
             catch (err) {
                 console.error(err);
                 await deleteUploadedFiles([avatarId]);
-                
+
             }
         }
 
@@ -87,7 +114,21 @@ export async function createProfile(req, res) {
         return res.status(500).json({ success: false, error: "An error occurred while trying to insert the record into the database" });
     };
 
-    return res.status(201).json({ success: true, newProfile: createdProfile });
+    //wysłanie tokenu, bo to ostatni etap rejestracji
+    const token = jwt.sign(
+        { userId: accountData.userId, email: email, userRole: accountData.userRole, emailConfirmed: accountData.emailConfirmed },
+        JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "lax",//przy hostowaniu "none"
+        secure: false, // zamienić potem na true
+    });
+
+
+    return res.status(201).json({ success: true, data: {profile: createdProfile, avatar: createdAvatar }});
 
 
 }

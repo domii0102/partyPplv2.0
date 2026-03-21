@@ -38,8 +38,8 @@ app.get(["/","/home"], (req, res) => {
 })*/
 
 app.use("/api/account", accountRouter);
-app.use(authMiddleware); 
 app.use("/api/user", userRouter);
+app.use(authMiddleware); 
 app.use("/api/event", eventRouter);
 
 

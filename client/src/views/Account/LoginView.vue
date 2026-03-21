@@ -6,29 +6,19 @@
       <form @submit.prevent="handleLogin" novalidate>
         <div class="form-group">
           <label for="email">Email</label>
-          <input 
-            v-model="loginData.email" 
-            type="email" 
-            id="email" 
-            placeholder="Enter your Email" 
-          />
+          <input v-model="loginData.email" type="email" id="email" placeholder="Enter your Email" />
           <span v-if="errors.email" class="text-danger">{{ errors.email }}</span>
         </div>
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input 
-            v-model="loginData.password" 
-            type="password" 
-            id="password" 
-            placeholder="Enter your password" 
-          />
+          <input v-model="loginData.password" type="password" id="password" placeholder="Enter your password" />
           <span v-if="errors.password" class="text-danger">{{ errors.password }}</span>
         </div>
 
         <div class="options-row">
           <label class="remember">
-            <input v-model="loginData.rememberMe" type="checkbox" /> 
+            <input v-model="loginData.rememberMe" type="checkbox" />
             Keep me logged in
           </label>
           <router-link to="/forgot-password">Forgot password?</router-link>
@@ -40,7 +30,7 @@
       </form>
 
       <p class="signup-text">
-        You don't have account? 
+        You don't have account?
         <router-link to="/register">Sign up!</router-link>
       </p>
     </div>
@@ -49,6 +39,16 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { SERVER_BASE_URL } from '../../config/env.js';
+import { useUserStore } from '../../stores/user';
+import { useAccountStore } from '../../stores/account.js';
+
+
+const router = useRouter();
+const store = useUserStore();
+let redirectDone = false;
+const accountStore = useAccountStore();
 
 const loginData = reactive({
   email: '',
@@ -59,13 +59,15 @@ const loginData = reactive({
 const loading = ref(false);
 const errors = reactive({
   email: null,
-  password: null
+  password: null,
+  backend: null
 });
 
 const validate = () => {
   let isValid = true;
   errors.email = null;
   errors.password = null;
+  errors.backend = null;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!loginData.email) {
@@ -87,19 +89,82 @@ const validate = () => {
 const handleLogin = async () => {
   if (!validate()) return;
 
+  if (redirectDone) return;
   loading.value = true;
+  errors.backend = null;
+  console.log(loginData.email);
+
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Symulacja błędu logowania (np. jeśli e-mail to nie 'admin@test.com')
-    if (loginData.email !== 'admin@test.com' || loginData.password !== 'password123') {
-      throw new Error('invalid_credentials');
+
+    const res = await fetch(`${SERVER_BASE_URL}/api/account/checkAccount/${loginData.email}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    const serverData = await res.json();
+    console.log(serverData)
+
+    if (res.ok) {
+      console.log(serverData);
+
+      console.log("Server response: ", serverData.data);
+
+      if (serverData.data.emailConfirmed === false) {
+        redirectDone = true;
+        console.log("Przekierowanie na verify-email:", serverData.data.emailConfirmed === false);
+        accountStore.setEmail(serverData.data.email);
+        router.push('/verify-email');
+        return;
+      }
+      else if (!serverData.data.hasProfile) { // Uzytkownik nie ma profilu, 
+        redirectDone = true;
+        console.log("Przekierowanie na profile/create", serverData.data.hasProfile === false);
+        router.push('/create');
+        return;
+      }
+      else {
+        try {
+
+          const response = await fetch(`${SERVER_BASE_URL}/api/account/login`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: loginData.email,
+              password: loginData.password
+            })
+          });
+
+          const data = await response.json();
+          if (data && data.error) {
+            throw new Error(data.error);
+          }
+          console.log(data);
+          if (response.ok && data.success) {
+            await store.loadUser();
+            await localStorage.setItem('user_verified', serverData.data.emailConfirmed ? 'true' : 'false');
+            redirectDone = true;
+            console.log("Przekierowanie na profile:", serverData.data.emailConfirmed === false, serverData.data.hasProfile === false );
+            router.push('/profile'); //to tak na razie, bo nie ma dashboardu
+            return;
+          }
+
+        }
+        catch (err) {
+          console.log(err);
+          errors.backend = 'Server error. Try again later.';
+        }
+
+
+      }
+
     }
 
-    console.log('Success!');
   } catch (err) {
     // Tutaj dodajemy błąd "po nieudanym logowaniu"
-    errors.email = "Email or password is incorrect.";
+    errors.backend = "Email or password is incorrect.";
   } finally {
     loading.value = false;
   }
@@ -124,7 +189,7 @@ const handleLogin = async () => {
   max-width: 32.5rem;
   padding: 2.8125rem 3.4375rem;
   background: rgba(0, 0, 0, 0.55);
-  border: 0.1875rem solid var(--primary-orange, #ff8c00); 
+  border: 0.1875rem solid var(--primary-orange, #ff8c00);
   border-radius: 1.5625rem;
   backdrop-filter: blur(1rem);
   box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45);
@@ -208,7 +273,8 @@ input[type="password"] {
   font-size: 0.875rem;
 }
 
-a, .router-link {
+a,
+.router-link {
   color: #d8aaff;
   text-decoration: none;
 }
@@ -221,6 +287,7 @@ a:hover {
   .form-container {
     padding: 1.5rem;
   }
+
   .options-row {
     flex-direction: column;
     gap: 0.75rem;

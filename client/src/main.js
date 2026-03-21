@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import './style.css'
 
 import App from './App.vue'
@@ -20,10 +21,11 @@ import {
 
 library.add(faSun, faMoon, faChevronRight, faChevronLeft)
 
-const app = createApp(App)
+const app = createApp(App);
+app.use(createPinia());
+app.component('FontAwesomeIcon', FontAwesomeIcon);
 
-app.component('FontAwesomeIcon', FontAwesomeIcon)
 
-app.use(router)
+app.use(router);
 
-app.mount('#app')
+app.mount('#app');

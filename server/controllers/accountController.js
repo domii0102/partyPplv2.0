@@ -5,6 +5,7 @@ import "dotenv/config";
 import prisma from "../db.js";
 import { credentialsSchema } from "../schemas/credentialsSchema.js";
 import { emailVerificationSchema, emailVerificationResendSchema, passwordChangeSchema } from "../schemas/emailVerificationSchema.js";
+import { emailSchema } from "../schemas/credentialsSchema.js";
 import { sendEmail } from "../services/mailService.js";
 import { randomInt } from "crypto";
 import { error } from "console";
@@ -29,6 +30,7 @@ export async function register(req, res) {
     try {
         const existingUser = await prisma.userCredentials.findUnique({
             where: { email },
+            select: { userId: true }
         });
 
         if (existingUser) {
@@ -43,6 +45,7 @@ export async function register(req, res) {
         const verifyToken = randomInt(100000, 1000000).toString();
         const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
 
+
         const newUser = await prisma.userCredentials.create({
             data: {
                 email: email,
@@ -54,6 +57,7 @@ export async function register(req, res) {
             },
         });
 
+        /*
         const token = jwt.sign(
             { userId: newUser.userId, email, userRole: userRoleOptions.USER, emailConfirmed: newUser.emailConfirmed },
             JWT_SECRET,
@@ -62,10 +66,10 @@ export async function register(req, res) {
 
         res.cookie("token", token, {
             httpOnly: true,
-            sameSite: "none",
-            secure: true,
+            sameSite: "lax",//przy hostowaniu "none"
+            secure: false, // zamienić potem na true
         });
-
+*/
         // Adresat, typ maila, token
         await sendEmail(email, "verify", verifyToken);
 
@@ -143,8 +147,8 @@ export async function login(req, res) {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: true,
-            sameSite: "none",
+            secure: false, //potem przy hostowaniu true
+            sameSite: "lax", //przy hostowaniu "none"
             maxAge: 1000 * 60 * 60 * 24,
         });
 
@@ -179,6 +183,49 @@ export async function logout(req, res) {
             error: "Logout failed",
         });
     }
+}
+
+export async function checkAccount(req, res) {
+
+    const result = emailSchema.safeParse(req.params.email);
+
+    if (!result.success) {
+        return res.status(400).json({ success: false, error: z.flattenError(result.error) });
+    }
+
+    const email = result.data;
+    let accountData;
+    let profile;
+    try {
+        accountData = await prisma.userCredentials.findUnique({
+            where: { email: email },
+            select: { userId: true, emailConfirmed: true }
+        });
+
+        if (!accountData) {
+            return res.status(404).json({success: false, error: "Account not found"})
+        }
+        profile = await prisma.userProfile.findUnique({
+            where: { userId: accountData.userId }
+        });
+
+        if (!accountData?.emailConfirmed) {
+            return res.status(404).json({ success: false, error: "User not found" });
+        }
+    }
+    catch (err) {
+        console.error(err);
+        console.log(accountData);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
+    }
+
+    if (profile) {
+        return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: true } });
+    } else {
+
+        return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: false } });
+    }
+
 }
 
 
@@ -229,6 +276,13 @@ export async function verifyEmail(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+
         if (existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -240,13 +294,6 @@ export async function verifyEmail(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
@@ -354,6 +401,13 @@ export async function requestPasswordReset(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+
         if (!existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -365,13 +419,6 @@ export async function requestPasswordReset(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
@@ -412,6 +459,13 @@ export async function resetPassword(req, res) {
             where: { email }
         });
 
+        if (existingUser.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                error: "Account has been removed"
+            });
+        }
+        
         if (!existingUser.emailConfirmed) {
             return res.status(409).json({
                 success: false,
@@ -423,13 +477,6 @@ export async function resetPassword(req, res) {
             return res.status(400).json({
                 success: false,
                 error: "No token to verify"
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
             });
         }
 
