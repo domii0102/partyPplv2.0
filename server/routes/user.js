@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../config/multerConfig.js';
-import { createProfile, getCurrentUser, getUser, updateProfile } from '../controllers/userController.js';
+import { createProfile, getCurrentUser, getUser, updateProfile, updateAvatar } from '../controllers/userController.js';
 import {authMiddleware} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -27,7 +27,7 @@ router.use(authMiddleware);
 //OUTPUT: success: true, data LUB success: false, error
 //wyświetlenie profilu aktualnie zalogowanego użytkownika
 //OUTPUT: success: true, data LUB success: false, error
-router.get('/me', authMiddleware, getCurrentUser);
+router.get('/me', getCurrentUser);
 
 
 //wyświetlenie profilu konkretnego użytkownika
@@ -36,12 +36,15 @@ router.get('/:id', getUser);
 
 
 //aktualizacja profilu
-//INPUT: taki sam jak w tworzeniu, ale trzeba też dać pole deleteAvatar: boolean
-//to jest do informacji czy użytkownik chce usunąć swój avatar przy updacie czy nie
-//OUTPUT: success: true, data LUB success: false, error
-router.put('/', upload.single('avatar'), updateProfile);
+//INPUT: taki sam jak w tworzeniu, ale bez zdjęcia
+//OUTPUT: success: true, data - profil z avatarem (null jak nie ma) LUB success: false, error
+router.put('/', updateProfile);
 
 
+//aktualizacja avatara
+//INPUT: albo jedno zdjęcie albo nic, wtedy obecny avatar (jeśli jest), zostanie usunięty
+//OUTPUT: success: true, data - avatar (null jak nie ma) LUB success: false, error
+router.patch('/update-avatar', upload.single('avatar'), updateAvatar);
 
 
 

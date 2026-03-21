@@ -1,6 +1,6 @@
 import express from 'express';
 import {upload} from '../config/multerConfig.js';
-import { getEvent, getEvents,  createEvent, deleteEvent, updateEvent } from '../controllers/eventController.js';
+import { getEvent, getEvents,  createEvent, deleteEvent, updateEvent, updateImage } from '../controllers/eventController.js';
 
 
 
@@ -35,11 +35,15 @@ OUTPUT: success: true, data: {event, image} LUB success: false, error
 router.post("/", upload.single('image'), createEvent);
 
 //modyfikowanie eventu
-//INPUT: taki sam format co w tworzeniu nowego eventu
-//OUTPUT: success: true, data - jeśli był update też ze zdjęciem to {event, image}
-// jeżeli nie to w data jest tylko obiekt z eventem LUB success: false, error
-router.put("/:id", upload.single('image'), updateEvent);
+//INPUT: taki sam format co w tworzeniu nowego eventu, ale bez zdjęcia
+//OUTPUT: success: true, data - obiekt eventu z dołączonym zdjęciem LUB success: false, error
+router.put("/:id", updateEvent);
 
+//modyfikowanie eventu
+//id to id eventu
+//INPUT: tylko jedno zdjęcie, jak nie będzie nic to błąd, bo event musi mieć min jedno zdjęcie
+//OUTPUT: success: true, data - obiekt zdjęcia LUB success: false, error
+router.patch("/update-image/:id", upload.single('image'), updateImage)
 
 //soft-delete eventu
 //OUTPUT: success: true, data - obiekt z usuniętym eventem LUB success: false, error

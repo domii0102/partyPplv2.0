@@ -36,29 +36,4 @@ export const profileSchema = z.object({
     )
 });
 
-export const updateProfileSchema = z.object({
-    nickname: z.string().min(5).max(30).regex(/^[a-zA-Z0-9_]+$/, {
-        message: "Nickname can consist of letters, numbers and \"_\" only"
-    }),
-    name: z.string().min(3).max(20),
-    surname: z.string().min(3).max(30),
-    dateOfBirth: z.preprocess(
-        val => {
-            const date = new Date(val);
-            return isNaN(date.getTime()) ? undefined : date;
-        },
-        z.date().refine(date => {
-            const age = calculateAge(date);
-            return age >= 13 && age <= 100;
-        }, {
-            message: "Age must be between 13 and 100"
-        })
-    ),
-    deleteAvatar: z.preprocess(val => {
-        if (typeof val === "string") {
-            return val.toLowerCase() === "true"; // "true" => true, wszystko inne => false
-        }
-        return Boolean(val);
-    }, z.boolean())
-});
 
