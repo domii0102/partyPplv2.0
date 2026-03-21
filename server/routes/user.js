@@ -8,6 +8,8 @@ const router = express.Router();
 /*
 tworzenie profilu
 INPUT:
+tworzenie profilu
+INPUT:
 Oczekuje całości w multipart-formdata, czyli:
     * avatar (opcjonalny, max 1), pole ma się nazywać avatar
     * nickname
@@ -15,11 +17,14 @@ Oczekuje całości w multipart-formdata, czyli:
     * surname
     * dateOfBirth
 OUTPUT: success: true, data LUB success: false, error
+OUTPUT: success: true, data LUB success: false, error
 */
 router.post('/', upload.single('avatar'), createProfile);
 
 router.use(authMiddleware);
 
+//wyświetlenie profilu aktualnie zalogowanego użytkownika
+//OUTPUT: success: true, data LUB success: false, error
 //wyświetlenie profilu aktualnie zalogowanego użytkownika
 //OUTPUT: success: true, data LUB success: false, error
 router.get('/me', authMiddleware, getCurrentUser);

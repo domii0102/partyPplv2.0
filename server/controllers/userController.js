@@ -2,12 +2,14 @@ import prisma from '../db.js';
 import * as z from 'zod';
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+
 import cloudinary from 'cloudinary';
 import { profileSchema, updateProfileSchema } from '../schemas/profileSchema.js';
 import { intoBase64 } from '../config/multerConfig.js';
 import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
+
 
 
 export async function getCurrentUser(req, res) {
@@ -61,23 +63,25 @@ export async function createProfile(req, res) {
     const avatar = req.file || null;
     let avatarId = null;
 
+
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     };
 
     const { nickname, name, surname, dateOfBirth } = result.data;
 
+
     const accountData = await prisma.userCredentials.findUnique({
-        where: { email: email },
-        select: { userId: true, emailConfirmed: true, userRole: true }
+        where: {  email: email  },
+        select: {  userId: true, emailConfirmed: true, userRole: true  }
     });
 
     if (!accountData) {
-        return res.status(404).json({ success: false, error: "Account not found" });
+        return res.status(404).json({  success: false, error: "Account not found"  });
     }
 
     if (!accountData.emailConfirmed) {
-        return res.status(400).json({ success: false, error: "Email is not confirmed" });
+        return res.status(400).json({  success: false, error: "Email is not confirmed"  });
     }
 
     const existingProfile = await prisma.userProfile.findUnique({
@@ -89,8 +93,11 @@ export async function createProfile(req, res) {
     }
 
     const existingNickname = await prisma.userProfile.findFirst({
-        where: { nickname: nickname }
-    });
+    where: {
+        nickname: nickname,
+        NOT: { userId: userId }
+    }
+});
 
     if (existingNickname) {
         return res.status(409).json({ success: false, error: "This nickname is taken. Try something else" });
@@ -135,7 +142,7 @@ export async function createProfile(req, res) {
                 console.error(err);
                 await deleteUploadedFiles([avatarId]);
                 return res.status(500).json("A database error has occurred"); //bo niby użytkownik nie musi mieć zdjęcia, 
-                // ale skoro chciał przesłać i nie wyszło to powinien dostać błąd
+                // ale skoro chciał przesłać i nie wyszło to powinien dostać błąd 
             }
         }
 
@@ -159,6 +166,7 @@ export async function createProfile(req, res) {
 
 
     return res.status(201).json({ success: true, data: { profile: createdProfile, avatar: createdAvatar } });
+
 
 
 }
