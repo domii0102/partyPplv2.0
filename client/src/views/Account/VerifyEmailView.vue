@@ -105,7 +105,7 @@ const handleVerify = async () => {
     successMessage.value = "Account activated successfully!";
     
     setTimeout(() => {
-      router.push('/login');
+      router.push('/create');
     }, 1500);
   } catch (err) {
     error.value = "Invalid or expired code.";

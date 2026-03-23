@@ -223,7 +223,7 @@ const handleFillInProfile = async () => {
         }
 
         if (response.ok && data.success) {
-            router.push({ path: '/profile'});
+            router.push({ path: '/login'});
             return;
         }
 

@@ -21,6 +21,7 @@
           v-for="event in events" 
           :key="event.id" 
           :event="event" 
+          @select="router.push(`/event/dashboard/${$event}`)"
         />
       </div>
     </div>
@@ -28,18 +29,64 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import EventCard from '../../components/event/EventCard.vue';
+  import { ref, reactive, onMounted, watch } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { SERVER_BASE_URL } from '../../config/env';
+  import EventCard from '../../components/event/EventCard.vue';
+  import { useUserStore } from '../../stores/user';
 
-const searchQuery = ref('');
-const events = ref([
-  { id: 1, title: 'Hulanki w garażu', date: '02.06.2026', time: '22:00', location: 'Białystok, ul. Garażowa 69', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 2, title: 'Wielki test makowców', date: '23.12.2025', time: '16:00', location: 'Grajewo', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 3, title: '67 urodziny Bożenki', date: '15.06.2026', time: '23:00', location: 'Bielsk Podlaski, Wrzosowa 7', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 4, title: 'Wigilia klasowa', date: '22.12.2032', time: '13:00', location: 'Białystok, al. Tysiąclecia 14', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 5, title: '67 urodziny Evil Bożenki', date: '15.06.2026', time: '23:13', location: 'Bielsk Podlaski, Wrzosowa 13', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 6, title: 'Rave w mojej stodole', date: '20.04.2026', time: '22:00', location: 'Lipinki Łużyckie, Łączna 46', image: 'https://placehold.co/600x400/2a1b33/white' }
-]);
+  const router = useRouter();
+  const store = useUserStore();
+  const loading = ref(false);
+  const searchQuery = ref('');
+
+  const events = ref([]);
+  const status = reactive({
+    error: null,
+    empty: false
+  });
+
+  const fetchEvents = async () => {
+    loading.value = true;
+    status.error = null;
+    status.empty = false;
+
+    try {
+      const fetchURL = new URL(`${SERVER_BASE_URL}/api/event/`);
+      fetchURL.searchParams.append('visibility', 'public');
+
+      //Trzeba dodac wyszukiwanie i filtry po stronie backendu!!!
+      if (searchQuery.value) fetchURL.searchParams.append('search', searchQuery.value);
+
+      const res = await fetch(fetchURL, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const serverData = await res.json();
+      if (!res.ok) throw new Error(serverData.error || "Failed to fetch events.");
+
+      events.value = serverData.data;
+
+      if (events.value.length === 0) status.empty = true;
+
+    } catch (err) {
+      console.error(err);
+      status.error = "Problem occured while loading events, please try again later.";
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  watch(searchQuery, () => {
+    fetchEvents();
+  });
+
+  onMounted(fetchEvents);
+
 </script>
 
 <style scoped>
