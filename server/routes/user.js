@@ -14,7 +14,7 @@ Oczekuje całości w multipart-formdata, czyli:
     * surname
     * dateOfBirth
 */
-router.post('/', upload.single('avatar'), createProfile);
+router.post('/', authMiddleware, upload.single('avatar'), createProfile);
 
 router.use(authMiddleware);
 

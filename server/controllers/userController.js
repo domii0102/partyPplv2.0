@@ -4,8 +4,9 @@ import cloudinary from 'cloudinary';
 import { profileSchema } from '../schemas/profileSchema.js';
 import { intoBase64 } from '../config/multerConfig.js';
 import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
+import jwt from 'jsonwebtoken';
 
-
+const JWT_SECRET = process.env.JWT_SECRET;
 
 
 export async function getCurrentUser(req, res) {
@@ -28,6 +29,7 @@ export async function getCurrentUser(req, res) {
 export async function createProfile(req, res) {
 
     const result = profileSchema.safeParse(req.body);
+    const userId = req.user.userId;
 
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });

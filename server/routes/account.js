@@ -1,6 +1,6 @@
 import express from 'express';
 import { register, login, logout, deleteCredentials, checkAccount } from '../controllers/accountController.js'
-import { verifyEmail, resendVerificationCode, requestPasswordReset, resetPassword } from '../controllers/accountController.js';
+import { verifyEmail, resendVerificationCode, requestPasswordReset, resetPassword, getCurrentUser } from '../controllers/accountController.js';
 import {authMiddleware} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -47,5 +47,10 @@ router.post("/request-password-reset", authMiddleware, requestPasswordReset);
 //INPUT: pola w body: email, token, password
 //OUTPUT: success: true LUB success: false, error
 router.post("/reset-password", authMiddleware, resetPassword);
+
+//uzyskanie maila i id zalogowanego uzytkownika bez profilu
+//INPUT: nie ma chyba lol,
+//OUTPUT: email, userId
+router.get("/me", authMiddleware, getCurrentUser);
 
 export default router;

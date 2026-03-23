@@ -416,7 +416,6 @@ import defaultImage from '../../assets/user-form-bg.jpg';
   color: rgba(255,255,255,0.72);
 }
 
-
 .event-actions{
   display:flex;
   gap:10px;
