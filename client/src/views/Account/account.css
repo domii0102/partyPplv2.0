@@ -1,0 +1,119 @@
+.background{
+  min-height: 100vh;
+  width: 100%;
+  background: url('../../assets/user-form-bg.jpg') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.main-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem;
+  background-color: var(--auth-bg-overlay);
+  backdrop-filter: blur(0.5rem);
+}
+
+.form-container {
+  width: 100%;
+  max-width: 60vw;
+  padding: 2.8125rem 3.4375rem;
+  background: var(--auth-bg-overlay);
+  border: 1px solid var(--primary-orange, #ff8c00);
+  border-radius: 1.5625rem;
+  backdrop-filter: blur(1rem);
+  box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45);
+  color: #fff;
+  z-index: 1;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 1.5625rem;
+  font-size: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.375rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+label {
+  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
+  display: block;
+}
+
+a,
+.router-link {
+  color: #d8aaff;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="email"],
+input[type="password"]{
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border-radius: 62.4375rem;
+  border: none;
+  background: rgba(12, 1, 1, 0.562);
+  color: #fff;
+  outline: none;
+}
+
+.gradient-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(45deg, var(--primary-orange), var(--primary-purple), var(--primary-orange));
+  color: var(--bg-main);
+  cursor: pointer;
+  background-size: 200% 200%;
+  transition: background-position 0.3s, filter 0.3s;
+}
+
+.gradient-btn:hover:not(:disabled) {
+  background-position: 100% 100%;
+  filter: brightness(1.1);
+}
+
+
+.gradient-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-text {
+  color: #ff4d4d;
+  font-size: 0.75rem;
+  margin-top: 0.3125rem;
+  margin-left: 0.9375rem;
+  font-weight: 500;
+  display: block;
+}
+
+.success-message,
+.error-message {
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 0.9375rem;
+}
+
+.text-success {
+  color: #4BB543;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: #efefef;
+  line-height: 1.5;
+  margin-bottom: 1.875rem;
+}

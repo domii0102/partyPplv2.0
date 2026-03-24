@@ -34,6 +34,7 @@
   /* do jest do logowania */
     --primary-orange: #ffb347;
     --primary-purple: #ad63ff;
+    --auth-bg-overlay: rgba(15, 10, 31, 0.5);
 
   --card-bg: radial-gradient(circle at 50% 30%, #2a1b33 0%, #1a1122 70%, #120b18 100%);
 

@@ -7,6 +7,7 @@ import cloudinary from 'cloudinary';
 import { profileSchema } from '../schemas/profileSchema.js';
 import { intoBase64 } from '../config/multerConfig.js';
 import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -60,6 +61,7 @@ export async function getUser(req, res) {
 export async function createProfile(req, res) {
 
     const result = profileSchema.safeParse(req.body);
+    const userId = req.user.userId;
     const avatar = req.file || null;
     let avatarId = null;
 

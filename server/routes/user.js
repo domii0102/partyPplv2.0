@@ -19,7 +19,7 @@ Oczekuje całości w multipart-formdata, czyli:
 OUTPUT: success: true, data LUB success: false, error
 OUTPUT: success: true, data LUB success: false, error
 */
-router.post('/', upload.single('avatar'), createProfile);
+router.post('/', authMiddleware, upload.single('avatar'), createProfile);
 
 router.use(authMiddleware);
 

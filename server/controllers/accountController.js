@@ -72,6 +72,15 @@ export async function register(req, res) {
     }
 }
 
+export function getCurrentUser(req, res) {
+    return res.status(200).json({
+        success: true,
+        data: {
+            email: req.user.email,
+            userId: req.user.userId
+        }
+    });
+}
 
 export async function login(req, res) {
     const result = credentialsSchema.safeParse(req.body);
