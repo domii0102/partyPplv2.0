@@ -195,24 +195,21 @@ onMounted(async () => {
 
 const handleFillInProfile = async () => {
     if (!validateForm()) return;
-    console.log("Handling...");
-    console.log(accountStore.email)
     loading.value = true;
+    const fetchData = new FormData();
+
+    fetchData.append('email', accountStore.email);
+    fetchData.append('nickname', formData.nickname);
+    fetchData.append('name', formData.name);
+    fetchData.append('surname', formData.surname);
+    fetchData.append('dateOfBirth', formData.dateOfBirth);
+    fetchData.append('avatar', formData.avatar);
+
     try {
         const response = await fetch(`${SERVER_BASE_URL}/api/user/`, {
             method: 'POST',
             credentials: 'include',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: accountStore.email,
-                nickname: formData.nickname,
-                name: formData.name,
-                surname: formData.surname,
-                dateOfBirth: formData.dateOfBirth,
-                avatar: formData.avatar
-            })
+            body: fetchData
         });
 
         const data = await response.json();
