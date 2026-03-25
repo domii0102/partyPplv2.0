@@ -7,7 +7,7 @@ import cloudinary from 'cloudinary';
 import { profileSchema } from '../schemas/profileSchema.js';
 import { intoBase64 } from '../config/multerConfig.js';
 import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
-import jwt from 'jsonwebtoken';
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -61,7 +61,6 @@ export async function getUser(req, res) {
 export async function createProfile(req, res) {
 
     const result = profileSchema.safeParse(req.body);
-    const userId = req.user.userId;
     const avatar = req.file || null;
     let avatarId = null;
 
@@ -70,7 +69,7 @@ export async function createProfile(req, res) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     };
 
-    const { nickname, name, surname, dateOfBirth } = result.data;
+    const { email, nickname, name, surname, dateOfBirth } = result.data;
 
 
     const accountData = await prisma.userCredentials.findUnique({
@@ -97,7 +96,7 @@ export async function createProfile(req, res) {
     const existingNickname = await prisma.userProfile.findFirst({
         where: {
             nickname: nickname,
-            NOT: { userId: userId }
+            NOT: { userId: accountData.userId }
         }
     });
 
@@ -117,7 +116,7 @@ export async function createProfile(req, res) {
     }
 
     const newProfile = {
-        userId: userId,
+        userId: accountData.userId,
         nickname: nickname,
         name: name,
         surname: surname,
@@ -168,9 +167,6 @@ export async function createProfile(req, res) {
 
 
     return res.status(201).json({ success: true, data: { profile: createdProfile, avatar: createdAvatar } });
-
-
-
 }
 
 export async function updateProfile(req, res) {
@@ -181,7 +177,6 @@ export async function updateProfile(req, res) {
     let updatedProfile;
     let currentProfile;
     let existingNickname;
-
     
 
     if (!result.success) {

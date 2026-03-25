@@ -57,7 +57,14 @@ export async function register(req, res) {
         });
 
         // Adresat, typ maila, token
-        await sendEmail(email, "verify", verifyToken);
+        try{
+            await sendEmail(email, "verify", verifyToken);
+        }
+        catch(err) {
+            console.error(err);
+            return res.status(500).json({success: false, error: "SMTP error"});
+        }
+        
 
         return res.status(200).json({
             success: true,
@@ -72,15 +79,6 @@ export async function register(req, res) {
     }
 }
 
-export function getCurrentUser(req, res) {
-    return res.status(200).json({
-        success: true,
-        data: {
-            email: req.user.email,
-            userId: req.user.userId
-        }
-    });
-}
 
 export async function login(req, res) {
     const result = credentialsSchema.safeParse(req.body);
@@ -184,11 +182,14 @@ export async function checkAccount(req, res) {
 
     const result = emailSchema.safeParse(req.body);
 
+    console.log("Zod result: ", result);
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     }
 
-    const email = result.data;
+    console.log("Parsowanie danych przeszło");
+    const {email} = result.data;
+    console.log("Email: ", email);
     let accountData;
     let profile;
     try {
@@ -198,11 +199,13 @@ export async function checkAccount(req, res) {
         });
 
         if (!accountData) {
+            console.log("Nie znaleziono credentiali");
             return res.status(404).json({success: false, error: "Account not found"})
         }
         profile = await prisma.userProfile.findUnique({
             where: { userId: accountData.userId }
         });
+        console.log("Po wyszukiwaniu profilu");
     }
     catch (err) {
         console.error(err);
@@ -211,9 +214,10 @@ export async function checkAccount(req, res) {
     }
 
     if (profile) {
+        console.log("Jest profil");
         return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: true } });
     } else {
-
+        console.log("Nie ma profilu");
         return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: false } });
     }
 
@@ -252,6 +256,7 @@ export async function deleteCredentials(req, res) {
 
 
 export async function verifyEmail(req, res) {
+    console.log("Body:", req.body);
     const result = emailVerificationSchema.safeParse(req.body);
 
     if (!result.success) {

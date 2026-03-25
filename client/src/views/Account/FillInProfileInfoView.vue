@@ -67,9 +67,10 @@
 import './account.css'
 import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { SERVER_BASE_URL } from '../../config/env.js';
+import {service} from '../../services/requestService.js';
 import defaultImage from '../../assets/pfp.jpg';
 import { useAccountStore } from '../../stores/account.js';
+import { useUserStore } from '../../stores/user.js';
 
 const formData = reactive({
     nickname: '',
@@ -94,6 +95,7 @@ const fileInput = ref(null);
 const photoPreview = ref(null);
 const photoError = ref('');
 const accountStore = useAccountStore();
+const userStore = useUserStore();
 
 function uploadPhoto() {
     fileInput.value?.click();
@@ -189,16 +191,14 @@ if (!formData.dateOfBirth) {
 return isValid;
 }
 
-onMounted(async () => {
-  await accountStore.loadAccount();
-});
 
 const handleFillInProfile = async () => {
     if (!validateForm()) return;
     loading.value = true;
     const fetchData = new FormData();
 
-    fetchData.append('email', accountStore.email);
+    console.log('Email w store:', accountStore.getEmail);
+    fetchData.append('email', accountStore.getEmail);
     fetchData.append('nickname', formData.nickname);
     fetchData.append('name', formData.name);
     fetchData.append('surname', formData.surname);
@@ -206,20 +206,18 @@ const handleFillInProfile = async () => {
     fetchData.append('avatar', formData.avatar);
 
     try {
-        const response = await fetch(`${SERVER_BASE_URL}/api/user/`, {
-            method: 'POST',
-            credentials: 'include',
-            body: fetchData
-        });
 
-        const data = await response.json();
-        console.log(data);
+        const response = await service.post('/api/user/', fetchData);
 
-        if (data && data.error) {
-            throw new Error(data.error)
+        console.log(response);
+
+        if (response && response.error) {
+            throw new Error(response.error)
         }
 
-        if (response.ok && data.success) {
+        console.log("Response success: ", response.success);
+        if (response.success) {
+            await userStore.loadUser();
             router.push({ path: '/profile'});
             return;
         }

@@ -63,8 +63,8 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { SERVER_BASE_URL } from '../../config/env.js';
 import { useAccountStore } from '../../stores/account.js';
+import {service} from "../../services/requestService.js";
 
 const router = useRouter();
 const loading = ref(false);
@@ -122,28 +122,22 @@ const handleRegister = async () => {
 
   loading.value = true;
   try {
-    const response = await fetch(`${SERVER_BASE_URL}/api/account/register`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
-    });
 
-    const data = await response.json();
-    console.log(data);
+    const response = await service.post('/api/account/register', {
+      email: formData.email,
+      password: formData.password
+    })
 
-    if (data && data.error) {
-      throw new Error(data.error);
+    console.log(response);
+
+    if (response && response.error) {
+      throw new Error(response.error);
     }
 
     accountStore.setEmail(formData.email);
-
-    if (response.ok && data.success) {
+    
+    if (response.success) {
+      
       router.push({ path: '/verify-email', query: { email: formData.email } });
       return;
     }
@@ -167,7 +161,7 @@ const handleRegister = async () => {
   font-size: 0.875rem;
 }
 
-.terms-container{
+.terms-container {
   margin-bottom: 1rem;
 }
 
