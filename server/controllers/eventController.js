@@ -13,7 +13,20 @@ export async function getEvent(req, res) {
     try {
         const event = await prisma.event.findUnique({
             where: { eventId: eventId, deletedAt: null },
-            include: { image: true }
+            include: { // Po id raczej nikt nikogo nie bedzie kojarzyl ;/
+                image: true,
+                userCredentials: {
+                    include: {
+                        userProfile: {
+                            select: {
+                                nickname: true,
+                                name: true,
+                                surname: true
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!event) {
             return res.status(404).json({ success: false, error: "Event not found" });

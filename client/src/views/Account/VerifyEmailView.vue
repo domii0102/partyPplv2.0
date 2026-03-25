@@ -97,8 +97,7 @@ const handleVerify = async () => {
     }
 
     successMessage.value = "Account activated successfully!";
-    
-  
+      
     router.push('/create');
 
   } catch (err) {

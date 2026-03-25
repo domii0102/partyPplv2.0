@@ -32,7 +32,7 @@ const routes = [
   { path: '/register', component: RegisterView, meta: { hideHeader: true } },
   { path: '/forgot-password', component: ForgotPasswordView, meta: { hideHeader: true } },
   { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
- { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
+  { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
   { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
   { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true } },
 
@@ -47,7 +47,7 @@ const routes = [
     component: EventFeedView, 
   },
   { 
-    path: '/event/dashboard', 
+    path: '/event/dashboard/:id', 
     component: EventDashboardView, 
   },
 
