@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { SERVER_BASE_URL } from '../config/env.js';
+import {service } from '../services/requestService.js';
+
 
 export const useUserStore = defineStore('user', {
     state: () => ({
@@ -19,26 +20,23 @@ export const useUserStore = defineStore('user', {
                 calculatedAge--;
             }
             return calculatedAge;
-        }
+        },
+        getUser: (state) => state.user
     },
     actions: {
         async loadUser() {
             try {
-                const res = await fetch(`${SERVER_BASE_URL}/api/user/me`, {
-                    method: "GET",
-                    credentials: "include",
-                    cache: "no-store"
-                });
 
-                console.log("loadUser() status:", res.status);
+                console.log("loading user into store...");
+                const res = await service.get('/api/user/me', false);
 
-                if (!res.ok) {
+                if (!res.success) {
                     this.user = null;
                     return;
                 }
-                console.log(res)
-                const data = await res.json();
-                this.user = data.data.user;
+                console.log(res);
+
+                this.user = res.data.user;
 
             } catch (err) {
                 console.error("loadUser() error:", err);
@@ -46,7 +44,7 @@ export const useUserStore = defineStore('user', {
             }
         },
         logout() {
-            this.token = null; // Nie powinno byc this.user = null??
+            this.user = null; 
         }
     }
 

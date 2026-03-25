@@ -57,11 +57,7 @@ const routes = [
     component: ProfileView, 
     meta: { requiresAuth: true, requiresVerification: true } 
   },
-  // { tworzenie profilu nie powinno byc przy rejestracji?
-  //   path: '/profile/create', 
-  //   component: FillInProfileInfoView, 
-  //   meta: { requiresAuth: true, requiresVerification: true } 
-  // }
+
 ];
 
 const router = createRouter({

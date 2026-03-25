@@ -1,6 +1,6 @@
 import express from 'express';
-import { register, login, logout, deleteCredentials, checkAccount } from '../controllers/accountController.js'
-import { verifyEmail, resendVerificationCode, requestPasswordReset, resetPassword, getCurrentUser } from '../controllers/accountController.js';
+import { register, login, logout, checkAccount } from '../controllers/accountController.js'
+import { verifyEmail, resendVerificationCode, requestPasswordReset, resetPassword} from '../controllers/accountController.js';
 import {authMiddleware} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -20,8 +20,10 @@ router.post('/login', login);
 //OUTPUT: success: true, message LUB success: false, error
 router.post("/logout", authMiddleware, logout);
 
-//żeby sprawdzić na jakim etapie rejestracji jest użytkownik, który próbuje się zalogować
-router.get("/checkAccount/:email", checkAccount)
+//sprawdzenie, na jakim etapie rejestracji jest użytkownik
+//INPUT: pola w body: email
+//OUTPUT: success: true, data: {emailConfirmed: boolean, hasProfile: boolean } LUB success: false, error
+router.post("/check-account", checkAccount)
 
 
 /* chyba jest niepotrzebny, więc na razie zakomentowany
@@ -41,16 +43,11 @@ router.post("/resend-verification-code", resendVerificationCode);
 //sprawdzanie poprawnosci kodu weryfikacyjnego
 //INPUT: pola w body: email, token
 //OUTPUT: success: true LUB success: false, error
-router.post("/request-password-reset", authMiddleware, requestPasswordReset);
+router.post("/request-password-reset", requestPasswordReset);
 
 //zmiana hasła
 //INPUT: pola w body: email, token, password
 //OUTPUT: success: true LUB success: false, error
-router.post("/reset-password", authMiddleware, resetPassword);
-
-//uzyskanie maila i id zalogowanego uzytkownika bez profilu
-//INPUT: nie ma chyba lol,
-//OUTPUT: email, userId
-router.get("/me", authMiddleware, getCurrentUser);
+router.post("/reset-password", resetPassword);
 
 export default router;

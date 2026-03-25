@@ -1,7 +1,7 @@
 import * as z from 'zod';
 import { intoBase64 } from '../config/multerConfig.js';
 import { uploadImage, deleteUploadedFiles } from '../config/cloudConfig.js';
-import { eventSchema, updateEventSchema } from '../schemas/eventSchema.js';
+import { eventSchema } from '../schemas/eventSchema.js';
 import { eventStatusOptions, userRoleOptions } from '../enums.js';
 import prisma from '../db.js';
 import cloudinary from 'cloudinary';
@@ -52,14 +52,14 @@ export async function getEvents(req, res) {
 
             events = await prisma.event.findMany({
                 where: { deletedAt: null, isPublic: true },
-                include: {image: true}
+                include: { image: true }
             })
             return res.status(200).json({ success: true, data: events });
         }
         else {
             events = await prisma.event.findMany({
                 where: { deletedAt: null, organizerId: userId },
-                include: {image: true} //tutaj jeszcze dodać te, w których uczestniczymy
+                include: { image: true } //tutaj jeszcze dodać te, w których uczestniczymy
             })
             return res.status(200).json({ success: true, data: events });
         }
@@ -129,7 +129,7 @@ export async function createEvent(req, res) {
                 }
             });
 
-            return {event: savedEvent, image: savedImage}
+            return { event: savedEvent, image: savedImage }
         });
     }
     catch (err) {
@@ -139,96 +139,137 @@ export async function createEvent(req, res) {
     }
 
 
-    return res.status(201).json({ success: true, data: transactionResult});
+    return res.status(201).json({ success: true, data: transactionResult });
 };
 
 export async function updateEvent(req, res) {
 
+    console.log(req.body);
     const userId = req.user.userId;
     const eventId = parseInt(req.params.id);
-    const result = updateEventSchema.safeParse(req.body);
-    const image = req.file || null;
+    const result = eventSchema.safeParse(req.body);
+    let currentEvent;
+    let updatedEvent;
+
 
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     }
 
-    const event = await prisma.event.findUnique({
-        where: { eventId: eventId },
-        include: {image: true}
-    });
+    const { eventName, description, isPublic, eventDateTime, locationLatitude, locationLongitude, ageRestriction } = result.data;
 
-    if (!event) {
+    try {
+        currentEvent = await prisma.event.findUnique({
+            where: { eventId: eventId }
+        });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
+    }
+
+    if (!currentEvent) {
         return res.status(404).json({ success: false, error: "Event not found" });
     }
 
 
-    if (event.organizerId !== userId) {
+    if (currentEvent.organizerId !== userId) {
         return res.status(403).json({ success: false, error: "Invalid permissions to update this resource - you are not the owner" });
     }
 
-    console.log(event);
-    let newImageId = null;
-
-    if (image) {
-        try {
-            if (!event.image) {
-                
-                throw new Error("Event does not have an associated image");
-            }
-            newImageId = await uploadImage(intoBase64(image));
-
-            try {
-
-                const oldImagePublicId = event.image.publicId;
-                const savedRecords = await prisma.$transaction([
-                    prisma.event.update({
-                        where: { eventId: eventId },
-                        data: { ...result.data }
-                    }),
-                    prisma.image.update({
-                        where: { imageId: event.image.imageId },
-                        data: {
-                            publicId: newImageId,
-                            url: cloudinary.url(newImageId)
-                        }
-                    })
-                ]);
-
-                if (newImageId && event.image) {
-                    await deleteUploadedFiles([oldImagePublicId]);
-                }
-
-                return res.status(201).json({ success: true, data: {event: savedRecords[0], image: savedRecords[1]} });
-
-            } catch (err) {
-                console.error(err);
-                await deleteUploadedFiles([newImageId]);
-                return res.status(500).json({ success: false, error: "An attempt to save changes in the database was unsuccessful" });
-
-            }
-        }
-        catch (err) {
-            console.error(err);
-            return res.status(500).json({ success: false, error: "An attempt to save event image in cloud was unsuccessful" });
-        }
-    }
-
-
-
     try {
-        const updatedEvent = await prisma.event.update({
+
+        updatedEvent = await prisma.event.update({
             where: { eventId: eventId },
-            data: { ...result.data },
+            data: {
+                eventName: eventName,
+                description: description,
+                isPublic: isPublic,
+                eventDateTime: eventDateTime,
+                locationLatitude: locationLatitude,
+                locationLongitude: locationLongitude,
+                ageRestriction: ageRestriction
+            },
             include: { image: true }
         });
-        return res.status(201).json({ success: true, data: updatedEvent });
+
+        return res.status(200).json({ success: true, data: updatedEvent });
+
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, error: "An attempt to save changes in the database was unsuccessful" });
 
     }
 
+}
+
+export async function updateImage(req, res) {
+
+    
+
+    const eventId = parseInt(req.params.id);
+    const userId = req.user.userId;
+    const image = req.file || null;
+    let newImageId;
+    let updatedImage;
+    let oldImageId;
+    let event;
+
+    
+
+    if (!image) {
+        return res.status(400).json({ success: false, error: "No image received" });
+    }
+
+    try {
+        event = await prisma.event.findUnique({
+            where: { eventId: eventId },
+            select: { organizerId: true, image: true }
+        });
+    }
+    catch (err) {
+        return res.status(404).json({ success: false, error: "A database error has occurred" });
+    }
+
+    if (!event) {
+        return res.status(404).json({ success: false, error: "Event not found" });
+    }
+
+    if (userId !== event.organizerId) {
+        return res.status(403).json({ success: false, error: "Invalid permissions to update this resource - you are not the owner" });
+    }
+
+    if (!event.image) {
+        return res.status(404).json({ success: false, error: "Current event image not found" });
+    }
+
+    oldImageId = event.image.publicId;
+
+    try {
+        newImageId = await uploadImage(intoBase64(image));
+
+        updatedImage = await prisma.image.update({
+            where: { imageId: event.image.imageId },
+            data: {
+                publicId: newImageId,
+                url: cloudinary.url(newImageId)
+            }
+        });
+
+        if (newImageId && updatedImage) {
+            await deleteUploadedFiles([oldImageId]);
+        }
+
+        return res.status(200).json({ success: true, data: updatedImage });
+    }
+    catch (err) {
+        console.error(err);
+        if (newImageId) {
+            await deleteUploadedFiles([oldImageId]);
+        }
+        return res.status(500).json({ success: false, error: "An error occurred while updating the image" });
+    }
 
 }
 

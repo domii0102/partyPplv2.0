@@ -15,7 +15,7 @@
 
                     <hr class="event-divider" />
 
-                    <form id="eventForm" @submit.prevent="handleRegister" novalidate>
+                    <form id="eventForm" @submit.prevent="handleCreateEvent" novalidate>
                         <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE"/>
                         <div class="row g-3">
                             <div class="col-md-8">
@@ -94,7 +94,7 @@
 
                         <div class="row g-3 mt-1">
                             <div class="col-md-6">
-                                <label class="event-label">Hashtags</label> <!--Todo: dodac parsowanie hashtagow-->
+                                <label class="event-label">Hashtags</label>
                                 <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200" placeholder="e.g. #birthday #party #friends" />
                             </div>
 
@@ -129,7 +129,7 @@
 
                         <div class="event-actions">
                             <button type="submit" class="btn-event btn-event-accent">
-                                Add event
+                                {{ loading ? 'Adding event...' : 'Add event'}}
                             </button>
                             <a href="/Event/List" class="btn-event btn-event-ghost">
                                 Cancel
@@ -146,6 +146,7 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import defaultImage from '../../assets/user-form-bg.jpg';
+import { SERVER_BASE_URL } from '../../config/env.js';
 
   // walidacja formularza
 
@@ -223,14 +224,9 @@ import defaultImage from '../../assets/user-form-bg.jpg';
     return isValid;
   };
 
-  const handleRegister = async () => {
-    if (!validateForm()) return; 
-  };
-
   // logika wklejania zdjecia i podgladu
 
     const fileInput = ref(null);
-    const photo = ref(null);
     const photoPreview = ref(null);
     const photoError = ref('');
 
@@ -245,7 +241,7 @@ import defaultImage from '../../assets/user-form-bg.jpg';
         // Walidacja typu pliku
         if (!file.type.startsWith('image/')) {
             errors.image = 'Please upload a valid image file';
-            photo.value = null;
+            formData.image = null;
             if (photoPreview.value) {
                 URL.revokeObjectURL(photoPreview.value);
                 photoPreview.value = null;
@@ -257,7 +253,7 @@ import defaultImage from '../../assets/user-form-bg.jpg';
         const maxSizeMB = 5;
         if (file.size / 1024 / 1024 > maxSizeMB) {
             errors.image = `Image must be smaller than ${maxSizeMB}MB`;
-            photo.value = null;
+            formData.image = null;
             if (photoPreview.value) {
                 URL.revokeObjectURL(photoPreview.value);
                 photoPreview.value = null;
@@ -268,11 +264,55 @@ import defaultImage from '../../assets/user-form-bg.jpg';
         if (photoPreview.value) {
         URL.revokeObjectURL(photoPreview.value);
         }
-        photo.value = file;
+        formData.image = file;
         photoPreview.value = URL.createObjectURL(file);
         photoError.value = '';
     }
 
+
+const handleCreateEvent = async () => {
+  if (!validateForm) return;
+  loading.value = true;
+  console.log(formData);
+
+  const [hours, minutes] = formData.eventTime.split(':').map(Number);
+  const eventDateTime = new Date(formData.eventDate);
+  eventDateTime.setHours(hours, minutes, 0, 0);
+
+  const eventDateTimeIso = eventDateTime.toISOString();
+
+    const fetchData = new FormData();
+    fetchData.append('image', formData.image);
+    fetchData.append('eventName', formData.eventName);
+    fetchData.append('description', formData.description);
+    fetchData.append('isPublic', formData.isPublic);
+    fetchData.append('eventDateTime', eventDateTimeIso);
+    fetchData.append('ageRestriction', formData.ageRestriction);
+
+  try {
+    const response = await fetch(`${SERVER_BASE_URL}/api/event/`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fetchData
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    if (data && data.error) {
+      throw new Error(data.error)
+    }
+
+    if (response.ok && data.success) {
+      router.push({ path: '/event/dashboard'});
+    }
+
+  } catch(err) {
+    console.log(err);
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <style scoped>

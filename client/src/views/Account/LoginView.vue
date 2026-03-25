@@ -42,14 +42,13 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { SERVER_BASE_URL } from '../../config/env.js';
+import { service } from '../../services/requestService.js';
 import { useUserStore } from '../../stores/user';
 import { useAccountStore } from '../../stores/account.js';
 
 
 const router = useRouter();
 const store = useUserStore();
-let redirectDone = false;
 const accountStore = useAccountStore();
 
 const loginData = reactive({
@@ -91,78 +90,58 @@ const validate = () => {
 const handleLogin = async () => {
   if (!validate()) return;
 
-  if (redirectDone) return;
   loading.value = true;
   errors.backend = null;
   console.log(loginData.email);
 
   try {
 
-    const res = await fetch(`${SERVER_BASE_URL}/api/account/checkAccount/${loginData.email}`, {
-      method: "GET",
-      cache: "no-store"
-    });
+    const res = await service.post('/api/account/check-account', { email: loginData.email });
+    const serverData = await res;
 
-    const serverData = await res.json();
-    console.log(serverData)
-
-    if (res.ok) {
-      console.log(serverData);
-
+    if (res.success) {
       console.log("Server response: ", serverData.data);
+      accountStore.setEmail(loginData.email);
 
       if (serverData.data.emailConfirmed === false) {
-        redirectDone = true;
-        console.log("Przekierowanie na verify-email:", serverData.data.emailConfirmed === false);
-        accountStore.setEmail(serverData.data.email);
+        console.log("Przekierowanie na verify-email");
         router.push('/verify-email');
         return;
       }
-      else {
-        try {
 
-          const response = await fetch(`${SERVER_BASE_URL}/api/account/login`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: loginData.email,
-              password: loginData.password
-            })
-          });
-
-          const data = await response.json();
-          if (data && data.error) {
-            throw new Error(data.error);
-          }
-          console.log(data);
-          if (response.ok && data.success) {
-            await localStorage.setItem('user_verified', serverData.data.emailConfirmed ? 'true' : 'false');
-            redirectDone = true;
-            if (!serverData.data.hasProfile) { // Uzytkownik nie ma profilu, 
-              console.log("Przekierowanie na profile/create", serverData.data.hasProfile === false);
-              router.push('/create');
-              return;
-            }
-            else{
-              await store.loadUser();
-              console.log("Przekierowanie na profile:", serverData.data.emailConfirmed === false, serverData.data.hasProfile === false );
-              router.push('/profile'); //to tak na razie, bo nie ma dashboardu
-              return;
-            }
-          }
-
-        }
-        catch (err) {
-          console.log(err);
-          errors.backend = 'Server error. Try again later.';
-        }
-
-
+      if (serverData.data.hasProfile === false) {
+        console.log("Przekierowanie na profile/create");
+        router.push('/create');
+        return;
       }
 
+      try {
+
+        const response = await service.post('/api/account/login', {
+          email: loginData.email,
+          password: loginData.password
+        });
+
+        if (response && response.error) {
+          throw new Error(response.error);
+        }
+        console.log(response);
+        if (response.success) {
+          localStorage.setItem('user_verified', serverData.data.emailConfirmed ? 'true' : 'false');
+
+          console.log("Logowanie udane: ", response);
+          await store.loadUser();
+          console.log("User store: ", store.getUser);
+          console.log("Przekierowanie na profile:");
+          router.push('/profile'); //to tak na razie, bo nie ma dashboardu
+          return;
+        }
+
+      }
+      catch (err) {
+        console.log(err);
+        errors.backend = 'Server error. Try again later.';
+      }
     }
 
   } catch (err) {
@@ -175,7 +154,6 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-
 .form-container {
   width: 100%;
   max-width: 500px;
