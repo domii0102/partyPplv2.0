@@ -40,7 +40,7 @@ const routes = [
   { 
     path: '/event/create', 
     component: CreateEventView, 
-    meta: { requiresAuth: false, requiresVerification: false } //ZMIENIAM TYMCZASOWO BO LOGOWANIE EJSCZE NIE DZIALA 
+    meta: { requiresAuth: true, requiresVerification: true }
   },
   { 
     path: '/event/feed', 
@@ -65,8 +65,12 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const store = useUserStore(); // Gdy jest na poczatku to nie pobiera najnowszego stanu store, wiec nie sprawdza dobrze autentyfikacji i wywali blad (login nie pojdzie dalej)
+
+  if (!store.getUser) {
+    await store.loadUser();
+  }
 
   const isAuthenticated = store.user != null;
   const isVerified = localStorage.getItem('user_verified') === 'true';
