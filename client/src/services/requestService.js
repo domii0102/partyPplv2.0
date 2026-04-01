@@ -1,66 +1,79 @@
-import axios from 'axios';
 import { SERVER_BASE_URL } from '../config/env';
 
 
-const api = axios.create({
-    baseURL: SERVER_BASE_URL,
-    withCredentials: true
-});
-
-/* Generalnie format prawie wszystkich żądań jest taki sam
-    GET - get(url, cache) - cache domyślnie jest true, jak chcecie false gdzieś to możecie dać false
-    POST, PUT, PATCH - (url, body) - nieważne czy body to obiekt zwykły czy formdata (jak coś to dajecie do body zwykły obiekt BEZ STRINGIFY)
-    DELETE - delete(url)
-
-    OUTPUT:
-    to jest taki obiekt jaki wysyła backend, nie trzeba robić response.data (bo wszystko będzie od razu w response)
-    dlatego też nie ma response.ok, nie używajcie tego, tylko response.success
-*/
-
 export class requestService {
 
-    //cache jest domyślnie na true, można zmieniać w zależności od potrzeby
-    async get(url, cache = true) {
+    async request(url, options = {}) {
+        const response = await fetch(`${SERVER_BASE_URL}${url}`, {
+            credentials: 'include',
+            ...options
+        });
 
-        let config = {
-            headers: {}
-        };
+        const data = await response.json();
 
-        if (!cache) {
-            config.headers["Cache-Control"] = "no-store";
-        }
-
-        const response = await api.get(url, config);
-        return response.data;
-
+        return data;
     }
 
-    //jako body obiekt zwykły javascriptowy albo multipart/form-data i axios sam rozpozna
-    //tak samo w put i patch
+    async get(url, cache = true) {
+        let headers = {};
+
+        if (!cache) {
+            headers["Cache-Control"] = "no-store";
+        }
+
+        return this.request(url, {
+            method: 'GET',
+            headers
+        });
+    }
+
     async post(url, body) {
-
-        const response = await api.post(url, body);
-        return response.data;
-
+        return this.request(url, {
+            method: 'POST',
+            headers: this.getHeaders(body),
+            body: this.prepareBody(body)
+        });
     }
 
     async put(url, body) {
-        const response = await api.put(url, body);
-        return response.data;
+        return this.request(url, {
+            method: 'PUT',
+            headers: this.getHeaders(body),
+            body: this.prepareBody(body)
+        });
     }
 
-
     async patch(url, body) {
-        const response = await api.patch(url, body);
-        return response.data;
+        return this.request(url, {
+            method: 'PATCH',
+            headers: this.getHeaders(body),
+            body: this.prepareBody(body)
+        });
     }
 
     async delete(url) {
-        const response = await api.delete(url);
-        return response.data;
+        return this.request(url, {
+            method: 'DELETE'
+        });
     }
 
+    getHeaders(body) {
+        if (body instanceof FormData) {
+            return {};
+        }
 
+        return {
+            "Content-Type": "application/json"
+        };
+    }
+
+    prepareBody(body) {
+        if (body instanceof FormData) {
+            return body;
+        }
+
+        return JSON.stringify(body);
+    }
 }
 
 export const service = new requestService();
