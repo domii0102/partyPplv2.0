@@ -18,12 +18,14 @@ export async function getEvent(req, res) {
                 userCredentials: {
                     select: {
                         userId: true,
-                        select: {
-                                nickname: true,
-                                name: true,
-                                surname: true,
-                                avatar: true
-                            }
+                        userProfile: {
+                            select: {
+                            nickname: true,
+                            name: true,
+                            surname: true,
+                            avatar: true
+                        }
+                        }
                     }
                 }
             }
@@ -137,7 +139,7 @@ export async function createEvent(req, res) {
                 for (const hashtag of hashtags) {
                     const clearHashtag = hashtag[0] === '#' ? hashtag.slice(1) : hashtag;
                     const record = await tx.hashtag.findUnique({
-                        where: {name: clearHashtag}
+                        where: { name: clearHashtag }
                     });
 
                     if (!record) {
@@ -145,18 +147,18 @@ export async function createEvent(req, res) {
                             data: {
                                 name: clearHashtag,
                                 events: {
-                                    connect: {eventId: savedEvent.eventId}
+                                    connect: { eventId: savedEvent.eventId }
 
                                 }
                             }
-                        });  
+                        });
                     }
                     else {
                         await tx.hashtag.update({
-                            where: {name: clearHashtag},
+                            where: { name: clearHashtag },
                             data: {
                                 events: {
-                                    connect: {eventId: savedEvent.eventId}
+                                    connect: { eventId: savedEvent.eventId }
                                 }
                             }
                         })
@@ -185,18 +187,24 @@ export async function updateEvent(req, res) {
     const result = eventSchema.safeParse(req.body);
     let currentEvent;
     let updatedEvent;
+    let currentHashtags = [];
+    let clearHashtags = [];
+    let hashtagsToAdd = [];
+    let hashtagsToDelete = [];
 
 
     if (!result.success) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     }
 
-    const { eventName, description, isPublic, eventDateTime, locationLatitude, locationLongitude, ageRestriction } = result.data;
+    const { eventName, description, isPublic, eventDateTime, endDateTime, locationLatitude, locationLongitude, locationName, locationAddress, ageRestriction, guestLimit, hashtags } = result.data;
 
     try {
         currentEvent = await prisma.event.findUnique({
-            where: { eventId: eventId }
+            where: { eventId: eventId },
+            include: { hashtags: true }
         });
+        console.log("Current event: ", currentEvent);
     }
     catch (err) {
         console.error(err);
@@ -212,24 +220,63 @@ export async function updateEvent(req, res) {
         return res.status(403).json({ success: false, error: "Invalid permissions to update this resource - you are not the owner" });
     }
 
+
+    // robienie listy nazw aktualnych hashtagów
+    currentHashtags = currentEvent.hashtags.map(h => h.name);
+
+    for (const hashtag of hashtags) {
+        clearHashtags.push(hashtag[0] === '#' ? hashtag.slice(1) : hashtag);
+    }
+
+    // robienie listy nazw hashtagów do dodania
+    for (const hashtag of clearHashtags) {
+        if (currentHashtags.indexOf(hashtag) === -1) {
+            hashtagsToAdd.push(hashtag);
+        }
+    }
+
+    // robienie listy nazw hashtagów do usunięcia
+    for (const hashtag of currentHashtags) {
+        if (clearHashtags.indexOf(hashtag) === -1) {
+            hashtagsToDelete.push(hashtag);
+        }
+    }
+
     try {
 
-        updatedEvent = await prisma.event.update({
-            where: { eventId: eventId },
-            data: {
-                eventName: eventName,
-                description: description,
-                isPublic: isPublic,
-                eventDateTime: eventDateTime,
-                locationLatitude: locationLatitude,
-                locationLongitude: locationLongitude,
-                ageRestriction: ageRestriction
-            },
-            include: { image: true }
-        });
+        const transactionResult = await prisma.$transaction(async (tx) => {
+            updatedEvent = await tx.event.update({
+                where: { eventId: eventId },
+                data: {
+                    eventName: eventName,
+                    description: description,
+                    isPublic: isPublic,
+                    eventDateTime: eventDateTime,
+                    endDateTime: endDateTime,
+                    locationLatitude: locationLatitude,
+                    locationLongitude: locationLongitude,
+                    locationName: locationName,
+                    locationAddress: locationAddress,
+                    ageRestriction: ageRestriction,
+                    guestLimit: guestLimit,
+                    hashtags: {
+                        disconnect: hashtagsToDelete.map(name => ({ name })),
+                        connectOrCreate: hashtagsToAdd.map(name => ({
+                            where: { name },
+                            create: { name }
+                        }))
+                    }
+                },
+                include: { image: true, hashtags: true }
+            });
 
-        return res.status(200).json({ success: true, data: updatedEvent });
+            return updatedEvent;
+        }
 
+        )
+
+
+        return res.status(200).json({ success: true, data: transactionResult });
 
     } catch (err) {
         console.error(err);
@@ -241,7 +288,7 @@ export async function updateEvent(req, res) {
 
 export async function updateImage(req, res) {
 
-    
+
 
     const eventId = parseInt(req.params.id);
     const userId = req.user.userId;
@@ -251,7 +298,7 @@ export async function updateImage(req, res) {
     let oldImageId;
     let event;
 
-    
+
 
     if (!image) {
         return res.status(400).json({ success: false, error: "No image received" });
