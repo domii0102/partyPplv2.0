@@ -279,7 +279,12 @@ const handleCreateEvent = async () => {
   const eventDateTime = new Date(formData.eventDate);
   eventDateTime.setHours(hours, minutes, 0, 0);
 
+  const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
+  const endDateTime = new Date(formData.endDate);
+  endDateTime.setHours(endHours, endMinutes, 0, 0);
+
   const eventDateTimeIso = eventDateTime.toISOString();
+  const endDateTimeIso = endDateTime.toISOString();
 
     const fetchData = new FormData();
     fetchData.append('image', formData.image);
@@ -287,7 +292,13 @@ const handleCreateEvent = async () => {
     fetchData.append('description', formData.description);
     fetchData.append('isPublic', formData.isPublic);
     fetchData.append('eventDateTime', eventDateTimeIso);
+    fetchData.append('endDateTime', endDateTimeIso);
+    fetchData.append('guestLimit', formData.guestsLimit);
     fetchData.append('ageRestriction', formData.ageRestriction);
+    fetchData.append('locationName', formData.locationName);
+    fetchData.append('locationAddress', formData.eventAddress);
+    fetchData.append('hashtags', JSON.stringify(formData.hashtags));
+
 
   try {
     const response = await fetch(`${SERVER_BASE_URL}/api/event/`, {

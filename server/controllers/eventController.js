@@ -16,14 +16,14 @@ export async function getEvent(req, res) {
             include: { // Po id raczej nikt nikogo nie bedzie kojarzyl ;/
                 image: true,
                 userCredentials: {
-                    include: {
-                        userProfile: {
-                            select: {
+                    select: {
+                        userId: true,
+                        select: {
                                 nickname: true,
                                 name: true,
-                                surname: true
+                                surname: true,
+                                avatar: true
                             }
-                        }
                     }
                 }
             }
@@ -86,7 +86,7 @@ export async function createEvent(req, res) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     }
 
-    const { eventName, description, isPublic, eventDateTime, locationLatitude = null, locationLongitude = null, ageRestriction = null } = result.data;
+    const { eventName, description, isPublic, eventDateTime, endDateTime = null, locationLatitude = null, locationLongitude = null, locationName = null, locationAddress = null, ageRestriction = null, guestLimit = null, hashtags = [] } = result.data;
 
     let imageId = null;
 
@@ -104,9 +104,13 @@ export async function createEvent(req, res) {
         description: description,
         isPublic: isPublic,
         eventDateTime: eventDateTime,
+        endDateTime: endDateTime,
         locationLatitude: locationLatitude,
         locationLongitude: locationLongitude,
+        locationName: locationName,
+        locationAddress: locationAddress,
         ageRestriction: ageRestriction,
+        guestLimit: guestLimit,
         eventStatus: eventStatusOptions.UPCOMING,
         createdAt: new Date(),
         deletedAt: null
@@ -128,6 +132,37 @@ export async function createEvent(req, res) {
                     url: cloudinary.url(imageId)
                 }
             });
+
+            if (hashtags.length > 0) {
+                for (const hashtag of hashtags) {
+                    const clearHashtag = hashtag[0] === '#' ? hashtag.slice(1) : hashtag;
+                    const record = await tx.hashtag.findUnique({
+                        where: {name: clearHashtag}
+                    });
+
+                    if (!record) {
+                        await tx.hashtag.create({
+                            data: {
+                                name: clearHashtag,
+                                events: {
+                                    connect: {eventId: savedEvent.eventId}
+
+                                }
+                            }
+                        });  
+                    }
+                    else {
+                        await tx.hashtag.update({
+                            where: {name: clearHashtag},
+                            data: {
+                                events: {
+                                    connect: {eventId: savedEvent.eventId}
+                                }
+                            }
+                        })
+                    }
+                }
+            }
 
             return { event: savedEvent, image: savedImage }
         });
