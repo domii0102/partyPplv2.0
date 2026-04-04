@@ -97,7 +97,8 @@ const handleLogin = async () => {
   try {
 
     const res = await service.post('/api/account/check-account', { email: loginData.email });
-    const serverData = await res;
+    const serverData = res;
+    console.log(res);
 
     if (res.success) {
       console.log("Server response: ", serverData.data);
@@ -108,6 +109,7 @@ const handleLogin = async () => {
         router.push('/verify-email');
         return;
       }
+      localStorage.setItem('user_verified', 'true');
 
       if (serverData.data.hasProfile === false) {
         console.log("Przekierowanie na profile/create");

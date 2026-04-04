@@ -66,7 +66,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const store = useUserStore(); // Gdy jest na poczatku to nie pobiera najnowszego stanu store, wiec nie sprawdza dobrze autentyfikacji i wywali blad (login nie pojdzie dalej)
+  const store = useUserStore(); 
 
   if (!store.getUser) {
     await store.loadUser();
@@ -79,7 +79,7 @@ router.beforeEach(async (to, from, next) => {
     return next('/login');
   } 
   
-  else if (to.meta.requiresVerification && !isVerified) { // Wywala tutaj przy logowaniu, jak jest confirmed ale bez profilu
+  else if (to.meta.requiresVerification && !isVerified) { 
     if (to.path === '/verify-email') {
       return next();
     } else {

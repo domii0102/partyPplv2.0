@@ -49,7 +49,7 @@
   const fetchEvents = async () => {
     loading.value = true;
     status.error = null;
-    status.empty = false;
+    status.empty = false; 
 
     try {
       const fetchURL = new URL(`${SERVER_BASE_URL}/api/event/`);
