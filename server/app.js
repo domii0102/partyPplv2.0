@@ -9,6 +9,7 @@ import { authMiddleware } from './middleware/authMiddleware.js';
 import accountRouter from './routes/account.js';
 import userRouter from './routes/user.js';
 import eventRouter from './routes/event.js';
+import invitationRouter from './routes/invites.js';
 
 
 
@@ -39,8 +40,10 @@ app.get(["/","/home"], (req, res) => {
 
 app.use("/api/account", accountRouter);
 app.use("/api/user", userRouter);
+app.use("/api/public", invitationRouter);
 app.use(authMiddleware); 
 app.use("/api/event", eventRouter);
+app.use("/api/invites", invitationRouter);
 
 
 app.use((req, res) => {

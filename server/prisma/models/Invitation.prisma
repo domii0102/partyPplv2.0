@@ -1,12 +1,16 @@
 model Invitation {
   invitationId Int     @id @default(autoincrement())
   eventId      Int
-  receiverId   String
-  isAccepted   Boolean
-  isExpired    Boolean
+  receiverId   String?
+
+  token        String?  @unique
+  expiresAt    DateTime?
+
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
 
   event           Event           @relation(fields: [eventId], references: [eventId])
-  userCredentials UserCredentials @relation(fields: [receiverId], references: [userId])
+  userCredentials UserCredentials? @relation(fields: [receiverId], references: [userId])
 
   @@index([eventId])
   @@index([receiverId])

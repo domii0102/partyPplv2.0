@@ -49,5 +49,7 @@ router.patch("/update-image/:id", upload.single('image'), updateImage)
 //OUTPUT: success: true, data - obiekt z usuniętym eventem LUB success: false, error
 router.delete("/:id", deleteEvent);
 
+//zaproszenia
+router.use('/:eventId/invites', invitationRouter);
 
 export default router;
