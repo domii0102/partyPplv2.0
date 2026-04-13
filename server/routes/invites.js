@@ -6,6 +6,33 @@ import { canCreateInvites,  canManageInvites} from '../middleware/userPermission
 const router = express.Router({ mergeParams: true });
 
 /*
+    Wyświetlenie listy zaproszeń DO DANEGO EVENTU
+    PARAMS:
+        * eventId
+    OUTPUT: success: true, message,
+            invitations: [
+                {   
+                    * invitationId,
+                    * expiresAt,
+                    * status,
+                    * createdAt,
+                    * type (link/personal)
+                        IF LINK
+                    * token
+                        IF PERSONAL
+                    * receiverId,
+                    * name,
+                    * surname,
+                    * nickname
+                }, ...
+            ]
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/link
+*/
+router.post('/:eventId/invites', canManageInvites, showEventInvites);
+
+
+/*
     Zaprasznie istniejącego użytkownika
     PARAMS:
         * eventId
@@ -27,17 +54,21 @@ const router = express.Router({ mergeParams: true });
 */
 router.post('/:eventId/invites/users', canCreateInvites, inviteUser);
 
+
 /*
     Zaprasznie poprzez stworzenie linku
     PARAMS:
         * eventId
     BODY:
         * expiresAt (date)
-    OUTPUT: success: true, message, token, link
+    OUTPUT: success: true, message, 
+            token, 
+            link
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/link
 */
 router.post('/:eventId/invites/link', canCreateInvites, inviteViaLink);
+
 
 /*
     Zarządzanie zaproszeniami - zmiana czasu wygaśnięcia zaproszenia
@@ -52,6 +83,7 @@ router.post('/:eventId/invites/link', canCreateInvites, inviteViaLink);
 */
 router.patch('/:eventId/invites/:invitationId', canManageInvites, changeExpirationDate);
 
+
 /*
     Zarządzanie zaproszeniami - usunięcie zaproszenia
     PARAMS:
@@ -62,6 +94,24 @@ router.patch('/:eventId/invites/:invitationId', canManageInvites, changeExpirati
     URL:    /api/events/:eventId/invites/:invitationId
 */
 router.delete('/:eventId/invites/:invitationId', canManageInvites, deleteInvite);
+
+
+/*
+    Wyświetlenie listy zaproszeń DANEGO UŻYTKOWNIKA
+    PARAMS:
+        * userId
+    OUTPUT: success: true, message,
+            invitations: [
+                {   
+                    * invitationId,
+                    * eventId,
+                    * expiresAt
+                }, ...
+            ]
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/link
+*/
+router.post('/:eventId/invites', canManageInvites, showUserInvites);
 
 
 /*
