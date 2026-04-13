@@ -16,6 +16,7 @@ import EventFeedView from '../views/Event/EventFeedView.vue'
 import LandingPageView from '../views/Home/LandingPageView.vue'
 
 import ProfileView from '../views/Profile/ProfileView.vue'
+import NotificationsView from '../views/Profile/NotificationsView.vue';
 
 import { getActivePinia, setActivePinia, createPinia } from 'pinia'
 
@@ -34,7 +35,7 @@ const routes = [
   { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
   { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
   { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
-  { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true } },
+  { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true, requiresAuth: true, requiresVerification: false } },
 
   // Event
   { 
@@ -45,16 +46,24 @@ const routes = [
   { 
     path: '/event/feed', 
     component: EventFeedView, 
+    meta: { requiresAuth: true, requiresVerification: true }
   },
   { 
     path: '/event/dashboard/:id', 
     component: EventDashboardView, 
+    meta: { requiresAuth: true, requiresVerification: true }
   },
 
   // Profile
   { 
     path: '/profile', 
     component: ProfileView, 
+    meta: { requiresAuth: true, requiresVerification: true } 
+  },
+
+  { 
+    path: '/notifications', 
+    component: NotificationsView, 
     meta: { requiresAuth: true, requiresVerification: true } 
   },
 
@@ -86,9 +95,10 @@ router.beforeEach(async (to, from, next) => {
       return next('/verify-email');
     }
   } 
-  //else if (to.meta.requiresAuth && !isAuthenticated) {
-  //  next('/login');
-  //} 
+
+  else if (!to.meta.requiresAuth && isAuthenticated) {
+    return next('/profile');
+  } 
   next();
 });
 

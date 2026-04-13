@@ -9,14 +9,18 @@
                 </div>
                 <div class="col-md">
                     <div class="profile-info text-center text-md-start ms-md-4">
-                        <h1>{{ userName }}</h1>
-                        <div class="nickname">{{ nickname }}</div>
+                        <h1>{{ user?.name }}</h1>
+                        <div class="nickname">{{ user?.nickname }}</div>
                         <div class="stats">
                             {{ 67 }} friends
                         </div>
                         <a class="btn btn-edit-profile">
                             Edit profile
                         </a>
+                        <button class="btn btn-none log-out" @click="logOut">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Log out
+                        </button>
                     </div>
                 </div>
             </div>
@@ -126,12 +130,24 @@
     font-size: 1.7rem;
     font-weight: 400;
 }
+
+.log-out{
+    margin-left: 2rem;
+    color: var(--text-main);
+    text-decoration: none;
+}
 </style>
 
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import defaultImage from '../../assets/horsegiirl.jpg';
-const userName = "Agnieszka Końska"
-const nickname = "HorseGiirL"
-const friendCount = 67
+import { useUserStore } from '../../stores/user.js';
+import { storeToRefs } from 'pinia';
+
+const store = useUserStore();
+const { user } = storeToRefs(store);
+
+const logOut = async () => {
+    store.logout();
+}
 </script>

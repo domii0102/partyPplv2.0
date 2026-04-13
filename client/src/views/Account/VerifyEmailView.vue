@@ -2,8 +2,12 @@
   <div class="background">
     <div class="main-page">
       <div class="form-container">
-        <div class="icon-box">
-          <i class="bi bi-envelope-check"></i>
+        <div class="header">
+          <div class="spacer"></div>
+          <div class="icon-box">
+            <i class="bi bi-envelope-check"></i>
+          </div>
+          <router-link class="go-back" to="/">← Go back</router-link>
         </div>
         
         <h2 class="display-6">Verify your email</h2>
