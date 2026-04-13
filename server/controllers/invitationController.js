@@ -1,5 +1,3 @@
-changeExpirationDate
-deleteInvite
 showUserInvites
 showInvite
 acceptInvite
@@ -44,6 +42,11 @@ export async function showEventInvites(req, res) {
                     }
                 }
             }
+        },
+        event: {
+            select: {
+                eventName: true
+            }
         }
       },
     });
@@ -74,7 +77,10 @@ export async function showEventInvites(req, res) {
         };
     });
 
-    return res.status(200).json({ success: true, data: invites });
+    return res.status(200).json({ 
+        success: true, 
+        message: `Pomyślnie zebrano i wyświetlono wszystkie zaproszenia wysłane do ${invite.event.eventName}`,
+        data: invites });
 
   } catch (err) {
     console.error(err);
@@ -206,6 +212,68 @@ export async function inviteViaLink(req, res) {
 
   } catch (err) {
     console.error("Błąd podczas generowania linku.", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function changeExpirationDate(req, res) {
+  const invitationId = parseInt(req.params);
+  
+  // Walidacja
+  const validation = expirationSchema.safeParse(req.body);
+  if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
+  
+  const { expiresAt } = validation.data;
+
+  try {
+    const updated = await prisma.invitation.update({
+        where: {
+            invitationId: invitationId
+        },
+        data: {
+            ...(expiresAt !== undefined && { expiresAt: expiresAt ? new Date(expiresAt) : null})
+        }
+    });
+
+    return res.status(200).json({ 
+        success: true, 
+        message: "Zaproszenie zostało zaktualizowane.",
+        //data: updated // Nie wiem czy potrzebujemy je wysyłać? Chyba nie
+     });
+
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, error: "Nie znaleziono zaproszenia." });
+    }
+    console.error("Nastąpił błąd podczas zapisywania zmian w zaproszeniu.", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function deleteInvite(req, res) {
+  const invitationId = parseInt(req.params);
+
+  try {
+    await prisma.invitation.delete({
+        where: { invitationId: invitationId }
+    });
+
+    return res.status(204).json({ 
+        success: true, 
+        message: "Zaproszenie zostało usunięte.",
+     });
+
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ success: false, error: "Nie znaleziono zaproszenia." });
+    }
+    console.error("Nastąpił błąd podczas zapisywania zmian w zaproszeniu.", err);
     return res
       .status(500)
       .json({ success: false, error: "A database error has occurred" });

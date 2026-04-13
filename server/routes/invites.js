@@ -40,15 +40,14 @@ router.post('/:eventId/invites', canManageInvites, showEventInvites);
         * userIds[id1, id2, ...],
         * expiresAt (date)
     OUTPUT: success: true, message,
-            invitations: [
+            invitation:
                 {   
-                    * invitationId,
-                    * receiver:
-                        * name,
-                        * surname,
-                        * nick
+                    * id,
+                    * eventName,
+                    * receiverName,
+                    * receiverSurname,
+                    * receiverNickname
                 }, ...
-            ]
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/users
 */
@@ -62,6 +61,8 @@ router.post('/:eventId/invites/users', canCreateInvites, inviteUser);
     BODY:
         * expiresAt (date)
     OUTPUT: success: true, message, 
+            invitationId,
+            eventName,
             token, 
             link
     OUTPUT: success: false, error
