@@ -17,6 +17,7 @@
 }
 
 .form-container {
+  position: relative;
   width: 100%;
   max-width: 60vw;
   padding: 2.8125rem 3.4375rem;
@@ -116,4 +117,25 @@ input[type="password"]{
   color: #efefef;
   line-height: 1.5;
   margin-bottom: 1.875rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h2 {
+  text-align: center;
+  flex: 1;
+}
+
+.spacer,
+.go-back {
+  width: 80px;
+}
+
+.go-back {
+  text-align: right;
+  color: #d8aaff;
 }

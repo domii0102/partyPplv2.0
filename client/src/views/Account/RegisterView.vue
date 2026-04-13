@@ -2,7 +2,11 @@
   <div class="background">
     <div class="main-page">
       <div class="form-container">
-        <h2 class="display-6">Register</h2>
+        <div class="header">
+          <div class="spacer"></div>
+          <h2 class="display-6">Register</h2>
+          <router-link class="go-back" to="/">← Go back</router-link>
+        </div>
 
         <form @submit.prevent="handleRegister" novalidate>
           <div class="form-group">
