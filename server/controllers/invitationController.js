@@ -1,17 +1,11 @@
-showUserInvites
-showInvite
-acceptInvite
-rejectInvite
-
-
-
-import * as z from "zod";
 import crypto from 'crypto';
 import { inviteStatusOptions } from "../enums.js";
 import prisma from "../db.js";
 import { inviteUserSchema, expirationSchema } from "../schemas/invitationSchema.js"
 
 const PENDING = inviteStatusOptions.PENDING;
+const ACCEPTED = inviteStatusOptions.ACCEPTED;
+const REJECTED = inviteStatusOptions.REJECTED;
 
 export async function showEventInvites(req, res) {
   const eventId = parseInt(req.params.id);
@@ -141,7 +135,7 @@ export async function inviteUser(req, res) {
     return res.status(201).json({ 
         success: true, 
         message: `Pomyślnie zaproszono ${invitations.length} użytkowników.`,
-        invitations: invitations.map(invitation => ({
+        data: invitations.map(invitation => ({
             id: invitation.invitationId,
             eventName: invitation.event.eventName,
             receiverName: invitation.userCredentials?.userProfile?.name || "AnonimName",
@@ -202,7 +196,7 @@ export async function inviteViaLink(req, res) {
     return res.status(201).json({ 
         success: true, 
         message: "Link został poprawnie wygenerowany",
-        invitation: {
+        data: {
             invitationId: invitation.invitationId,
             eventName: invitation.event.eventName,
             token: token,
@@ -274,6 +268,230 @@ export async function deleteInvite(req, res) {
       return res.status(404).json({ success: false, error: "Nie znaleziono zaproszenia." });
     }
     console.error("Nastąpił błąd podczas zapisywania zmian w zaproszeniu.", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function showUserInvites(req, res) {
+  const userId = req.params.id;
+
+  try {
+    const user = await prisma.userCredentials.findUnique({  
+        where: { userId: userId },
+        select: {
+            userProfile: {
+                select: {
+                    nickname: true
+                }
+            },
+            invitations: {
+                where: {
+                    status: PENDING,
+                },
+                select: {
+                    invitationId: true,
+                    status: true,
+                    expiresAt: true,
+                    createdAt: true,
+                    event: {
+                        select: {
+                            eventName: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "No invites to show - user not found" });
+    }
+
+    const invites = user.invitations.map((invite) => {
+        return {
+            invitationId: invite.invitationId,
+            eventName: invite.event.eventName,
+            expiresAt: invite.expiresAt,
+            status: invite.status,
+            createdAt: invite.createdAt
+        };
+        
+    });
+
+    const userNick = user.userProfile?.nickname || "użytkownika";
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Pomyślnie zebrano i wyświetlono wszystkie zaproszenia wysłane do ${userNick}`,
+        data: invites });
+
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function showInvite(req, res) {
+  const { token } = req.params;
+
+  try {
+    const invitation = await prisma.invitation.findUnique({  
+        where: { token: token },
+        select: {
+            invitationId: true,
+            status: true,
+            createdAt: true,
+            expiresAt: true,
+            event: {
+                select: {
+                    eventId: true,
+                    eventName: true,
+                    description: true,
+                    isPublic: true,
+                    eventDateTime: true,
+                    locationName: true,
+                    locationAddress: true,
+                    eventStatus: true
+                }
+            }
+        }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ success: false, error: "Invitation not found - cant show the invite" });
+    }
+
+    if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    const data = {
+        invitationId: invitation.invitationId,
+        status: invitation.status,
+        createdAt: invitation.createdAt,
+        expiresAt: invitation.expiresAt,
+        eventId: invitation.event.eventId,
+        eventName: invitation.event.eventName,
+        description: invitation.event.description,
+        isPublic: invitation.event.isPublic,
+        eventDateTime: invitation.event.eventDateTime,
+        locationName: invitation.event.locationName,
+        locationAddress: invitation.event.locationAddress,
+        eventStatus: invitation.event.eventStatus
+    };
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Wysłano dane odnośnie zaproszenia ${event.invitationId} do wydarzenia ${event.event.eventName}`,
+        data: data });
+
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function acceptInvite(req, res) {
+  const { invitationId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const invitation = await prisma.invitation.findUnique({  
+        where: { invitationId: invitationId },
+        include: { event: true }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ success: false, error: "Invitation not found - cant be accepted" });
+    }
+
+    if (invitation.status !== "PENDING") {
+      return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
+    }
+
+    if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    await prisma.$transaction([
+        prisma.eventGuest.create({
+            data: {
+                eventId: invitation.eventId,
+                userId: userId
+            }
+        }),
+        prisma.invitation.update({
+            where: { invitationId: invitation.invitationId },
+            data: {
+                status: REJECTED,
+                receiverId: userId
+            }
+        })
+    ]);
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Dołączono do eventu ${invitation.event.eventName}.`
+    });
+
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(400).json({ success: false, error: "Jesteś już uczestnikiem tego wydarzenia." });
+    }
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function rejectInvite(req, res) {
+  const { invitationId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const invitation = await prisma.invitation.findUnique({  
+        where: { invitationId: invitationId },
+        include: { event: true }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ success: false, error: "Invitation not found - cant be rejected" });
+    }
+
+    if (invitation.status !== "PENDING") {
+      return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
+    }
+
+    if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    await prisma.invitation.update({
+        where: { invitationId: invitation.invitationId },
+        data: {
+            status: ACCEPTED,
+            receiverId: userId
+        }
+    });
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Odrzucono zaproszenie do eventu ${invitation.event.eventName}.`
+    });
+
+  } catch (err) {
+    console.error(err);
     return res
       .status(500)
       .json({ success: false, error: "A database error has occurred" });

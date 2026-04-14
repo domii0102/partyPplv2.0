@@ -10,7 +10,7 @@ const router = express.Router({ mergeParams: true });
     PARAMS:
         * eventId
     OUTPUT: success: true, message,
-            invitations: [
+            data: [
                 {   
                     * invitationId,
                     * expiresAt,
@@ -27,7 +27,7 @@ const router = express.Router({ mergeParams: true });
                 }, ...
             ]
     OUTPUT: success: false, error
-    URL:    /api/events/:eventId/invites/link
+    URL:    /api/events/:eventId/invites
 */
 router.post('/:eventId/invites', canManageInvites, showEventInvites);
 
@@ -40,7 +40,7 @@ router.post('/:eventId/invites', canManageInvites, showEventInvites);
         * userIds[id1, id2, ...],
         * expiresAt (date)
     OUTPUT: success: true, message,
-            invitation:
+            data: [
                 {   
                     * id,
                     * eventName,
@@ -48,6 +48,7 @@ router.post('/:eventId/invites', canManageInvites, showEventInvites);
                     * receiverSurname,
                     * receiverNickname
                 }, ...
+            ] 
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/users
 */
@@ -60,11 +61,13 @@ router.post('/:eventId/invites/users', canCreateInvites, inviteUser);
         * eventId
     BODY:
         * expiresAt (date)
-    OUTPUT: success: true, message, 
-            invitationId,
-            eventName,
-            token, 
-            link
+    OUTPUT: success: true, message,
+            data: {
+            * invitationId,
+            * eventName,
+            * token, 
+            * link
+            }
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/link
 */
@@ -102,33 +105,37 @@ router.delete('/:eventId/invites/:invitationId', canManageInvites, deleteInvite)
     PARAMS:
         * userId
     OUTPUT: success: true, message,
-            invitations: [
+            data: [
                 {   
                     * invitationId,
-                    * eventId,
-                    * expiresAt
+                    * eventName,
+                    * expiresAt,
+                    * status,
+                    * createdAt
                 }, ...
             ]
     OUTPUT: success: false, error
-    URL:    /api/events/:eventId/invites/link
+    URL:    /api/events/:eventId/invites/:userId
 */
-router.post('/:eventId/invites', canManageInvites, showUserInvites);
+router.post('/:eventId/invites/user/:userId', showUserInvites);
 
 
 /*
     Wyświetlenie zaproszenia
     PARAMS:
         * token
-    OUTPUT: success: true, message, data:
-                                    * invitationId,
-                                    * event:
-                                        * eventId,
-                                        * eventName,
-                                        * eventDateTime
-                                    * organizer:
-                                        * name,
-                                        * surname,
-                                        * nick
+    OUTPUT: success: true, message, 
+            data: {
+                * invitationId,
+                * event:
+                    * eventId,
+                    * eventName,
+                    * eventDateTime
+                * organizer:
+                    * name,
+                    * surname,
+                    * nick
+            }
     OUTPUT: success: false, error
     URL:   /api/public/:token
 */
