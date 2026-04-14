@@ -1,4 +1,4 @@
-import prisma from "../db";
+import prisma from "../db.js";
 
 export const canCreateInvites = async (req, res, next) => {
     const { eventId } = req.params;

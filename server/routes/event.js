@@ -1,6 +1,8 @@
 import express from 'express';
-import {upload} from '../config/multerConfig.js';
+import { upload } from '../config/multerConfig.js';
 import { getEvent, getEvents,  createEvent, deleteEvent, updateEvent, updateImage } from '../controllers/eventController.js';
+import invitationRouter from './invites.js';
+
 
 
 

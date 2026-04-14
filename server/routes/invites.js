@@ -1,6 +1,6 @@
 import express from 'express';
-import { upload } from '../config/multerConfig.js';
 import { canCreateInvites,  canManageInvites} from '../middleware/userPermissionsMiddleware.js';
+import { showEventInvites, inviteUser, inviteViaLink, changeExpirationDate, deleteInvite, showUserInvites, showInvite, acceptInvite, rejectInvite } from '../controllers/invitationController.js';
 
 
 const router = express.Router({ mergeParams: true });
@@ -29,7 +29,7 @@ const router = express.Router({ mergeParams: true });
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites
 */
-router.post('/:eventId/invites', canManageInvites, showEventInvites);
+router.get('/', canManageInvites, showEventInvites);
 
 
 /*
@@ -52,7 +52,7 @@ router.post('/:eventId/invites', canManageInvites, showEventInvites);
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/users
 */
-router.post('/:eventId/invites/users', canCreateInvites, inviteUser);
+router.post('/users', canCreateInvites, inviteUser);
 
 
 /*
@@ -71,34 +71,7 @@ router.post('/:eventId/invites/users', canCreateInvites, inviteUser);
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/link
 */
-router.post('/:eventId/invites/link', canCreateInvites, inviteViaLink);
-
-
-/*
-    Zarządzanie zaproszeniami - zmiana czasu wygaśnięcia zaproszenia
-    PARAMS:
-        *eventId,
-        * invitationId
-    BODY:
-        * expiresAt (date)
-    OUTPUT: success: true, message
-    OUTPUT: success: false, error
-    URL:    /api/events/:eventId/invites/:invitationId
-*/
-router.patch('/:eventId/invites/:invitationId', canManageInvites, changeExpirationDate);
-
-
-/*
-    Zarządzanie zaproszeniami - usunięcie zaproszenia
-    PARAMS:
-        * eventId,
-        * invitationId
-    OUTPUT: success: true, message
-    OUTPUT: success: false, error
-    URL:    /api/events/:eventId/invites/:invitationId
-*/
-router.delete('/:eventId/invites/:invitationId', canManageInvites, deleteInvite);
-
+router.post('/link', canCreateInvites, inviteViaLink);
 
 /*
     Wyświetlenie listy zaproszeń DANEGO UŻYTKOWNIKA
@@ -117,7 +90,55 @@ router.delete('/:eventId/invites/:invitationId', canManageInvites, deleteInvite)
     OUTPUT: success: false, error
     URL:    /api/events/:eventId/invites/:userId
 */
-router.post('/:eventId/invites/user/:userId', showUserInvites);
+router.get('/user/:userId', showUserInvites);
+
+
+/*
+    Zaakceptowanie zaproszenia
+    PARAMS:
+        * invitationId
+    OUTPUT: success: true, message
+    OUTPUT: success: false, error
+    URL:    /api/invites/:invitationId/accept
+*/
+router.post('/:invitationId/accept', acceptInvite);
+
+
+/*
+    Odrzucanie zaproszenia
+    PARAMS:
+        * invitationId
+    OUTPUT: success: true, message
+    OUTPUT: success: false, error
+    URL:    /api/invites/:invitationId/reject
+*/
+router.post('/:invitationId/reject', rejectInvite);
+
+
+/*
+    Zarządzanie zaproszeniami - zmiana czasu wygaśnięcia zaproszenia
+    PARAMS:
+        *eventId,
+        * invitationId
+    BODY:
+        * expiresAt (date)
+    OUTPUT: success: true, message
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/:invitationId
+*/
+router.patch('/:invitationId', canManageInvites, changeExpirationDate);
+
+
+/*
+    Zarządzanie zaproszeniami - usunięcie zaproszenia
+    PARAMS:
+        * eventId,
+        * invitationId
+    OUTPUT: success: true, message
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/:invitationId
+*/
+router.delete('/:invitationId', canManageInvites, deleteInvite);
 
 
 /*
@@ -141,26 +162,5 @@ router.post('/:eventId/invites/user/:userId', showUserInvites);
 */
 router.get('/:token', showInvite);
 
-
-/*
-    Zaakceptowanie zaproszenia
-    PARAMS:
-        * invitationId
-    OUTPUT: success: true, message
-    OUTPUT: success: false, error
-    URL:    /api/invites/:invitationId/accept
-*/
-router.post('/:invitationId/accept', acceptInvite);
-
-
-/*
-    Odrzucanie zaproszenia
-    PARAMS:
-        * invitationId
-    OUTPUT: success: true, message
-    OUTPUT: success: false, error
-    URL:    /api/invites/:invitationId/reject
-*/
-router.post('/invites/:invitationId/reject', rejectInvite);
 
 export default router;

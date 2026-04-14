@@ -8,7 +8,7 @@ const ACCEPTED = inviteStatusOptions.ACCEPTED;
 const REJECTED = inviteStatusOptions.REJECTED;
 
 export async function showEventInvites(req, res) {
-  const eventId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
 
   try {
     const event = await prisma.event.findUnique({  where: { eventId: eventId, deletedAt: null } });
@@ -73,7 +73,7 @@ export async function showEventInvites(req, res) {
 
     return res.status(200).json({ 
         success: true, 
-        message: `Pomyślnie zebrano i wyświetlono wszystkie zaproszenia wysłane do ${invite.event.eventName}`,
+        message: `Pomyślnie zebrano i wyświetlono wszystkie zaproszenia wysłane do ${event.eventName}`,
         data: invites });
 
   } catch (err) {
@@ -86,7 +86,7 @@ export async function showEventInvites(req, res) {
 
 
 export async function inviteUser(req, res) {
-  const eventId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
 
   // Walidacja
   const validation = inviteUserSchema.safeParse(req.body);
@@ -151,13 +151,13 @@ export async function inviteUser(req, res) {
     console.error(err);
     return res
       .status(500)
-      .json({ success: false, error: "A database error has occurred" });
+      .json({ success: false, error: error.message });
   }
 }
 
 
 export async function inviteViaLink(req, res) {
-  const eventId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
   
   // Walidacja
   const validation = expirationSchema.safeParse(req.body);
@@ -214,7 +214,7 @@ export async function inviteViaLink(req, res) {
 
 
 export async function changeExpirationDate(req, res) {
-  const invitationId = parseInt(req.params);
+  const invitationId = parseInt(req.params.invitationId);
   
   // Walidacja
   const validation = expirationSchema.safeParse(req.body);
@@ -251,7 +251,7 @@ export async function changeExpirationDate(req, res) {
 
 
 export async function deleteInvite(req, res) {
-  const invitationId = parseInt(req.params);
+  const invitationId = parseInt(req.params.invitationId);
 
   try {
     await prisma.invitation.delete({
@@ -276,7 +276,7 @@ export async function deleteInvite(req, res) {
 
 
 export async function showUserInvites(req, res) {
-  const userId = req.params.id;
+  const userId = req.params.userId;
 
   try {
     const user = await prisma.userCredentials.findUnique({  
@@ -338,7 +338,7 @@ export async function showUserInvites(req, res) {
 
 
 export async function showInvite(req, res) {
-  const { token } = req.params;
+  const token = req.params.token;
 
   try {
     const invitation = await prisma.invitation.findUnique({  
@@ -388,7 +388,7 @@ export async function showInvite(req, res) {
 
     return res.status(200).json({ 
         success: true, 
-        message: `Wysłano dane odnośnie zaproszenia ${event.invitationId} do wydarzenia ${event.event.eventName}`,
+        message: `Wysłano dane odnośnie zaproszenia ${invitation.invitationId} do wydarzenia ${invitation.event.eventName}`,
         data: data });
 
   } catch (err) {
@@ -401,7 +401,7 @@ export async function showInvite(req, res) {
 
 
 export async function acceptInvite(req, res) {
-  const { invitationId } = req.params;
+  const invitationId = parseInt(req.params.invitationId);
   const userId = req.user.userId;
 
   try {
@@ -426,13 +426,14 @@ export async function acceptInvite(req, res) {
         prisma.eventGuest.create({
             data: {
                 eventId: invitation.eventId,
-                userId: userId
+                userId: userId,
+                confirmedArrival: false
             }
         }),
         prisma.invitation.update({
             where: { invitationId: invitation.invitationId },
             data: {
-                status: REJECTED,
+                status: ACCEPTED,
                 receiverId: userId
             }
         })
@@ -456,7 +457,7 @@ export async function acceptInvite(req, res) {
 
 
 export async function rejectInvite(req, res) {
-  const { invitationId } = req.params;
+  const invitationId = parseInt(req.params.invitationId);
   const userId = req.user.userId;
 
   try {
@@ -480,7 +481,7 @@ export async function rejectInvite(req, res) {
     await prisma.invitation.update({
         where: { invitationId: invitation.invitationId },
         data: {
-            status: ACCEPTED,
+            status: REJECTED,
             receiverId: userId
         }
     });

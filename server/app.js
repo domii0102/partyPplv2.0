@@ -43,7 +43,8 @@ app.use("/api/user", userRouter);
 app.use("/api/public", invitationRouter);
 app.use(authMiddleware); 
 app.use("/api/event", eventRouter);
-app.use("/api/invites", invitationRouter);
+app.use('/api/events/:eventId/invites', invitationRouter);
+app.use('/api/invites', invitationRouter);
 
 
 app.use((req, res) => {
