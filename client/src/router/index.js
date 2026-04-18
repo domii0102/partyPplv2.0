@@ -12,6 +12,7 @@ import EnterEmailView from '../views/Account/EnterEmailView.vue'
 import CreateEventView from '../views/Event/CreateEventView.vue'
 import EventDashboardView from '../views/Event/EventDashboardView.vue'
 import EventFeedView from '../views/Event/EventFeedView.vue'
+import EventInviteView from '../views/Event/EventInviteView.vue';
 
 import LandingPageView from '../views/Home/LandingPageView.vue'
 
@@ -53,6 +54,11 @@ const routes = [
     component: EventDashboardView, 
     meta: { requiresAuth: true, requiresVerification: true }
   },
+    { 
+    path: '/event/invite', 
+    component: EventInviteView, 
+    meta: { hideHeader: true, isInvite: true }
+  },
 
   // Profile
   { 
@@ -74,7 +80,7 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const store = useUserStore(); 
 
   if (!store.getUser) {
@@ -85,21 +91,26 @@ router.beforeEach(async (to, from, next) => {
   const isVerified = localStorage.getItem('user_verified') === 'true';
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return next('/login');
+    return '/login';
   } 
   
   else if (to.meta.requiresVerification && !isVerified) { 
     if (to.path === '/verify-email') {
       return next();
     } else {
-      return next('/verify-email');
+      return '/verify-email';
     }
   } 
 
+  //zaproszenia moga byc wyswietlane przez uzytkownikow zalogowanych i niezalogowanych
+  else if (to.meta.isInvite){
+    return;
+  }
+
   else if (!to.meta.requiresAuth && isAuthenticated) {
-    return next('/profile');
+    return '/event/feed';
   } 
-  next();
+  return;
 });
 
 export default router;
