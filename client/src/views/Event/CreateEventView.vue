@@ -1,141 +1,37 @@
 <template>
-    <div class="event-create-page">
-        <div class="container event-container">
-            <div class="event-card">
-                <div class="event-card-body">
+  <div class="event-create-page">
+    <div class="container event-container">
+      <div class="event-card">
+        <div class="event-card-body">
 
-                    <div class="d-flex justify-content-between align-items-start gap-3">
-                        <div>
-                            <h3 class="event-title">Create event</h3>
-                            <div class="event-subtitle">Provide the basic details for your event.</div>
-                        </div>
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <h3 class="event-title">Create event</h3>
+              <div class="event-subtitle">Provide the basic details for your event.</div>
+            </div>
 
-                        <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
-                    </div>
+            <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
+          </div>
 
-                    <hr class="event-divider" />
+          <hr class="event-divider" />
 
-                    <form id="eventForm" @submit.prevent="handleRegister" novalidate>
-                        <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE"/>
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label class="event-label">Event name *</label>
-                                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required placeholder="Event name*"/>
-                                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
-                            </div>
+          <form id="eventForm" @submit.prevent="handleCreateEvent" novalidate>
+            <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE" />
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="event-label">Event name *</label>
+                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required
+                  placeholder="Event name*" />
+                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
+              </div>
 
-                            <div class="col-md-4">
-                                <label class="event-label">Visibility</label>
-                                <div class="event-radio mt-2">
-                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" :value="false" checked>
-                                    <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
-                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" :value="true">
-                                    <label for="public">Public</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <label class="event-label">About *</label>
-                            <textarea v-model="formData.description" name="description" class="event-textarea" maxlength="512" required
-                                    placeholder="Describe the event: what, where, rules, what to bring..."></textarea>
-                            <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Start date *</label>
-                                <input v-model="formData.eventDate" type="date" name="eventDate" class="event-input" required />
-                                <span v-if="errors.eventDate" class="error-text">{{ errors.eventDate }}</span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">Start time *</label>
-                                <input v-model="formData.eventTime" type="time" name="eventTime" class="event-input" required />
-                                <span v-if="errors.eventTime" class="error-text">{{ errors.eventTime }}</span>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">End date</label>
-                                <input v-model="formData.endDate" type="date" name="endDate" class="event-input" />
-                                <span v-if="errors.endDate" class="error-text">{{ errors.endDate }}</span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">End time</label>
-                                <input v-model="formData.endTime" type="time" name="endTime" class="event-input" />
-                                <span v-if="errors.endTime" class="error-text">{{ errors.endTime }}</span>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Age restriction</label>
-                                <input v-model="formData.ageRestriction" type="number" name="ageRestriction" class="event-input" min="0" placeholder="e.g. 18" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="event-label">Guests limit</label>
-                                <input v-model="formData.guestsLimit" type="number" name="guestLimit" class="event-input" min="1" placeholder="e.g. 50" />
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Location name</label>
-                                <input v-model="formData.locationName" name="locationName" class="event-input" maxlength="80" placeholder="Event's location" />
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">Address</label>
-                                <input v-model="formData.eventAddress" name="locationAddress" class="event-input" maxlength="128" placeholder="Street, city (optional)" />
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Hashtags</label> <!--Todo: dodac parsowanie hashtagow-->
-                                <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200" placeholder="e.g. #birthday #party #friends" />
-                            </div>
-
-                            <div class="col-md-6">
-                                <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
-                                nwm jeszcze jak ma dzialac integracja ze spotify-->
-                                <label class="event-label">Playlist link</label>
-                                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
-                            </div>
-                        </div>
-
-                        <div class="mt-3">
-                            <label class="event-label">Cover image *</label>
-                            <button type="button" @click="uploadPhoto" class="btn-event btn-event-ghost">Upload Image</button>
-                            <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
-                            <span v-if="errors.image" class="error-text">{{ errors.image }}</span>
-                        </div>
-
-                        <div class="event-preview-wrap mt-4">
-                            <div class="event-preview">
-                                <img v-if="photoPreview" :src="photoPreview" alt="Cover preview" />
-                                <img v-else :src="defaultImage" alt="Cover preview" />
-                            </div>
-
-                            <div class="event-info">
-                                <strong>Header preview</strong><br />
-                                The selected image will be used as the event cover.
-                            </div>
-                        </div>
-
-                        <hr class="event-divider" />
-
-                        <div class="event-actions">
-                            <button type="submit" class="btn-event btn-event-accent">
-                                Add event
-                            </button>
-                            <a href="/Event/List" class="btn-event btn-event-ghost">
-                                Cancel
-                            </a>
-                        </div>
-                    </form>
+              <div class="col-md-4">
+                <label class="event-label">Visibility</label>
+                <div class="event-radio mt-2">
+                  <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" :value="false" checked>
+                  <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
+                  <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" :value="true">
+                  <label for="public">Public</label>
                 </div>
               </div>
             </div>
@@ -256,81 +152,87 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import defaultImage from '../../assets/user-form-bg.jpg';
+import { SERVER_BASE_URL } from '../../config/env.js';
 
-  // walidacja formularza
+const router = useRouter();
+const loading = ref(false);
 
-  const router = useRouter();
-  const loading = ref(false);
-  const successMessage = ref('')
+const formData = reactive({
+  status: 'ACTIVE',
+  eventName: '',
+  description: '',
+  isPublic: false,
+  eventDate: '',
+  eventTime: '',
+  endDate: '',
+  endTime: '',
+  ageRestriction: null,
+  guestsLimit: null,
+  locationName: '',
+  eventAddress: '',
+  hashtags: '',   // string, bo parsujemy potem
+  image: ''
+});
 
-  const formData = reactive({
-    status: 'ACTIVE',
-    eventName: '',
-    description: '',
-    isPublic: false,
-    eventDate: '',
-    eventTime: '',
-    endDate: null, //do dodania do bazki
-    endTime: null, //do dodania do bazki
-    ageRestriction: null,
-    guestsLimit: null, //do dodania do bazki
-    locationName: null, //do dodania do bazki
-    eventAddress: null, //do dodania do bazki
-    hashtags: null,
-    image: ''
-  });
+const errors = reactive({
+  eventName: '',
+  description: '',
+  eventDate: '',
+  eventTime: '',
+  endDate: '',
+  endTime: '',
+  ageRestriction: '',
+  guestsLimit: '',
+  locationName: '',
+  eventAddress: '',
+  hashtags: '',
+  image: ''
+});
 
-  const errors = reactive({
-    eventName: '',
-    description: '',
-    eventDate: '',
-    eventTime: '',
-    endDate: '', //do dodania do bazki
-    endTime: '', //do dodania do bazki
-    ageRestriction: '',
-    guestsLimit: '', //do dodania do bazki
-    locationName: '', //do dodania do bazki
-    eventAddress: '', //do dodania do bazki
-    hashtags: '',
-    image: ''
-  });
+const validateForm = () => {
+  let isValid = true;
+  Object.keys(errors).forEach(key => errors[key] = '');
+  const today = new Date();
 
-  const validateForm = () => {
-    let isValid = true;
-    Object.keys(errors).forEach(key => errors[key] = '');
-    const today = new Date();
-    if (!formData.eventName){
-      errors.eventName = "Event name is required"
-    }
+  if (!formData.eventName) {
+    errors.eventName = "Event name is required";
+    isValid = false;
+  }
 
-    if (!formData.description){
-      errors.description = "Description is required"
-    }
+  if (!formData.description) {
+    errors.description = "Description is required";
+    isValid = false;
+  }
 
-    if (!formData.eventDate) {
-      errors.eventDate = "Event date is required";
+  if (!formData.eventDate) {
+    errors.eventDate = "Event date is required";
+    isValid = false;
+  } else {
+    const eventDate = new Date(formData.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    if (eventDate <= today) {
+      errors.eventDate = "Event date must be in the future";
       isValid = false;
     } else if (formData.endDate && formData.endDate < formData.eventDate) {
-      errors.endDate = "End date needs to be after start date"
+      errors.endDate = "End date needs to be after start date";
     } else if (formData.endTime && formData.endDate == formData.eventDate) {
       if (formData.endTime < formData.eventTime) {
-        errors.endTime = "End time needs to be after start time"
+        errors.endTime = "End time needs to be after start time";
       }
     }
   }
 
   if (!formData.eventTime) {
-    errors.eventTime = "Event time is required"
+    errors.eventTime = "Event time is required";
+    isValid = false;
   }
 
   return isValid;
 };
 
-// logika wklejania zdjecia i podgladu
-
 const fileInput = ref(null);
 const photoPreview = ref(null);
-const photoError = ref('');
 
 function uploadPhoto() {
   fileInput.value?.click();
@@ -340,7 +242,6 @@ function handleFileChange(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Walidacja typu pliku
   if (!file.type.startsWith('image/')) {
     errors.image = 'Please upload a valid image file';
     formData.image = null;
@@ -351,7 +252,6 @@ function handleFileChange(event) {
     return;
   }
 
-  // Walidacja rozmiaru (max 5MB)
   const maxSizeMB = 5;
   if (file.size / 1024 / 1024 > maxSizeMB) {
     errors.image = `Image must be smaller than ${maxSizeMB}MB`;
@@ -368,23 +268,19 @@ function handleFileChange(event) {
   }
   formData.image = file;
   photoPreview.value = URL.createObjectURL(file);
-  photoError.value = '';
+  errors.image = '';
 }
 
-
 const handleCreateEvent = async () => {
-  if (!validateForm) return;
+  if (!validateForm()) return;  // POPRAWKA: było !validateForm bez ()
   loading.value = true;
-  console.log(formData);
 
   const [hours, minutes] = formData.eventTime.split(':').map(Number);
   const eventDateTime = new Date(formData.eventDate);
   eventDateTime.setHours(hours, minutes, 0, 0);
-
   const eventDateTimeIso = eventDateTime.toISOString();
 
   let endDateTimeIso = null;
-
   if (formData.endDate && formData.endTime) {
     const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
     const endDateTime = new Date(formData.endDate);
@@ -392,42 +288,10 @@ const handleCreateEvent = async () => {
     endDateTimeIso = endDateTime.toISOString();
   }
 
-
   const hashtagsArray = formData.hashtags
     .split(' ')
     .map(tag => tag.trim())
     .filter(tag => tag.startsWith('#'));
-
-  const hashtagParser = () => {
-    const hashtagString = formData.hashtags
-    const hashtagArr = hashtagString.match(/#[^\s#]+/g);
-    return hashtagArr ? hashtagArr.map(tag => tag.slice(1)) : [];
-  }
-
-  async function handleRegister(){
-    if (!validateForm()) return;
-
-    const _eventDateTime = `${formData.eventDate}T${formData.eventTime}:00`;
-    const _endDateTime = formData.endDate ? `${formData.endDate}T${formData.endTime ? formData.endTime : '00:00'}:00` : null;
-    const _hashtags = hashtagParser();
-
-    const payload = {
-      eventName: formData.eventName,
-      description: formData.description,
-      isPublic: formData.isPublic,
-      eventDateTime: _eventDateTime,
-      endDateTime: _endDateTime,
-      ageRestriction: formData.ageRestriction,
-      guestsLimit: formData.guestsLimit,
-      locationName: formData.locationName,
-      eventAddress: formData.eventAddress,
-      hashtags: _hashtags,
-      eventStatus: formData.status,
-      image: formData.image
-    }
-
-    console.log(payload)
-  };
 
   const fetchData = new FormData();
   fetchData.append('image', formData.image);
@@ -442,7 +306,6 @@ const handleCreateEvent = async () => {
   fetchData.append('locationAddress', formData.eventAddress);
   fetchData.append('hashtags', JSON.stringify(hashtagsArray));
 
-
   try {
     const response = await fetch(`${SERVER_BASE_URL}/api/event/`, {
       method: 'POST',
@@ -451,10 +314,9 @@ const handleCreateEvent = async () => {
     });
 
     const data = await response.json();
-    console.log(data);
 
-    if (data && data.error) {
-      throw new Error(data.error)
+    if (data?.error) {
+      throw new Error(data.error);
     }
 
     if (response.ok && data.success) {
@@ -462,26 +324,26 @@ const handleCreateEvent = async () => {
     }
 
   } catch (err) {
-    console.log(err);
+    console.error(err);
   } finally {
     loading.value = false;
   }
-}
+};
 </script>
 
 <style scoped>
-.event-container {
-  text-align: start;
-  max-width: 900px;
+.event-container{
+    text-align: start;
+    max-width: 900px;
 }
 
-.event-create-page {
-  background: linear-gradient(180deg, var(--bg-main), var(--accent-purple), transparent 1000%);
-  padding-top: 2rem;
-  padding-bottom: 3rem;
+.event-create-page{
+    background: linear-gradient(180deg, var(--bg-main), var(--accent-purple), transparent 1000%);
+    padding-top: 2rem;
+    padding-bottom:3rem;
 }
 
-.event-card {
+.event-card{
   background: linear-gradient(180deg, rgba(19, 12, 35, 0.65), rgba(10, 7, 20, 0.72));
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -490,44 +352,41 @@ const handleCreateEvent = async () => {
   -webkit-backdrop-filter: blur(10px);
 }
 
-.event-card .event-card-body {
+.event-card .event-card-body{
   padding: 2rem;
 }
 
-.event-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  pointer-events: none;
-  background: radial-gradient(600px 220px at 30% 0%, rgba(181, 107, 255, 0.16), transparent 60%);
+.event-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  pointer-events:none;
+  background: radial-gradient(600px 220px at 30% 0%, rgba(181,107,255,0.16), transparent 60%);
   opacity: .8;
 }
 
-.event-card {
-  position: relative;
+.event-card{ position:relative; }
+
+.event-title{
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
-.event-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.event-subtitle {
+.event-subtitle{
   color: var(--text-muted);
   font-size: 0.9rem;
 }
-
-.event-divider {
+.event-divider{
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(181, 107, 255, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(181,107,255,0.5), transparent);
   margin: 1.5rem 0 1.3rem;
 }
 
-.event-label {
-  color: rgba(255, 255, 255, 0.82);
+.event-label{
+  color: rgba(255,255,255,0.82);
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
   width: 100%;
@@ -535,10 +394,10 @@ const handleCreateEvent = async () => {
 
 .event-input,
 .event-textarea,
-.event-select {
+.event-select{
   width: 100%;
   background: rgba(8, 6, 16, 0.55);
-  border: 1px solid rgba(187, 120, 255, 0.18);
+  border: 1px solid rgba(187,120,255,0.18);
   border-radius: 12px;
   color: var(--text);
   padding: 11px 12px;
@@ -546,160 +405,149 @@ const handleCreateEvent = async () => {
   transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease;
 }
 
-.event-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
+.event-textarea{ min-height: 120px; resize: vertical; }
 
 .event-input::placeholder,
-.event-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+.event-textarea::placeholder{
+  color: rgba(255,255,255,0.35);
 }
 
 .event-input:focus,
 .event-textarea:focus,
-.event-select:focus {
-  border-color: rgba(181, 107, 255, 0.55);
-  box-shadow: 0 0 0 4px rgba(181, 107, 255, 0.12);
+.event-select:focus{
+  border-color: rgba(181,107,255,0.55);
+  box-shadow: 0 0 0 4px rgba(181,107,255,0.12);
 }
 
-.event-help {
-  color: rgba(255, 255, 255, 0.45);
+.event-help{
+  color: rgba(255,255,255,0.45);
   font-size: 12px;
   margin-top: 6px;
 }
 
 /* checkbox */
-.event-radio {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  user-select: none;
+.event-radio{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  user-select:none;
 }
-
-.event-radio input[type="radio"] {
+.event-radio input[type="radio"]{
   width: 18px;
   height: 18px;
   border-radius: 5px;
   accent-color: var(--accent);
 }
-
-.event-radio label {
+.event-radio label{
   color: var(--text-muted);
 }
 
 
-.event-preview-wrap {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+.event-preview-wrap{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
 }
 
-.event-preview {
+.event-preview{
   width: 230px;
   border-radius: 14px;
-  border: 1px solid rgba(187, 120, 255, 0.22);
-  background: rgba(0, 0, 0, 0.22);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
+  border: 1px solid rgba(187,120,255,0.22);
+  background: rgba(0,0,0,0.22);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  overflow:hidden;
 }
 
-.event-preview img {
+.event-preview img{
   width: 100%;
-  display: block;
+  display:block;
 }
 
-.event-info {
-  flex: 1;
+.event-info{
+  flex:1;
   border-radius: 14px;
-  border: 1px solid rgba(187, 120, 255, 0.14);
+  border: 1px solid rgba(187,120,255,0.14);
   background: rgba(9, 7, 16, 0.35);
   padding: 14px 14px;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255,255,255,0.72);
 }
 
-.event-actions {
-  display: flex;
-  gap: 10px;
+
+.event-actions{
+  display:flex;
+  gap:10px;
   flex-wrap: wrap;
 }
 
-.btn-event {
+.btn-event{
   border-radius: 12px;
   padding: 10px 14px;
   font-weight: 600;
-  border: 1px solid rgba(181, 107, 255, 0.22);
+  border: 1px solid rgba(181,107,255,0.22);
   background: rgba(10, 8, 18, 0.35);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255,255,255,0.9);
   transition: transform .12s ease, box-shadow .16s ease, border-color .16s ease;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
 }
 
-.btn-event:hover {
+.btn-event:hover{
   transform: translateY(-1px);
-  border-color: rgba(181, 107, 255, 0.42);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
-  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(181,107,255,0.42);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.95);
 }
 
-.btn-event-primary {
-  background: linear-gradient(135deg, rgba(181, 107, 255, 0.95), rgba(122, 75, 255, 0.9));
+.btn-event-primary{
+  background: linear-gradient(135deg, rgba(181,107,255,0.95), rgba(122,75,255,0.9));
   border: none;
   color: #120a22;
 }
-
-.btn-event-primary:hover {
-  box-shadow: 0 18px 50px rgba(122, 75, 255, 0.28);
-  color: #120a22;
+.btn-event-primary:hover{
+  box-shadow: 0 18px 50px rgba(122,75,255,0.28);
+  color:#120a22;
 }
 
-.btn-event-ghost {
+.btn-event-ghost{
   background: rgba(10, 8, 18, 0.25);
 }
 
-.event-error {
+.event-error{
   color: rgba(255, 77, 109, 0.95);
   font-size: 12px;
   margin-top: 6px;
-  display: none;
+  display:none;
 }
 
 .was-validated .event-input:invalid,
-.was-validated .event-textarea:invalid {
+.was-validated .event-textarea:invalid{
   border-color: rgba(255, 77, 109, 0.55);
   box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.12);
 }
-
-.was-validated .event-input:invalid+.event-error,
-.was-validated .event-textarea:invalid+.event-error {
-  display: block;
+.was-validated .event-input:invalid + .event-error,
+.was-validated .event-textarea:invalid + .event-error{
+  display:block;
 }
 
 
-@media (max-width: 900px) {
-  .event-preview-wrap {
-    flex-direction: column;
-  }
-
-  .event-preview {
-    width: 100%;
-    max-width: 420px;
-  }
+@media (max-width: 900px){
+  .event-preview-wrap{ flex-direction: column; }
+  .event-preview{ width: 100%; max-width: 420px; }
 }
 
-.btn-event-accent {
+.btn-event-accent{
   background: linear-gradient(135deg, #b56bff 0%, #ff9a3c 100%);
   color: #120a22;
   border: none;
   font-weight: 700;
 }
 
-.btn-event-accent:hover {
+.btn-event-accent:hover{
   box-shadow: none;
   transform: none;
   color: #120a22;
 }
+
 </style>
