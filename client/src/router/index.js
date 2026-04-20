@@ -2,16 +2,17 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "../stores/user";
 
 // import widoków
-import FillInProfileInfoView from "../views/Account/FillInProfileInfoView.vue";
-import ForgotPasswordView from "../views/Account/ForgotPasswordView.vue";
-import LoginView from "../views/Account/LoginView.vue";
-import RegisterView from "../views/Account/RegisterView.vue";
-import ResetPasswordView from "../views/Account/ResetPasswordView.vue";
-import VerifyEmailView from "../views/Account/VerifyEmailView.vue";
-import EnterEmailView from "../views/Account/EnterEmailView.vue";
-import CreateEventView from "../views/Event/CreateEventView.vue";
-import EventDashboardView from "../views/Event/EventDashboardView.vue";
-import EventFeedView from "../views/Event/EventFeedView.vue";
+import FillInProfileInfoView from '../views/Account/FillInProfileInfoView.vue'
+import ForgotPasswordView from '../views/Account/ForgotPasswordView.vue'
+import LoginView from '../views/Account/LoginView.vue'
+import RegisterView from '../views/Account/RegisterView.vue'
+import ResetPasswordView from '../views/Account/ResetPasswordView.vue'
+import VerifyEmailView from '../views/Account/VerifyEmailView.vue'
+import EnterEmailView from '../views/Account/EnterEmailView.vue'
+import CreateEventView from '../views/Event/CreateEventView.vue'
+import EventDashboardView from '../views/Event/EventDashboardView.vue'
+import EventFeedView from '../views/Event/EventFeedView.vue'
+import EventInviteView from '../views/Event/EventInviteView.vue';
 
 import LandingPageView from "../views/Home/LandingPageView.vue";
 
@@ -73,6 +74,11 @@ const routes = [
     component: EventDashboardView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
+    { 
+    path: '/event/invite', 
+    component: EventInviteView, 
+    meta: { hideHeader: true, isInvite: true }
+  },
 
   // Profile
   {
@@ -93,8 +99,8 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from, next) => {
-  const store = useUserStore();
+router.beforeEach(async (to, from) => {
+  const store = useUserStore(); 
 
   if (!store.getUser) {
     await store.loadUser();
@@ -104,17 +110,26 @@ router.beforeEach(async (to, from, next) => {
   const isVerified = localStorage.getItem("user_verified") === "true";
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return next("/login");
-  } else if (to.meta.requiresVerification && !isVerified) {
-    if (to.path === "/verify-email") {
+    return '/login';
+  } 
+  
+  else if (to.meta.requiresVerification && !isVerified) { 
+    if (to.path === '/verify-email') {
       return next();
     } else {
-      return next("/verify-email");
+      return '/verify-email';
     }
-  } else if (!to.meta.requiresAuth && isAuthenticated) {
-    return next("/profile");
+  } 
+
+  //zaproszenia moga byc wyswietlane przez uzytkownikow zalogowanych i niezalogowanych
+  else if (to.meta.isInvite){
+    return;
   }
-  next();
+
+  else if (!to.meta.requiresAuth && isAuthenticated) {
+    return '/event/feed';
+  } 
+  return;
 });
 
 export default router;

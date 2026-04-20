@@ -15,6 +15,9 @@
   min-height: 100vh;
   background-color: var(--bg-main);
 
+  /* Wysokość headera */
+  --header-height: 4.5rem;
+
   /* Zmienne - kolory i gradienty */
   --frame-gradient: linear-gradient(135deg, #ff9f1c ,#9b5de5);
   --line-gradient: linear-gradient(90deg,#ff9f1c ,#9b5de5);

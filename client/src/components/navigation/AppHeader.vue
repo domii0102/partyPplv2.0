@@ -26,7 +26,7 @@
 
 <style scoped>
 header{
-    padding: 1rem 0;
+    height: var(--header-height);
     background: none;
 }
 .brand-logo, .link-container{
