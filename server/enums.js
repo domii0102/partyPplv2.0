@@ -9,3 +9,10 @@ export const eventStatusOptions = {
     ONGOING: "ongoing",
     FINISHED: "finished"
 }
+
+export const inviteStatusOptions = {
+    PENDING: "pending",
+    ACCEPTED: "accepted",
+    REJECTED: "rejected",
+    CANCELED: "canceled"
+}

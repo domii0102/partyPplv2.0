@@ -1,4 +1,5 @@
 <template>
+    <event-invite-create v-if="showPopup" @close="showPopup = false"></event-invite-create>
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="defaultImage"/>
@@ -34,6 +35,10 @@
                         <button @click="select('About')">About</button>
                         <div class="gradient-line" :class="{ active: activeTab === 'About' }"></div>
                     </div>
+                    <div class="event-tab">
+                        <button @click="showPopup = true"><i class="bi bi-share-fill"></i> Invite</button>
+                        <div class="gradient-line"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -45,31 +50,79 @@
 </template>
 
 <script setup>
-import defaultImage from '../../assets/user-form-bg.jpg';
-import { ref, computed } from 'vue'
-import EventAbout from '../../components/event/EventAbout.vue';
-import EventGuests from '../../components/event/EventGuests.vue';
-import EventPlaylist from '../../components/event/EventPlaylist.vue';
-import EventPosts from '../../components/event/EventPosts.vue';
+    import { ref, computed, onMounted } from 'vue';
+    import { useRoute } from 'vue-router';
+    import { SERVER_BASE_URL } from '../../config/env';
 
-const eventName = "67 urodziny Bożenki"
-const eventDate = "15th June 2026, 23:00"
-const organizer = "mariolabibka13"
+    import defaultImage from '../../assets/user-form-bg.jpg';
+    import EventAbout from '../../components/event/EventAbout.vue';
+    import EventGuests from '../../components/event/EventGuests.vue';
+    import EventPlaylist from '../../components/event/EventPlaylist.vue';
+    import EventPosts from '../../components/event/EventPosts.vue';
+    import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
 
-const activeTab = ref('Posts')
+    const route = useRoute();
+    const loading = ref(false);
+    const error = ref(null);
+    const event = ref(null);
+    const showPopup = ref(false);
 
-const componentsMap = {
-    Posts: EventPosts,
-    Guests: EventGuests,
-    Playlist: EventPlaylist,
-    About: EventAbout
-}
+    const fetchEvent = async () => {
+        loading.value = true;
+        error.value = null;
+        const eventId = route.params.id;
 
-const currentComponent = computed(() => componentsMap[activeTab.value])
+        try {
+            const res = await fetch(`${SERVER_BASE_URL}/api/event/${eventId}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
 
-function select(tab){
-    activeTab.value = tab
-}
+            const serverData = await res.json();
+            if (!res.ok) throw new Error(serverData.error || "Failed to fetch selected event.");
+
+            if (serverData.success) event.value = serverData.data;
+        } catch (err) {
+            console.error(err);
+            error.value = "Problem occured while loading selected event, please try again later.";
+        } finally {
+            loading.value = false;
+        }
+    };
+    
+    onMounted(fetchEvent);
+
+    const eventDate = computed(() => {
+        if (!event.value?.eventDateTime) return '';
+        const date = new Date(event.value.eventDateTime);
+        return date.toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    });
+    const eventName = computed(() => event.value?.eventName || 'No Data');
+    const coverImage = computed(() => event.value?.image?.url || defaultImage);
+
+    const organizer = computed(() => {
+        if (!event.value) return 'Loading...';
+        const profile = event.value.userCredentials?.userProfile;
+
+        if (profile) return `${profile.name} ${profile.surname} - ${profile.nickname}`;
+
+        return event.value.organizerId || null;
+    });
+
+    const activeTab = ref('Posts')
+
+    const componentsMap = {
+        Posts: EventPosts,
+        Guests: EventGuests,
+        Playlist: EventPlaylist,
+        About: EventAbout
+    }
+
+    const currentComponent = computed(() => componentsMap[activeTab.value])
+
+    function select(tab){
+        activeTab.value = tab
+    }
 
 </script>
 
@@ -77,6 +130,7 @@ function select(tab){
 .event-dashboard {
     color: #fff;
     font-family: 'Montserrat', sans-serif;
+    position: relative;
 }
 .event-header{
     position: relative;

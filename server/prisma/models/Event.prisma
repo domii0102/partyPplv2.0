@@ -4,9 +4,13 @@ model Event {
   eventName        String          @db.VarChar(64)
   description      String          @db.VarChar(512)
   isPublic         Boolean
-  eventDateTime    DateTime        
+  eventDateTime    DateTime
+  endDateTime      DateTime?        
   locationLatitude Float?
   locationLongitude Float?
+  locationName      String?        @db.VarChar(64)
+  locationAddress   String?        @db.VarChar(128)
+  guestLimit        Int?
   ageRestriction   Int?
   eventStatus      String          @db.VarChar(32)
   createdAt        DateTime        @default(now())

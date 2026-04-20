@@ -45,5 +45,3 @@ ALTER TABLE "Image" ADD CONSTRAINT "Image_eventId_fkey" FOREIGN KEY ("eventId") 
 
 -- AddForeignKey
 ALTER TABLE "Image" ADD CONSTRAINT "Image_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "UserProfile"("profileId") ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE "Image" ADD CONSTRAINT image_one_owner CHECK ( (postId IS NOT NULL)::int + (eventId IS NOT NULL)::int + (profileId IS NOT NULL)::int = 1 );
