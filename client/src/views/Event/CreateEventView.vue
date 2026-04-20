@@ -1,37 +1,141 @@
 <template>
-  <div class="event-create-page">
-    <div class="container event-container">
-      <div class="event-card">
-        <div class="event-card-body">
+    <div class="event-create-page">
+        <div class="container event-container">
+            <div class="event-card">
+                <div class="event-card-body">
 
-          <div class="d-flex justify-content-between align-items-start gap-3">
-            <div>
-              <h3 class="event-title">Create event</h3>
-              <div class="event-subtitle">Provide the basic details for your event.</div>
-            </div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h3 class="event-title">Create event</h3>
+                            <div class="event-subtitle">Provide the basic details for your event.</div>
+                        </div>
 
-            <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
-          </div>
+                        <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
+                    </div>
 
-          <hr class="event-divider" />
+                    <hr class="event-divider" />
 
-          <form id="eventForm" @submit.prevent="handleCreateEvent" novalidate>
-            <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE" />
-            <div class="row g-3">
-              <div class="col-md-8">
-                <label class="event-label">Event name *</label>
-                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required
-                  placeholder="Event name*" />
-                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
-              </div>
+                    <form id="eventForm" @submit.prevent="handleRegister" novalidate>
+                        <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE"/>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="event-label">Event name *</label>
+                                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required placeholder="Event name*"/>
+                                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
+                            </div>
 
-              <div class="col-md-4">
-                <label class="event-label">Visibility</label>
-                <div class="event-radio mt-2">
-                  <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" value="false" checked>
-                  <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
-                  <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" value="true">
-                  <label for="public">Public</label>
+                            <div class="col-md-4">
+                                <label class="event-label">Visibility</label>
+                                <div class="event-radio mt-2">
+                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" :value="false" checked>
+                                    <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
+                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" :value="true">
+                                    <label for="public">Public</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="event-label">About *</label>
+                            <textarea v-model="formData.description" name="description" class="event-textarea" maxlength="512" required
+                                    placeholder="Describe the event: what, where, rules, what to bring..."></textarea>
+                            <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="event-label">Start date *</label>
+                                <input v-model="formData.eventDate" type="date" name="eventDate" class="event-input" required />
+                                <span v-if="errors.eventDate" class="error-text">{{ errors.eventDate }}</span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="event-label">Start time *</label>
+                                <input v-model="formData.eventTime" type="time" name="eventTime" class="event-input" required />
+                                <span v-if="errors.eventTime" class="error-text">{{ errors.eventTime }}</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="event-label">End date</label>
+                                <input v-model="formData.endDate" type="date" name="endDate" class="event-input" />
+                                <span v-if="errors.endDate" class="error-text">{{ errors.endDate }}</span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="event-label">End time</label>
+                                <input v-model="formData.endTime" type="time" name="endTime" class="event-input" />
+                                <span v-if="errors.endTime" class="error-text">{{ errors.endTime }}</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="event-label">Age restriction</label>
+                                <input v-model="formData.ageRestriction" type="number" name="ageRestriction" class="event-input" min="0" placeholder="e.g. 18" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="event-label">Guests limit</label>
+                                <input v-model="formData.guestsLimit" type="number" name="guestLimit" class="event-input" min="1" placeholder="e.g. 50" />
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="event-label">Location name</label>
+                                <input v-model="formData.locationName" name="locationName" class="event-input" maxlength="80" placeholder="Event's location" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="event-label">Address</label>
+                                <input v-model="formData.eventAddress" name="locationAddress" class="event-input" maxlength="128" placeholder="Street, city (optional)" />
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="event-label">Hashtags</label> <!--Todo: dodac parsowanie hashtagow-->
+                                <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200" placeholder="e.g. #birthday #party #friends" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
+                                nwm jeszcze jak ma dzialac integracja ze spotify-->
+                                <label class="event-label">Playlist link</label>
+                                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="event-label">Cover image *</label>
+                            <button type="button" @click="uploadPhoto" class="btn-event btn-event-ghost">Upload Image</button>
+                            <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
+                            <span v-if="errors.image" class="error-text">{{ errors.image }}</span>
+                        </div>
+
+                        <div class="event-preview-wrap mt-4">
+                            <div class="event-preview">
+                                <img v-if="photoPreview" :src="photoPreview" alt="Cover preview" />
+                                <img v-else :src="defaultImage" alt="Cover preview" />
+                            </div>
+
+                            <div class="event-info">
+                                <strong>Header preview</strong><br />
+                                The selected image will be used as the event cover.
+                            </div>
+                        </div>
+
+                        <hr class="event-divider" />
+
+                        <div class="event-actions">
+                            <button type="submit" class="btn-event btn-event-accent">
+                                Add event
+                            </button>
+                            <a href="/Event/List" class="btn-event btn-event-ghost">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
                 </div>
               </div>
             </div>
@@ -152,67 +256,59 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import defaultImage from '../../assets/user-form-bg.jpg';
-import { SERVER_BASE_URL } from '../../config/env.js';
 
-// walidacja formularza
+  // walidacja formularza
 
-const router = useRouter();
-const loading = ref(false);
-const successMessage = ref('')
+  const router = useRouter();
+  const loading = ref(false);
+  const successMessage = ref('')
 
-const formData = reactive({
-  status: '',
-  eventName: '',
-  description: '',
-  isPublic: false,
-  eventDate: '',
-  eventTime: '',
-  endDate: '', //do dodania do bazki
-  endTime: '', //do dodania do bazki
-  ageRestriction: '',
-  guestsLimit: '', //do dodania do bazki
-  locationName: '', //do dodania do bazki
-  eventAddress: '', //do dodania do bazki
-  hashtags: [''],
-  image: ''
-});
+  const formData = reactive({
+    status: 'ACTIVE',
+    eventName: '',
+    description: '',
+    isPublic: false,
+    eventDate: '',
+    eventTime: '',
+    endDate: null, //do dodania do bazki
+    endTime: null, //do dodania do bazki
+    ageRestriction: null,
+    guestsLimit: null, //do dodania do bazki
+    locationName: null, //do dodania do bazki
+    eventAddress: null, //do dodania do bazki
+    hashtags: null,
+    image: ''
+  });
 
-const errors = reactive({
-  eventName: '',
-  description: '',
-  eventDate: '',
-  eventTime: '',
-  endDate: '', //do dodania do bazki
-  endTime: '', //do dodania do bazki
-  ageRestriction: '',
-  guestsLimit: '', //do dodania do bazki
-  locationName: '', //do dodania do bazki
-  eventAddress: '', //do dodania do bazki
-  hashtags: '',
-  image: ''
-});
+  const errors = reactive({
+    eventName: '',
+    description: '',
+    eventDate: '',
+    eventTime: '',
+    endDate: '', //do dodania do bazki
+    endTime: '', //do dodania do bazki
+    ageRestriction: '',
+    guestsLimit: '', //do dodania do bazki
+    locationName: '', //do dodania do bazki
+    eventAddress: '', //do dodania do bazki
+    hashtags: '',
+    image: ''
+  });
 
-const validateForm = () => {
-  let isValid = true;
-  Object.keys(errors).forEach(key => errors[key] = '');
-  const today = new Date();
-  if (!formData.eventName) {
-    errors.eventName = "Event name is required"
-  }
+  const validateForm = () => {
+    let isValid = true;
+    Object.keys(errors).forEach(key => errors[key] = '');
+    const today = new Date();
+    if (!formData.eventName){
+      errors.eventName = "Event name is required"
+    }
 
-  if (!formData.description) {
-    errors.description = "Description is required"
-  }
+    if (!formData.description){
+      errors.description = "Description is required"
+    }
 
-  if (!formData.eventDate) {
-    errors.eventDate = "Event date is required";
-    isValid = false;
-  } else {
-    const eventDate = new Date(formData.eventDate);
-    eventDate.setHours(0, 0, 0, 0);
-
-    if (eventDate <= today) {
-      errors.eventDate = "Event date must be in the future";
+    if (!formData.eventDate) {
+      errors.eventDate = "Event date is required";
       isValid = false;
     } else if (formData.endDate && formData.endDate < formData.eventDate) {
       errors.endDate = "End date needs to be after start date"
@@ -302,6 +398,36 @@ const handleCreateEvent = async () => {
     .map(tag => tag.trim())
     .filter(tag => tag.startsWith('#'));
 
+  const hashtagParser = () => {
+    const hashtagString = formData.hashtags
+    const hashtagArr = hashtagString.match(/#[^\s#]+/g);
+    return hashtagArr ? hashtagArr.map(tag => tag.slice(1)) : [];
+  }
+
+  async function handleRegister(){
+    if (!validateForm()) return;
+
+    const _eventDateTime = `${formData.eventDate}T${formData.eventTime}:00`;
+    const _endDateTime = formData.endDate ? `${formData.endDate}T${formData.endTime ? formData.endTime : '00:00'}:00` : null;
+    const _hashtags = hashtagParser();
+
+    const payload = {
+      eventName: formData.eventName,
+      description: formData.description,
+      isPublic: formData.isPublic,
+      eventDateTime: _eventDateTime,
+      endDateTime: _endDateTime,
+      ageRestriction: formData.ageRestriction,
+      guestsLimit: formData.guestsLimit,
+      locationName: formData.locationName,
+      eventAddress: formData.eventAddress,
+      hashtags: _hashtags,
+      eventStatus: formData.status,
+      image: formData.image
+    }
+
+    console.log(payload)
+  };
 
   const fetchData = new FormData();
   fetchData.append('image', formData.image);
