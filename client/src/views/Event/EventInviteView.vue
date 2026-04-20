@@ -1,7 +1,7 @@
 <template>
 <main>
     <div class="invite-main">
-        <div class="container">
+        <div class="invite-container">
             <div class="invite-message">
                 <h2>{{"You're invited!"}}</h2> <!-- Defaultowa wiadomosc, ale mozna ustawic wlasna ig -->
                 <div class="gradient-line"></div>
@@ -61,7 +61,7 @@ img {
     height: 100%;
     z-index: 2;
 }
-.container {
+.invite-container {
     grid-column: 1;
     background-color: var(--bg-main);
     align-content: center;
@@ -111,5 +111,27 @@ h1{
 }
 .decline:hover {
     color: var(--text-main);
+}
+
+@media (max-width: 900px) {
+    .invite-main{
+        grid-template-rows: 1fr 1fr;
+        grid-template-columns: 1fr;
+    }
+    .container {
+        grid-row: 2;
+        grid-column: 1;
+        width: 100%;
+    }
+    .gradient {
+        grid-row: 1;
+        grid-column: 1;
+        background: linear-gradient(0deg, var(--bg-main), transparent);
+    }
+    img {
+        z-index: 1;
+        margin-left: 0;
+        margin-top: -25%;
+    }
 }
 </style>
