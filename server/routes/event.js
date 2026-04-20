@@ -1,6 +1,8 @@
 import express from 'express';
-import {upload} from '../config/multerConfig.js';
+import { upload } from '../config/multerConfig.js';
 import { getEvent, getEvents,  createEvent, deleteEvent, updateEvent, updateImage } from '../controllers/eventController.js';
+import invitationRouter from './invites.js';
+
 
 
 
@@ -49,5 +51,7 @@ router.patch("/update-image/:id", upload.single('image'), updateImage)
 //OUTPUT: success: true, data - obiekt z usuniętym eventem LUB success: false, error
 router.delete("/:id", deleteEvent);
 
+//zaproszenia
+router.use('/:eventId/invites', invitationRouter);
 
 export default router;

@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from '../stores/user';
+import { createRouter, createWebHistory } from "vue-router";
+import { useUserStore } from "../stores/user";
 
 // import widoków
 import FillInProfileInfoView from '../views/Account/FillInProfileInfoView.vue'
@@ -14,45 +14,65 @@ import EventDashboardView from '../views/Event/EventDashboardView.vue'
 import EventFeedView from '../views/Event/EventFeedView.vue'
 import EventInviteView from '../views/Event/EventInviteView.vue';
 
-import LandingPageView from '../views/Home/LandingPageView.vue'
+import LandingPageView from "../views/Home/LandingPageView.vue";
 
-import ProfileView from '../views/Profile/ProfileView.vue'
-import NotificationsView from '../views/Profile/NotificationsView.vue';
+import ProfileView from "../views/Profile/ProfileView.vue";
+import NotificationsView from "../views/Profile/NotificationsView.vue";
 
-import { getActivePinia, setActivePinia, createPinia } from 'pinia'
+import { getActivePinia, setActivePinia, createPinia } from "pinia";
 
-const pinia = getActivePinia() || createPinia()
-setActivePinia(pinia)
+const pinia = getActivePinia() || createPinia();
+setActivePinia(pinia);
 
 //const store = useUserStore();
 
 const routes = [
-  { path: '/', component: LandingPageView },
+  { path: "/", component: LandingPageView },
 
   // Auth
-  { path: '/login', component: LoginView, meta: { hideHeader: true } },
-  { path: '/register', component: RegisterView, meta: { hideHeader: true } },
-  { path: '/forgot-password', component: ForgotPasswordView, meta: { hideHeader: true } },
-  { path: '/reset-password', component: ResetPasswordView, meta: { hideHeader: true } },
-  { path: '/enter-email', component: EnterEmailView, meta: { hideHeader: true }},
-  { path: '/verify-email', component: VerifyEmailView, meta: { hideHeader: true } },
-  { path: '/create', component: FillInProfileInfoView, meta: { hideHeader: true, requiresAuth: true, requiresVerification: false } },
+  { path: "/login", component: LoginView, meta: { hideHeader: true } },
+  { path: "/register", component: RegisterView, meta: { hideHeader: true } },
+  {
+    path: "/forgot-password",
+    component: ForgotPasswordView,
+    meta: { hideHeader: true },
+  },
+  {
+    path: "/reset-password",
+    component: ResetPasswordView,
+    meta: { hideHeader: true },
+  },
+  {
+    path: "/enter-email",
+    component: EnterEmailView,
+    meta: { hideHeader: true },
+  },
+  {
+    path: "/verify-email",
+    component: VerifyEmailView,
+    meta: { hideHeader: true },
+  },
+  {
+    path: "/create",
+    component: FillInProfileInfoView,
+    meta: { hideHeader: true, requiresAuth: false, requiresVerification: true },
+  },
 
   // Event
-  { 
-    path: '/event/create', 
-    component: CreateEventView, 
-    meta: { requiresAuth: true, requiresVerification: true }
+  {
+    path: "/event/create",
+    component: CreateEventView,
+    meta: { requiresAuth: true, requiresVerification: true },
   },
-  { 
-    path: '/event/feed', 
-    component: EventFeedView, 
-    meta: { requiresAuth: true, requiresVerification: true }
+  {
+    path: "/event/feed",
+    component: EventFeedView,
+    meta: { requiresAuth: true, requiresVerification: true },
   },
-  { 
-    path: '/event/dashboard/:id', 
-    component: EventDashboardView, 
-    meta: { requiresAuth: true, requiresVerification: true }
+  {
+    path: "/event/dashboard/:id",
+    component: EventDashboardView,
+    meta: { requiresAuth: true, requiresVerification: true },
   },
     { 
     path: '/event/invite', 
@@ -61,23 +81,22 @@ const routes = [
   },
 
   // Profile
-  { 
-    path: '/profile', 
-    component: ProfileView, 
-    meta: { requiresAuth: true, requiresVerification: true } 
+  {
+    path: "/profile",
+    component: ProfileView,
+    meta: { requiresAuth: true, requiresVerification: true },
   },
 
-  { 
-    path: '/notifications', 
-    component: NotificationsView, 
-    meta: { requiresAuth: true, requiresVerification: true } 
+  {
+    path: "/notifications",
+    component: NotificationsView,
+    meta: { requiresAuth: true, requiresVerification: true },
   },
-
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
 router.beforeEach(async (to, from) => {
@@ -88,7 +107,7 @@ router.beforeEach(async (to, from) => {
   }
 
   const isAuthenticated = store.user != null;
-  const isVerified = localStorage.getItem('user_verified') === 'true';
+  const isVerified = localStorage.getItem("user_verified") === "true";
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return '/login';
