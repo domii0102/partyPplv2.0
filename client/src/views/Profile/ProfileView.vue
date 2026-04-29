@@ -66,12 +66,33 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import defaultImage from "../../assets/horsegiirl.jpg";
 import { useUserStore } from "../../stores/user.js";
 import { storeToRefs } from "pinia";
+import { service } from "../../services/requestService.js";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const store = useUserStore();
 const { user } = storeToRefs(store);
 
 const logOut = async () => {
   store.logout();
+
+  try {
+    const response = await service.post("/api/account/logout", {});
+
+    console.log(response);
+
+    if (response && response.error) {
+      throw new Error(response.error);
+    }
+
+    console.log("Response success: ", response.success);
+    if (response.success) {
+      router.push({ path: "/" });
+      return;
+    }
+  } catch (err) {
+    console.log(err);
+  }
 };
 </script>
 

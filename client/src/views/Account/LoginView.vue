@@ -11,14 +11,28 @@
         <form @submit.prevent="handleLogin" novalidate>
           <div class="form-group">
             <label for="email">Email</label>
-            <input v-model="loginData.email" type="email" id="email" placeholder="Enter your Email" />
-            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
+            <input
+              v-model="loginData.email"
+              type="email"
+              id="email"
+              placeholder="Enter your Email"
+            />
+            <span v-if="errors.email" class="error-text">{{
+              errors.email
+            }}</span>
           </div>
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input v-model="loginData.password" type="password" id="password" placeholder="Enter your password" />
-            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+            <input
+              v-model="loginData.password"
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+            />
+            <span v-if="errors.password" class="error-text">{{
+              errors.password
+            }}</span>
           </div>
 
           <div class="options-row">
@@ -30,7 +44,7 @@
           </div>
 
           <button type="submit" class="gradient-btn" :disabled="loading">
-            {{ loading ? 'Logging in...' : 'Log in' }}
+            {{ loading ? "Logging in..." : "Log in" }}
           </button>
         </form>
 
@@ -44,28 +58,27 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { service } from '../../services/requestService.js';
-import { useUserStore } from '../../stores/user';
-import { useAccountStore } from '../../stores/account.js';
-
+import { ref, reactive } from "vue";
+import { useRouter } from "vue-router";
+import { service } from "../../services/requestService.js";
+import { useUserStore } from "../../stores/user";
+import { useAccountStore } from "../../stores/account.js";
 
 const router = useRouter();
 const store = useUserStore();
 const accountStore = useAccountStore();
 
 const loginData = reactive({
-  email: '',
-  password: '',
-  rememberMe: false
+  email: "",
+  password: "",
+  rememberMe: false,
 });
 
 const loading = ref(false);
 const errors = reactive({
   email: null,
   password: null,
-  backend: null
+  backend: null,
 });
 
 const validate = () => {
@@ -99,8 +112,10 @@ const handleLogin = async () => {
   console.log(loginData.email);
 
   try {
-
-    const res = await service.post('/api/account/check-account', { email: loginData.email });
+    const res = await service.post("/api/account/check-account", {
+      email: loginData.email,
+      password: loginData.password,
+    });
     const serverData = res;
     console.log(res);
 
@@ -110,22 +125,21 @@ const handleLogin = async () => {
 
       if (serverData.data.emailConfirmed === false) {
         console.log("Przekierowanie na verify-email");
-        router.push('/verify-email');
+        router.push("/verify-email");
         return;
       }
-      localStorage.setItem('user_verified', 'true');
+      localStorage.setItem("user_verified", "true");
 
       if (serverData.data.hasProfile === false) {
         console.log("Przekierowanie na profile/create");
-        router.push('/create');
+        router.push("/create");
         return;
       }
 
       try {
-
-        const response = await service.post('/api/account/login', {
+        const response = await service.post("/api/account/login", {
           email: loginData.email,
-          password: loginData.password
+          password: loginData.password,
         });
 
         if (response && response.error) {
@@ -133,23 +147,23 @@ const handleLogin = async () => {
         }
         console.log(response);
         if (response.success) {
-          localStorage.setItem('user_verified', serverData.data.emailConfirmed ? 'true' : 'false');
+          localStorage.setItem(
+            "user_verified",
+            serverData.data.emailConfirmed ? "true" : "false",
+          );
 
           console.log("Logowanie udane: ", response);
           await store.loadUser();
           console.log("User store: ", store.getUser);
           console.log("Przekierowanie na profile:");
-          router.push('/profile'); //to tak na razie, bo nie ma dashboardu
+          router.push("/profile"); //to tak na razie, bo nie ma dashboardu
           return;
         }
-
-      }
-      catch (err) {
+      } catch (err) {
         console.log(err);
-        errors.backend = 'Server error. Try again later.';
+        errors.backend = "Server error. Try again later.";
       }
     }
-
   } catch (err) {
     // Tutaj dodajemy błąd "po nieudanym logowaniu"
     errors.backend = "Email or password is incorrect.";

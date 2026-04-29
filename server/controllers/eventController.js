@@ -98,7 +98,7 @@ export async function getEvents(req, res) {
         include: { image: true },
       });
       return res.status(200).json({ success: true, data: events });
-    } else {
+    } else if (visibility === "mine") {
       events = await prisma.event.findMany({
         where: { deletedAt: null, organizerId: userId },
         include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy
@@ -152,12 +152,10 @@ export async function createEvent(req, res) {
     imageId = await uploadImage(intoBase64(image));
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error: "An attempt to save event image was unsuccessful",
-      });
+    return res.status(500).json({
+      success: false,
+      error: "An attempt to save event image was unsuccessful",
+    });
   }
 
   const newEvent = {
@@ -227,13 +225,11 @@ export async function createEvent(req, res) {
   } catch (err) {
     console.error(err);
     await deleteUploadedFiles([imageId]);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error:
-          "An error occurred while trying to insert the record into the database",
-      });
+    return res.status(500).json({
+      success: false,
+      error:
+        "An error occurred while trying to insert the record into the database",
+    });
   }
 
   return res.status(201).json({ success: true, data: transactionResult });
@@ -290,13 +286,11 @@ export async function updateEvent(req, res) {
   }
 
   if (currentEvent.organizerId !== userId) {
-    return res
-      .status(403)
-      .json({
-        success: false,
-        error:
-          "Invalid permissions to update this resource - you are not the owner",
-      });
+    return res.status(403).json({
+      success: false,
+      error:
+        "Invalid permissions to update this resource - you are not the owner",
+    });
   }
 
   // robienie listy nazw aktualnych hashtagów
@@ -353,12 +347,10 @@ export async function updateEvent(req, res) {
     return res.status(200).json({ success: true, data: transactionResult });
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error: "An attempt to save changes in the database was unsuccessful",
-      });
+    return res.status(500).json({
+      success: false,
+      error: "An attempt to save changes in the database was unsuccessful",
+    });
   }
 }
 
@@ -391,13 +383,11 @@ export async function updateImage(req, res) {
   }
 
   if (userId !== event.organizerId) {
-    return res
-      .status(403)
-      .json({
-        success: false,
-        error:
-          "Invalid permissions to update this resource - you are not the owner",
-      });
+    return res.status(403).json({
+      success: false,
+      error:
+        "Invalid permissions to update this resource - you are not the owner",
+    });
   }
 
   if (!event.image) {
@@ -429,12 +419,10 @@ export async function updateImage(req, res) {
     if (newImageId) {
       await deleteUploadedFiles([oldImageId]);
     }
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error: "An error occurred while updating the image",
-      });
+    return res.status(500).json({
+      success: false,
+      error: "An error occurred while updating the image",
+    });
   }
 }
 
@@ -478,12 +466,10 @@ export async function deleteEvent(req, res) {
     event.organizerId !== userId &&
     userRole.userRole !== userRoleOptions.ADMIN
   ) {
-    return res
-      .status(403)
-      .json({
-        success: false,
-        error: "Invalid permissions to delete this resource",
-      });
+    return res.status(403).json({
+      success: false,
+      error: "Invalid permissions to delete this resource",
+    });
   }
 
   let deletedEvent;

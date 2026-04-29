@@ -4,223 +4,256 @@ import * as z from "zod";
 import "dotenv/config";
 import prisma from "../db.js";
 import { credentialsSchema } from "../schemas/credentialsSchema.js";
-import { emailVerificationSchema, emailVerificationResendSchema, passwordChangeSchema } from "../schemas/emailVerificationSchema.js";
+import {
+  emailVerificationSchema,
+  emailVerificationResendSchema,
+  passwordChangeSchema,
+} from "../schemas/emailVerificationSchema.js";
 import { emailSchema } from "../schemas/credentialsSchema.js";
 import { sendEmail } from "../services/mailService.js";
 import { randomInt } from "crypto";
 import { userRoleOptions } from "../enums.js";
 
-
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
 export async function register(req, res) {
-    const result = credentialsSchema.safeParse(req.body);
+  const result = credentialsSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error),
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email, password } = result.data;
+
+  try {
+    const existingUser = await prisma.userCredentials.findUnique({
+      where: { email },
+      select: { userId: true },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: "User with such email already exists",
+      });
     }
 
-    const { email, password } = result.data;
+    const passwordHash = await bcrypt.hash(password, 10);
 
+    const verifyToken = randomInt(100000, 1000000).toString();
+    const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
+
+    const newUser = await prisma.userCredentials.create({
+      data: {
+        email: email,
+        emailConfirmed: false, // vvv
+        emailConfirmationToken: verifyTokenHash,
+        passwordHash: passwordHash,
+        userRole: userRoleOptions.USER, // vvv
+        createdAt: new Date(), //Czy tych rzeczy nie mozna skipnc skoro sa ustawione defaulty w schemacie?
+      },
+    });
+
+    // Adresat, typ maila, token
     try {
-        const existingUser = await prisma.userCredentials.findUnique({
-            where: { email },
-            select: { userId: true }
-        });
-
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                error: "User with such email already exists",
-            });
-        }
-
-        const passwordHash = await bcrypt.hash(password, 10);
-
-        const verifyToken = randomInt(100000, 1000000).toString();
-        const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
-
-
-        const newUser = await prisma.userCredentials.create({
-            data: {
-                email: email,
-                emailConfirmed: false, // vvv
-                emailConfirmationToken: verifyTokenHash,
-                passwordHash: passwordHash,
-                userRole: userRoleOptions.USER, // vvv
-                createdAt: new Date() //Czy tych rzeczy nie mozna skipnc skoro sa ustawione defaulty w schemacie?
-            },
-        });
-
-        // Adresat, typ maila, token
-        try{
-            await sendEmail(email, "verify", verifyToken);
-        }
-        catch(err) {
-            console.error(err);
-            return res.status(500).json({success: false, error: "SMTP error"});
-        }
-        
-
-        return res.status(200).json({
-            success: true,
-            userId: newUser.userId,
-        });
+      await sendEmail(email, "verify", verifyToken);
     } catch (err) {
-        console.error("Register error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Database error occurred",
-        });
+      console.error(err);
+      return res.status(500).json({ success: false, error: "SMTP error" });
     }
-}
 
+    return res.status(200).json({
+      success: true,
+      userId: newUser.userId,
+    });
+  } catch (err) {
+    console.error("Register error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Database error occurred",
+    });
+  }
+}
 
 export async function login(req, res) {
-    const result = credentialsSchema.safeParse(req.body);
+  const result = credentialsSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error),
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email, password } = result.data;
+
+  try {
+    const user = await prisma.userCredentials.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password",
+      });
     }
 
-    const { email, password } = result.data;
-
-    try {
-        const user = await prisma.userCredentials.findUnique({
-            where: { email },
-        });
-
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid email or password",
-            });
-        }
-
-        if (!user.emailConfirmed) { //Front powinien wtedy odsylac do weryfikacji maila (chyba)
-            return res.status(403).json({
-                success: false,
-                error: "Email not verified"
-            });
-        }
-
-        if (user.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed",
-            });
-        }
-
-        const valid = await bcrypt.compare(password, user.passwordHash);
-
-        if (!valid) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid email or password",
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                userId: user.userId,
-                email: user.email,
-                userRole: user.userRole,
-                emailConfirmed: user.emailConfirmed
-            },
-            JWT_SECRET,
-            { expiresIn: "1h" }
-        );
-
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false, //potem przy hostowaniu true
-            sameSite: "lax", //przy hostowaniu "none"
-            maxAge: 1000 * 60 * 60 * 24,
-        });
-
-        return res.status(200).json({ success: true, token: token }); //token zwracany na potrzeby testów, potem usunąć
-    } catch (err) {
-        console.error("Login error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Login failed",
-        });
+    if (!user.emailConfirmed) {
+      //Front powinien wtedy odsylac do weryfikacji maila (chyba)
+      return res.status(403).json({
+        success: false,
+        error: "Email not verified",
+      });
     }
+
+    /* nie ma póki co takiego pola
+    if (user.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
+    }
+      */
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.userId,
+        email: user.email,
+        userRole: user.userRole,
+        emailConfirmed: user.emailConfirmed,
+      },
+      JWT_SECRET,
+      { expiresIn: "1h" },
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, //potem przy hostowaniu true
+      sameSite: "lax", //przy hostowaniu "none"
+      maxAge: 1000 * 60 * 60 * 24,
+    });
+
+    return res.status(200).json({ success: true, token: token }); //token zwracany na potrzeby testów, potem usunąć
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Login failed",
+    });
+  }
 }
 
-
 export async function logout(req, res) {
-    try {
-        res.clearCookie("token", {
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-            path: "/",
-        });
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      path: "/",
+    });
 
-        return res.status(200).json({
-            success: true,
-            message: "Logged out",
-        });
-    } catch (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Logout failed",
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      message: "Logged out",
+    });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Logout failed",
+    });
+  }
 }
 
 export async function checkAccount(req, res) {
+  const result = credentialsSchema.safeParse(req.body);
 
-    const result = emailSchema.safeParse(req.body);
+  console.log("Zod result: ", result);
+  if (!result.success) {
+    return res
+      .status(400)
+      .json({ success: false, error: z.flattenError(result.error) });
+  }
 
-    console.log("Zod result: ", result);
-    if (!result.success) {
-        return res.status(400).json({ success: false, error: z.flattenError(result.error) });
+  console.log("Parsowanie danych przeszło");
+  const { email, password } = result.data;
+  console.log("Email: ", email);
+  let accountData;
+  let profile;
+
+  try {
+    accountData = await prisma.userCredentials.findUnique({
+      where: { email: email },
+      select: {
+        userId: true,
+        emailConfirmed: true,
+        //isDeleted: true,
+        passwordHash: true,
+      },
+    });
+
+    if (!accountData) {
+      console.log("Nie znaleziono credentiali");
+      return res
+        .status(404)
+        .json({ success: false, error: "Account not found" });
     }
 
-    console.log("Parsowanie danych przeszło");
-    const {email} = result.data;
-    console.log("Email: ", email);
-    let accountData;
-    let profile;
-    try {
-        accountData = await prisma.userCredentials.findUnique({
-            where: { email: email },
-            select: { userId: true, emailConfirmed: true }
-        });
-
-        if (!accountData) {
-            console.log("Nie znaleziono credentiali");
-            return res.status(404).json({success: false, error: "Account not found"})
-        }
-        profile = await prisma.userProfile.findUnique({
-            where: { userId: accountData.userId }
-        });
-        console.log("Po wyszukiwaniu profilu");
+    /* nie ma póki co takiego pola
+    if (accountData.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
     }
-    catch (err) {
-        console.error(err);
-        console.log(accountData);
-        return res.status(500).json({ success: false, error: "A database error has occurred" });
+    */
+    const valid = await bcrypt.compare(password, accountData.passwordHash);
+
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password",
+      });
     }
 
-    if (profile) {
-        console.log("Jest profil");
-        return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: true } });
-    } else {
-        console.log("Nie ma profilu");
-        return res.status(200).json({ success: true, data: { emailConfirmed: accountData.emailConfirmed, hasProfile: false } });
-    }
+    profile = await prisma.userProfile.findUnique({
+      where: { userId: accountData.userId },
+    });
+    console.log("Po wyszukiwaniu profilu");
+  } catch (err) {
+    console.error(err);
+    console.log(accountData);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
 
+  if (profile) {
+    console.log("Jest profil");
+    return res.status(200).json({
+      success: true,
+      data: { emailConfirmed: accountData.emailConfirmed, hasProfile: true },
+    });
+  } else {
+    console.log("Nie ma profilu");
+    return res.status(200).json({
+      success: true,
+      data: { emailConfirmed: accountData.emailConfirmed, hasProfile: false },
+    });
+  }
 }
 
 /* bo nie mogę na to patrzeć, ale niech na razie zostanie
@@ -254,253 +287,259 @@ export async function deleteCredentials(req, res) {
 }
     */
 
-
 export async function verifyEmail(req, res) {
-    console.log("Body:", req.body);
-    const result = emailVerificationSchema.safeParse(req.body);
+  console.log("Body:", req.body);
+  const result = emailVerificationSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error)
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email, token } = result.data;
+
+  try {
+    const existingUser = await prisma.userCredentials.findUnique({
+      where: { email },
+    });
+
+    if (existingUser.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
     }
 
-    const { email, token } = result.data;
-
-    try {
-        const existingUser = await prisma.userCredentials.findUnique({
-            where: { email }
-        });
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
-            });
-        }
-
-        if (existingUser.emailConfirmed) {
-            return res.status(409).json({
-                success: false,
-                error: "User with such email is already verified"
-            });
-        }
-
-        if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({
-                success: false,
-                error: "No token to verify"
-            });
-        }
-
-        const valid = await bcrypt.compare(token, existingUser.emailConfirmationToken);
-
-        if (!valid) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid token"
-            });
-        }
-
-        await prisma.userCredentials.update({
-            where: { email },
-            data: {
-                emailConfirmed: true,
-                emailConfirmationToken: null
-            }
-        });
-
-        return res.status(200).json({ success: true });
-    } catch (err) {
-        console.error("Email verification error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Email verification failed"
-        });
+    if (existingUser.emailConfirmed) {
+      return res.status(409).json({
+        success: false,
+        error: "User with such email is already verified",
+      });
     }
+
+    if (!existingUser.emailConfirmationToken) {
+      return res.status(400).json({
+        success: false,
+        error: "No token to verify",
+      });
+    }
+
+    const valid = await bcrypt.compare(
+      token,
+      existingUser.emailConfirmationToken,
+    );
+
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid token",
+      });
+    }
+
+    await prisma.userCredentials.update({
+      where: { email },
+      data: {
+        emailConfirmed: true,
+        emailConfirmationToken: null,
+      },
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Email verification error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Email verification failed",
+    });
+  }
 }
 
-
 export async function resendVerificationCode(req, res) {
-    const result = emailVerificationResendSchema.safeParse(req.body);
+  const result = emailVerificationResendSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error),
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email } = result.data;
+
+  try {
+    const existingUser = await prisma.userCredentials.findUnique({
+      where: { email },
+    });
+
+    if (!existingUser) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email",
+      });
     }
 
-    const { email } = result.data;
-
-    try {
-        const existingUser = await prisma.userCredentials.findUnique({
-            where: { email },
-        });
-
-        if (!existingUser) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid email",
-            });
-        }
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed",
-            });
-        }
-
-        // Nie wiem czy potrzebujemy tutaj sprawdzac weryfikacje maila, bo to ma byc uniersalny endpoint do resetu hasla i weryfikacji po logowaniu
-
-        const verifyToken = randomInt(100000, 1000000).toString();
-        const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
-
-        await prisma.userCredentials.update({
-            where: { email },
-            data: {
-                emailConfirmationToken: verifyTokenHash
-            }
-        });
-
-        // Adresat, typ maila, token
-        await sendEmail(email, "verify", verifyToken);
-
-        return res.status(200).json({
-            success: true
-        });
-    } catch (err) {
-        console.error("Verification error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Verification failed",
-        });
+    if (existingUser.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
     }
+
+    // Nie wiem czy potrzebujemy tutaj sprawdzac weryfikacje maila, bo to ma byc uniersalny endpoint do resetu hasla i weryfikacji po logowaniu
+
+    const verifyToken = randomInt(100000, 1000000).toString();
+    const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
+
+    await prisma.userCredentials.update({
+      where: { email },
+      data: {
+        emailConfirmationToken: verifyTokenHash,
+      },
+    });
+
+    // Adresat, typ maila, token
+    await sendEmail(email, "verify", verifyToken);
+
+    return res.status(200).json({
+      success: true,
+    });
+  } catch (err) {
+    console.error("Verification error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Verification failed",
+    });
+  }
 }
 
 // Jezeli robimy sprawdzanie tokenu + reset razem na jednej stronie to te dwa endpointy trzeba polaczyc
 export async function requestPasswordReset(req, res) {
-    const result = emailVerificationSchema.safeParse(req.body);
+  const result = emailVerificationSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error)
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email, token } = result.data;
+
+  try {
+    const existingUser = await prisma.userCredentials.findUnique({
+      where: { email },
+    });
+
+    if (existingUser.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
     }
 
-    const { email, token } = result.data;
-
-    try {
-        const existingUser = await prisma.userCredentials.findUnique({
-            where: { email }
-        });
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
-            });
-        }
-
-        if (!existingUser.emailConfirmed) {
-            return res.status(409).json({
-                success: false,
-                error: "User with such email is not yet verified"
-            });
-        }
-
-        if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({
-                success: false,
-                error: "No token to verify"
-            });
-        }
-
-        const valid = await bcrypt.compare(token, existingUser.emailConfirmationToken);
-
-        if (!valid) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid token"
-            });
-        }
-
-        return res.status(200).json({ success: true });
-    } catch (err) {
-        console.error("Code verification error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Code verification failed"
-        });
+    if (!existingUser.emailConfirmed) {
+      return res.status(409).json({
+        success: false,
+        error: "User with such email is not yet verified",
+      });
     }
+
+    if (!existingUser.emailConfirmationToken) {
+      return res.status(400).json({
+        success: false,
+        error: "No token to verify",
+      });
+    }
+
+    const valid = await bcrypt.compare(
+      token,
+      existingUser.emailConfirmationToken,
+    );
+
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid token",
+      });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Code verification error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Code verification failed",
+    });
+  }
 }
 
-
 export async function resetPassword(req, res) {
-    const result = passwordChangeSchema.safeParse(req.body);
+  const result = passwordChangeSchema.safeParse(req.body);
 
-    if (!result.success) {
-        return res.status(400).json({
-            success: false,
-            error: z.flattenError(result.error)
-        });
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: z.flattenError(result.error),
+    });
+  }
+
+  const { email, token, password } = result.data;
+
+  try {
+    const existingUser = await prisma.userCredentials.findUnique({
+      where: { email },
+    });
+
+    if (existingUser.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        error: "Account has been removed",
+      });
     }
 
-    const { email, token, password } = result.data;
-
-    try {
-        const existingUser = await prisma.userCredentials.findUnique({
-            where: { email }
-        });
-
-        if (existingUser.isDeleted) {
-            return res.status(403).json({
-                success: false,
-                error: "Account has been removed"
-            });
-        }
-        
-        if (!existingUser.emailConfirmed) {
-            return res.status(409).json({
-                success: false,
-                error: "User with such email is not yet verified"
-            });
-        }
-
-        if (!existingUser.emailConfirmationToken) {
-            return res.status(400).json({
-                success: false,
-                error: "No token to verify"
-            });
-        }
-
-        // Double check, musze poszukac jak sie robi weryfikacje tak juz profesjonalnie sensownie
-        const valid = await bcrypt.compare(token, existingUser.emailConfirmationToken);
-
-        if (!valid) {
-            return res.status(401).json({
-                success: false,
-                error: "Invalid token"
-            });
-        }
-
-        const passwordHash = await bcrypt.hash(password, 10);
-        await prisma.userCredentials.update({
-            where: { email },
-            data: {
-                passwordHash: passwordHash
-            }
-        });
-
-        return res.status(200).json({ success: true });
-    } catch (err) {
-        console.error("Code verification error:", err);
-        return res.status(500).json({
-            success: false,
-            error: "Code verification failed"
-        });
+    if (!existingUser.emailConfirmed) {
+      return res.status(409).json({
+        success: false,
+        error: "User with such email is not yet verified",
+      });
     }
+
+    if (!existingUser.emailConfirmationToken) {
+      return res.status(400).json({
+        success: false,
+        error: "No token to verify",
+      });
+    }
+
+    // Double check, musze poszukac jak sie robi weryfikacje tak juz profesjonalnie sensownie
+    const valid = await bcrypt.compare(
+      token,
+      existingUser.emailConfirmationToken,
+    );
+
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid token",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.userCredentials.update({
+      where: { email },
+      data: {
+        passwordHash: passwordHash,
+      },
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Code verification error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Code verification failed",
+    });
+  }
 }
