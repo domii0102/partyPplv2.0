@@ -4,8 +4,16 @@
       <div class="search-section">
         <div class="search-bar">
           <i class="bi bi-search"></i>
-          <input type="text" placeholder="Search for a public event..." v-model="searchQuery" />
-          <button v-if="searchQuery" class="search-clear-btn" @click="searchQuery = ''">
+          <input
+            type="text"
+            placeholder="Search for a public event..."
+            v-model="searchQuery"
+          />
+          <button
+            v-if="searchQuery"
+            class="search-clear-btn"
+            @click="searchQuery = ''"
+          >
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
@@ -16,7 +24,10 @@
 
       <div class="toolbar-section">
         <div class="results-info">
-          Showing {{ filteredEvents.length }} event<span v-if="filteredEvents.length !== 1">s</span>
+          Showing {{ filteredEvents.length }} event<span
+            v-if="filteredEvents.length !== 1"
+            >s</span
+          >
         </div>
 
         <div class="sort-box">
@@ -60,7 +71,9 @@
           </button>
         </div>
 
-        <button class="clear-all-btn" @click="resetAllFilters">Clear all</button>
+        <button class="clear-all-btn" @click="resetAllFilters">
+          Clear all
+        </button>
       </div>
 
       <div class="title-container">
@@ -69,10 +82,11 @@
       </div>
 
       <div v-if="filteredEvents.length" class="events-grid">
-        <EventCard 
-          v-for="event in filteredEvents" 
-          :key="event.id" 
-          :event="event" 
+        <EventCard
+          v-for="event in filteredEvents"
+          :key="event.id"
+          :event="event"
+          @select="router.push(`/event/dashboard/${$event}`)"
         />
       </div>
 
@@ -82,13 +96,19 @@
         </div>
         <h3>No events found</h3>
         <p>Try changing the search phrase or filters.</p>
-        <button class="empty-reset-btn" @click="resetAllFilters">Reset filters</button>
+        <button class="empty-reset-btn" @click="resetAllFilters">
+          Reset filters
+        </button>
       </div>
     </div>
   </div>
 
   <transition name="modal-fade">
-    <div v-if="showFilters" class="filter-modal-overlay" @click.self="showFilters = false">
+    <div
+      v-if="showFilters"
+      class="filter-modal-overlay"
+      @click.self="showFilters = false"
+    >
       <div class="filter-modal">
         <div class="filter-modal-header">
           <h3>Filters</h3>
@@ -117,17 +137,73 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import EventCard from '../../components/event/EventCard.vue';
+import { ref, reactive, onMounted, watch, computed } from "vue";
+import { useRouter } from "vue-router";
+import { SERVER_BASE_URL } from "../../config/env";
+import EventCard from "../../components/event/EventCard.vue";
+import { useUserStore } from "../../stores/user";
 
-const searchQuery = ref('');
+const router = useRouter();
+const store = useUserStore();
+const loading = ref(false);
+const searchQuery = ref("");
+
+const events = ref([]);
+const status = reactive({
+  error: null,
+  empty: false,
+});
+
+const fetchEvents = async () => {
+  loading.value = true;
+  status.error = null;
+  status.empty = false;
+
+  try {
+    const fetchURL = new URL(`${SERVER_BASE_URL}/api/event/`);
+    fetchURL.searchParams.append("visibility", "public");
+
+    //Trzeba dodac wyszukiwanie i filtry po stronie backendu!!!
+    if (searchQuery.value)
+      fetchURL.searchParams.append("search", searchQuery.value);
+
+    const res = await fetch(fetchURL, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const serverData = await res.json();
+    if (!res.ok) throw new Error(serverData.error || "Failed to fetch events.");
+
+    events.value = serverData.data;
+
+    if (events.value.length === 0) status.empty = true;
+  } catch (err) {
+    console.error(err);
+    status.error =
+      "Problem occured while loading events, please try again later.";
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(searchQuery, () => {
+  fetchEvents();
+});
+
+onMounted(fetchEvents);
+
+const searchQuery = ref("");
 const showFilters = ref(false);
-const sortBy = ref('default');
+const sortBy = ref("default");
 
 const filters = ref({
-  city: '',
-  date: '',
-  hashtags: ''
+  city: "",
+  date: "",
+  hashtags: "",
 });
 
 function applyFilters() {
@@ -135,32 +211,85 @@ function applyFilters() {
 }
 
 function resetModalFilters() {
-  filters.value.city = '';
-  filters.value.date = '';
-  filters.value.hashtags = '';
+  filters.value.city = "";
+  filters.value.date = "";
+  filters.value.hashtags = "";
 }
 
 function resetAllFilters() {
-  searchQuery.value = '';
-  sortBy.value = 'default';
+  searchQuery.value = "";
+  sortBy.value = "default";
   resetModalFilters();
 }
 
 const events = ref([
-  { id: 1, title: 'Hulanki w garażu', date: '02.06.2026', time: '22:00', location: 'Białystok, ul. Garażowa 69', hashtags: '#garage #party', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 2, title: 'Wielki test makowców', date: '23.12.2025', time: '16:00', location: 'Grajewo', hashtags: '#food #christmas', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 3, title: '67 urodziny Bożenki', date: '15.06.2026', time: '23:00', location: 'Bielsk Podlaski, Wrzosowa 7', hashtags: '#birthday #party', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 4, title: 'Wigilia klasowa', date: '22.12.2032', time: '13:00', location: 'Białystok, al. Tysiąclecia 14', hashtags: '#school #christmas', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 5, title: '67 urodziny Evil Bożenki', date: '15.06.2026', time: '23:13', location: 'Bielsk Podlaski, Wrzosowa 13', hashtags: '#birthday #night', image: 'https://placehold.co/600x400/2a1b33/white' },
-  { id: 6, title: 'Rave w mojej stodole', date: '20.04.2026', time: '22:00', location: 'Lipinki Łużyckie, Łączna 46', hashtags: '#rave #music', image: 'https://placehold.co/600x400/2a1b33/white' }
+  {
+    id: 1,
+    title: "Hulanki w garażu",
+    date: "02.06.2026",
+    time: "22:00",
+    location: "Białystok, ul. Garażowa 69",
+    hashtags: "#garage #party",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
+  {
+    id: 2,
+    title: "Wielki test makowców",
+    date: "23.12.2025",
+    time: "16:00",
+    location: "Grajewo",
+    hashtags: "#food #christmas",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
+  {
+    id: 3,
+    title: "67 urodziny Bożenki",
+    date: "15.06.2026",
+    time: "23:00",
+    location: "Bielsk Podlaski, Wrzosowa 7",
+    hashtags: "#birthday #party",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
+  {
+    id: 4,
+    title: "Wigilia klasowa",
+    date: "22.12.2032",
+    time: "13:00",
+    location: "Białystok, al. Tysiąclecia 14",
+    hashtags: "#school #christmas",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
+  {
+    id: 5,
+    title: "67 urodziny Evil Bożenki",
+    date: "15.06.2026",
+    time: "23:13",
+    location: "Bielsk Podlaski, Wrzosowa 13",
+    hashtags: "#birthday #night",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
+  {
+    id: 6,
+    title: "Rave w mojej stodole",
+    date: "20.04.2026",
+    time: "22:00",
+    location: "Lipinki Łużyckie, Łączna 46",
+    hashtags: "#rave #music",
+    image: "https://placehold.co/600x400/2a1b33/white",
+  },
 ]);
 
 const hasActiveFilters = computed(() => {
-  return !!searchQuery.value || !!filters.value.city || !!filters.value.date || !!filters.value.hashtags;
+  return (
+    !!searchQuery.value ||
+    !!filters.value.city ||
+    !!filters.value.date ||
+    !!filters.value.hashtags
+  );
 });
 
 const filteredEvents = computed(() => {
-  let result = events.value.filter(event => {
+  let result = events.value.filter((event) => {
     const matchesSearch =
       !searchQuery.value ||
       event.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -177,18 +306,24 @@ const filteredEvents = computed(() => {
 
     const matchesHashtags =
       !filters.value.hashtags ||
-      event.hashtags.toLowerCase().includes(filters.value.hashtags.toLowerCase());
+      event.hashtags
+        .toLowerCase()
+        .includes(filters.value.hashtags.toLowerCase());
 
     return matchesSearch && matchesCity && matchesDate && matchesHashtags;
   });
 
-  if (sortBy.value === 'soonest') {
-    result = [...result].sort((a, b) => parseEventDate(a.date, a.time) - parseEventDate(b.date, b.time));
-  } else if (sortBy.value === 'latest') {
-    result = [...result].sort((a, b) => parseEventDate(b.date, b.time) - parseEventDate(a.date, a.time));
-  } else if (sortBy.value === 'title-asc') {
+  if (sortBy.value === "soonest") {
+    result = [...result].sort(
+      (a, b) => parseEventDate(a.date, a.time) - parseEventDate(b.date, b.time),
+    );
+  } else if (sortBy.value === "latest") {
+    result = [...result].sort(
+      (a, b) => parseEventDate(b.date, b.time) - parseEventDate(a.date, a.time),
+    );
+  } else if (sortBy.value === "title-asc") {
     result = [...result].sort((a, b) => a.title.localeCompare(b.title));
-  } else if (sortBy.value === 'title-desc') {
+  } else if (sortBy.value === "title-desc") {
     result = [...result].sort((a, b) => b.title.localeCompare(a.title));
   }
 
@@ -196,14 +331,14 @@ const filteredEvents = computed(() => {
 });
 
 function formatDateForInput(dateString) {
-  const parts = dateString.split('.');
-  if (parts.length !== 3) return '';
+  const parts = dateString.split(".");
+  if (parts.length !== 3) return "";
   const [day, month, year] = parts;
   return `${year}-${month}-${day}`;
 }
 
 function parseEventDate(dateString, timeString) {
-  const [day, month, year] = dateString.split('.');
+  const [day, month, year] = dateString.split(".");
   return new Date(`${year}-${month}-${day}T${timeString}`);
 }
 </script>
@@ -546,7 +681,9 @@ function parseEventDate(dateString, timeString) {
 
 .modal-fade-enter-active .filter-modal,
 .modal-fade-leave-active .filter-modal {
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
 }
 
 .modal-fade-enter-from,
@@ -592,4 +729,5 @@ function parseEventDate(dateString, timeString) {
     flex: 1;
   }
 }
-</style>cd
+</style>
+cd

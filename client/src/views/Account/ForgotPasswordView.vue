@@ -1,5 +1,6 @@
 <template>
-<div class="forgot-page">
+<div class="background">
+<div class="main-page">
 <div class="form-container">
 <h2 class="display-6">Forgot Password</h2>
 <p class="subtitle">Enter your email to get a link to reset your password.</p>
@@ -13,7 +14,7 @@
         id="email" 
         placeholder="Enter your registered email" 
       />
-      <span v-if="error" class="text-danger">{{ error }}</span>
+      <span v-if="error" class="error-text">{{ error }}</span>
     </div>
 
     <p v-if="successMessage" class="text-success">
@@ -29,6 +30,7 @@
     Remembered it? 
     <router-link to="/login">Back to Sign in</router-link>
   </p>
+</div>
 </div>
 </div>
 </template>
@@ -76,101 +78,9 @@ loading.value = false;
 </script>
 
 <style scoped>
-.forgot-page {
-min-height: 100vh;
-width: 100%;
-display: flex;
-justify-content: center;
-align-items: center;
-background: url('../../assets/user-form-bg.jpg') no-repeat center center;
-background-size: cover;
-background-attachment: fixed;
-padding: 1.25rem;
-}
-
 .form-container {
-width: 100%;
-max-width: 32.5rem;
-padding: 2.8125rem 3.4375rem;
-background: rgba(0, 0, 0, 0.55);
-border: 0.1875rem solid var(--primary-orange, #ff8c00);
-border-radius: 1.5625rem;
-backdrop-filter: blur(1rem);
-box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.45);
-color: #fff;
-}
-
-h2 {
-text-align: center;
-margin-bottom: 0.625rem;
-font-size: 2rem;
-}
-
-.subtitle {
-text-align: center;
-font-size: 0.875rem;
-color: #ccc;
-margin-bottom: 1.5625rem;
-}
-
-.form-group {
-margin-bottom: 1.375rem;
-display: flex;
-flex-direction: column;
-align-items: flex-start;
-}
-
-label {
-font-size: 0.875rem;
-margin-bottom: 0.5rem;
-display: block;
-}
-
-input[type="email"] {
-width: 100%;
-padding: 0.8125rem 0.875rem;
-border-radius: 62.4375rem;
-border: none;
-background: rgba(12, 1, 1, 0.562);
-color: #fff;
-font-size: 0.9375rem;
-outline: none;
-box-sizing: border-box;
-}
-
-.gradient-btn {
-width: 100%;
-padding: 0.75rem;
-border: none;
-border-radius: 62.4375rem;
-background: linear-gradient(45deg, var(--primary-orange), var(--primary-purple), var(--primary-orange));
-background-size: 200% auto;
-color: white;
-font-size: 1rem;
-font-weight: bold;
-cursor: pointer;
-transition: background-position 0.4s ease-in-out, filter 0.3s;
-margin-top: 0.625rem;
-}
-
-.gradient-btn:hover:not(:disabled) {
-background-position: 100% center;
-filter: brightness(1.2);
-}
-
-.text-success {
-color: #4BB543;
-font-size: 0.8125rem;
-margin-bottom: 0.9375rem;
-text-align: center;
-}
-
-.text-danger {
-color: #ff4d4d;
-font-size: 0.75rem;
-margin-top: 0.3125rem;
-margin-left: 0.9375rem;
-display: block;
+  width: 100%;
+  max-width: 500px;
 }
 
 .signup-text {

@@ -5,13 +5,15 @@ export const useAccountStore = defineStore('account', {
     state: () => ({
         email: ''
     }),
-    getters: { },
+    getters: { 
+        getEmail: (state) => state.email
+     },
     actions: {
         setEmail (email) {
             this.email = email;
         },
         clearEmail (email) {
             this.email = '';
-        }
+        },
     }
 });

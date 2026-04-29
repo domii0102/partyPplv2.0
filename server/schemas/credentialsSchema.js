@@ -5,4 +5,4 @@ export const credentialsSchema = z.object({
     password: z.string().min(6)
 });
 
-export const emailSchema = z.email().nonempty().trim().toLowerCase();
+export const emailSchema = z.object({ email: z.email().nonempty().trim().toLowerCase() });

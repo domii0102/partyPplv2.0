@@ -1,278 +1,334 @@
 <template>
-    <div class="event-create-page">
-        <div class="container event-container">
-            <div class="event-card">
-                <div class="event-card-body">
+  <div class="event-create-page">
+    <div class="container event-container">
+      <div class="event-card">
+        <div class="event-card-body">
 
-                    <div class="d-flex justify-content-between align-items-start gap-3">
-                        <div>
-                            <h3 class="event-title">Create event</h3>
-                            <div class="event-subtitle">Provide the basic details for your event.</div>
-                        </div>
-
-                        <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
-                    </div>
-
-                    <hr class="event-divider" />
-
-                    <form id="eventForm" @submit.prevent="handleRegister" novalidate>
-                        <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE"/>
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label class="event-label">Event name *</label>
-                                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required placeholder="Event name*"/>
-                                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="event-label">Visibility</label>
-                                <div class="event-radio mt-2">
-                                    <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" value="false" checked>
-                                    <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
-                                    <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" value="true">
-                                    <label for="public">Public</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <label class="event-label">About *</label>
-                            <textarea v-model="formData.description" name="description" class="event-textarea" maxlength="512" required
-                                    placeholder="Describe the event: what, where, rules, what to bring..."></textarea>
-                            <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Start date *</label>
-                                <input v-model="formData.eventDate" type="date" name="eventDate" class="event-input" required />
-                                <span v-if="errors.eventDate" class="error-text">{{ errors.eventDate }}</span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">Start time *</label>
-                                <input v-model="formData.eventTime" type="time" name="eventTime" class="event-input" required />
-                                <span v-if="errors.eventTime" class="error-text">{{ errors.eventTime }}</span>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">End date</label>
-                                <input v-model="formData.endDate" type="date" name="endDate" class="event-input" />
-                                <span v-if="errors.endDate" class="error-text">{{ errors.endDate }}</span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">End time</label>
-                                <input v-model="formData.endTime" type="time" name="endTime" class="event-input" />
-                                <span v-if="errors.endTime" class="error-text">{{ errors.endTime }}</span>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Age restriction</label>
-                                <input v-model="formData.ageRestriction" type="number" name="ageRestriction" class="event-input" min="0" placeholder="e.g. 18" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="event-label">Guests limit</label>
-                                <input v-model="formData.guestsLimit" type="number" name="guestLimit" class="event-input" min="1" placeholder="e.g. 50" />
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Location name</label>
-                                <input v-model="formData.locationName" name="locationName" class="event-input" maxlength="80" placeholder="Event's location" />
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="event-label">Address</label>
-                                <input v-model="formData.eventAddress" name="locationAddress" class="event-input" maxlength="128" placeholder="Street, city (optional)" />
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-6">
-                                <label class="event-label">Hashtags</label> <!--Todo: dodac parsowanie hashtagow-->
-                                <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200" placeholder="e.g. #birthday #party #friends" />
-                            </div>
-
-                            <div class="col-md-6">
-                                <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
-                                nwm jeszcze jak ma dzialac integracja ze spotify-->
-                                <label class="event-label">Playlist link</label>
-                                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
-                            </div>
-                        </div>
-
-                        <div class="mt-3">
-                            <label class="event-label">Cover image *</label>
-                            <button type="button" @click="uploadPhoto" class="btn-event btn-event-ghost">Upload Image</button>
-                            <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
-                            <span v-if="errors.image" class="error-text">{{ errors.image }}</span>
-                        </div>
-
-                        <div class="event-preview-wrap mt-4">
-                            <div class="event-preview">
-                                <img v-if="photoPreview" :src="photoPreview" alt="Cover preview" />
-                                <img v-else :src="defaultImage" alt="Cover preview" />
-                            </div>
-
-                            <div class="event-info">
-                                <strong>Header preview</strong><br />
-                                The selected image will be used as the event cover.
-                            </div>
-                        </div>
-
-                        <hr class="event-divider" />
-
-                        <div class="event-actions">
-                            <button type="submit" class="btn-event btn-event-accent">
-                                Add event
-                            </button>
-                            <a href="/Event/List" class="btn-event btn-event-ghost">
-                                Cancel
-                            </a>
-                        </div>
-                    </form>
-                </div>
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <h3 class="event-title">Create event</h3>
+              <div class="event-subtitle">Provide the basic details for your event.</div>
             </div>
+
+            <RouterLink to="/event/list" class="btn-event btn-event-ghost">← Back</RouterLink>
+          </div>
+
+          <hr class="event-divider" />
+
+          <form id="eventForm" @submit.prevent="handleCreateEvent" novalidate>
+            <input v-model="formData.status" type="hidden" name="eventStatus" value="ACTIVE" />
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="event-label">Event name *</label>
+                <input v-model="formData.eventName" name="eventName" class="event-input" maxlength="64" required
+                  placeholder="Event name*" />
+                <span v-if="errors.eventName" class="error-text">{{ errors.eventName }}</span>
+              </div>
+
+              <div class="col-md-4">
+                <label class="event-label">Visibility</label>
+                <div class="event-radio mt-2">
+                  <input v-model="formData.isPublic" id="private" type="radio" name="isPublic" :value="false" checked>
+                  <label for="private">Private</label> <!--Upewnic sie ze tak dziala boolean bo nwm-->
+                  <input v-model="formData.isPublic" id="public" type="radio" name="isPublic" :value="true">
+                  <label for="public">Public</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="event-label">About *</label>
+              <textarea v-model="formData.description" name="description" class="event-textarea" maxlength="512"
+                required placeholder="Describe the event: what, where, rules, what to bring..."></textarea>
+              <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="event-label">Start date *</label>
+                <input v-model="formData.eventDate" type="date" name="eventDate" class="event-input" required />
+                <span v-if="errors.eventDate" class="error-text">{{ errors.eventDate }}</span>
+              </div>
+
+              <div class="col-md-6">
+                <label class="event-label">Start time *</label>
+                <input v-model="formData.eventTime" type="time" name="eventTime" class="event-input" required />
+                <span v-if="errors.eventTime" class="error-text">{{ errors.eventTime }}</span>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="event-label">End date</label>
+                <input v-model="formData.endDate" type="date" name="endDate" class="event-input" />
+                <span v-if="errors.endDate" class="error-text">{{ errors.endDate }}</span>
+              </div>
+
+              <div class="col-md-6">
+                <label class="event-label">End time</label>
+                <input v-model="formData.endTime" type="time" name="endTime" class="event-input" />
+                <span v-if="errors.endTime" class="error-text">{{ errors.endTime }}</span>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="event-label">Age restriction</label>
+                <input v-model="formData.ageRestriction" type="number" name="ageRestriction" class="event-input" min="0"
+                  placeholder="e.g. 18" />
+              </div>
+              <div class="col-md-6">
+                <label class="event-label">Guests limit</label>
+                <input v-model="formData.guestsLimit" type="number" name="guestLimit" class="event-input" min="1"
+                  placeholder="e.g. 50" />
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="event-label">Location name</label>
+                <input v-model="formData.locationName" name="locationName" class="event-input" maxlength="80"
+                  placeholder="Event's location" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="event-label">Address</label>
+                <input v-model="formData.eventAddress" name="locationAddress" class="event-input" maxlength="128"
+                  placeholder="Street, city (optional)" />
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="event-label">Hashtags</label>
+                <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200"
+                  placeholder="e.g. #birthday #party #friends" />
+              </div>
+
+              <div class="col-md-6">
+                <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
+                                nwm jeszcze jak ma dzialac integracja ze spotify-->
+                <label class="event-label">Playlist link</label>
+                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="event-label">Cover image *</label>
+              <button type="button" @click="uploadPhoto" class="btn-event btn-event-ghost">Upload Image</button>
+              <input type="file" ref="fileInput" @change="handleFileChange" style="display: none;" />
+              <span v-if="errors.image" class="error-text">{{ errors.image }}</span>
+            </div>
+
+            <div class="event-preview-wrap mt-4">
+              <div class="event-preview">
+                <img v-if="photoPreview" :src="photoPreview" alt="Cover preview" />
+                <img v-else :src="defaultImage" alt="Cover preview" />
+              </div>
+
+              <div class="event-info">
+                <strong>Header preview</strong><br />
+                The selected image will be used as the event cover.
+              </div>
+            </div>
+
+            <hr class="event-divider" />
+
+            <div class="event-actions">
+              <button type="submit" class="btn-event btn-event-accent">
+                {{ loading ? 'Adding event...' : 'Add event' }}
+              </button>
+              <a href="/Event/List" class="btn-event btn-event-ghost">
+                Cancel
+              </a>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import defaultImage from '../../assets/user-form-bg.jpg';
+import { SERVER_BASE_URL } from '../../config/env.js';
 
-  // walidacja formularza
+const router = useRouter();
+const loading = ref(false);
 
-  const router = useRouter();
-  const loading = ref(false);
-  const successMessage = ref('')
+const formData = reactive({
+  status: 'ACTIVE',
+  eventName: '',
+  description: '',
+  isPublic: false,
+  eventDate: '',
+  eventTime: '',
+  endDate: '',
+  endTime: '',
+  ageRestriction: null,
+  guestsLimit: null,
+  locationName: '',
+  eventAddress: '',
+  hashtags: '',   // string, bo parsujemy potem
+  image: ''
+});
 
-  const formData = reactive({
-    status: '',
-    eventName: '',
-    description: '',
-    isPublic: false,
-    eventDate: '',
-    eventTime: '',
-    endDate: '', //do dodania do bazki
-    endTime: '', //do dodania do bazki
-    ageRestriction: '',
-    guestsLimit: '', //do dodania do bazki
-    locationName: '', //do dodania do bazki
-    eventAddress: '', //do dodania do bazki
-    hashtags: [''],
-    image: ''
-  });
+const errors = reactive({
+  eventName: '',
+  description: '',
+  eventDate: '',
+  eventTime: '',
+  endDate: '',
+  endTime: '',
+  ageRestriction: '',
+  guestsLimit: '',
+  locationName: '',
+  eventAddress: '',
+  hashtags: '',
+  image: ''
+});
 
-  const errors = reactive({
-    eventName: '',
-    description: '',
-    eventDate: '',
-    eventTime: '',
-    endDate: '', //do dodania do bazki
-    endTime: '', //do dodania do bazki
-    ageRestriction: '',
-    guestsLimit: '', //do dodania do bazki
-    locationName: '', //do dodania do bazki
-    eventAddress: '', //do dodania do bazki
-    hashtags: '',
-    image: ''
-  });
+const validateForm = () => {
+  let isValid = true;
+  Object.keys(errors).forEach(key => errors[key] = '');
+  const today = new Date();
 
-  const validateForm = () => {
-    let isValid = true;
-    Object.keys(errors).forEach(key => errors[key] = '');
-    const today = new Date();
-    if (!formData.eventName){
-      errors.eventName = "Event name is required"
-    }
+  if (!formData.eventName) {
+    errors.eventName = "Event name is required";
+    isValid = false;
+  }
 
-    if (!formData.description){
-      errors.description = "Description is required"
-    }
+  if (!formData.description) {
+    errors.description = "Description is required";
+    isValid = false;
+  }
 
-    if (!formData.eventDate) {
-      errors.eventDate = "Event date is required";
+  if (!formData.eventDate) {
+    errors.eventDate = "Event date is required";
+    isValid = false;
+  } else {
+    const eventDate = new Date(formData.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    if (eventDate <= today) {
+      errors.eventDate = "Event date must be in the future";
       isValid = false;
-    } else {
-      const eventDate = new Date(formData.eventDate);
-      eventDate.setHours(0,0,0,0);
-
-      if (eventDate <= today) {
-        errors.eventDate = "Event date must be in the future";
-        isValid = false;
-      } else if (formData.endDate && formData.endDate < formData.eventDate){
-      errors.endDate = "End date needs to be after start date"
-      } else if(formData.endTime && formData.endDate == formData.eventDate){
-        if(formData.endTime < formData.eventTime){
-          errors.endTime = "End time needs to be after start time"
-        }
+    } else if (formData.endDate && formData.endDate < formData.eventDate) {
+      errors.endDate = "End date needs to be after start date";
+    } else if (formData.endTime && formData.endDate == formData.eventDate) {
+      if (formData.endTime < formData.eventTime) {
+        errors.endTime = "End time needs to be after start time";
       }
-      }
+    }
+  }
 
-    if (!formData.eventTime){
-      errors.eventTime = "Event time is required"
+  if (!formData.eventTime) {
+    errors.eventTime = "Event time is required";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+const fileInput = ref(null);
+const photoPreview = ref(null);
+
+function uploadPhoto() {
+  fileInput.value?.click();
+}
+
+function handleFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    errors.image = 'Please upload a valid image file';
+    formData.image = null;
+    if (photoPreview.value) {
+      URL.revokeObjectURL(photoPreview.value);
+      photoPreview.value = null;
+    }
+    return;
+  }
+
+  const maxSizeMB = 5;
+  if (file.size / 1024 / 1024 > maxSizeMB) {
+    errors.image = `Image must be smaller than ${maxSizeMB}MB`;
+    formData.image = null;
+    if (photoPreview.value) {
+      URL.revokeObjectURL(photoPreview.value);
+      photoPreview.value = null;
+    }
+    return;
+  }
+
+  if (photoPreview.value) {
+    URL.revokeObjectURL(photoPreview.value);
+  }
+  formData.image = file;
+  photoPreview.value = URL.createObjectURL(file);
+  errors.image = '';
+}
+
+const handleCreateEvent = async () => {
+  if (!validateForm()) return;  // POPRAWKA: było !validateForm bez ()
+  loading.value = true;
+
+  const [hours, minutes] = formData.eventTime.split(':').map(Number);
+  const eventDateTime = new Date(formData.eventDate);
+  eventDateTime.setHours(hours, minutes, 0, 0);
+  const eventDateTimeIso = eventDateTime.toISOString();
+
+  let endDateTimeIso = null;
+  if (formData.endDate && formData.endTime) {
+    const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
+    const endDateTime = new Date(formData.endDate);
+    endDateTime.setHours(endHours, endMinutes, 0, 0);
+    endDateTimeIso = endDateTime.toISOString();
+  }
+
+  const hashtagsArray = formData.hashtags
+    .split(' ')
+    .map(tag => tag.trim())
+    .filter(tag => tag.startsWith('#'));
+
+  const fetchData = new FormData();
+  fetchData.append('image', formData.image);
+  fetchData.append('eventName', formData.eventName);
+  fetchData.append('description', formData.description);
+  fetchData.append('isPublic', formData.isPublic);
+  fetchData.append('eventDateTime', eventDateTimeIso);
+  fetchData.append('endDateTime', endDateTimeIso || '');
+  fetchData.append('guestLimit', formData.guestsLimit);
+  fetchData.append('ageRestriction', formData.ageRestriction);
+  fetchData.append('locationName', formData.locationName);
+  fetchData.append('locationAddress', formData.eventAddress);
+  fetchData.append('hashtags', JSON.stringify(hashtagsArray));
+
+  try {
+    const response = await fetch(`${SERVER_BASE_URL}/api/event/`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fetchData
+    });
+
+    const data = await response.json();
+
+    if (data?.error) {
+      throw new Error(data.error);
     }
 
-    return isValid;
-  };
-
-  const handleRegister = async () => {
-    if (!validateForm()) return; 
-  };
-
-  // logika wklejania zdjecia i podgladu
-
-    const fileInput = ref(null);
-    const photo = ref(null);
-    const photoPreview = ref(null);
-    const photoError = ref('');
-
-    function uploadPhoto() {
-        fileInput.value?.click();
+    if (response.ok && data.success) {
+      router.push({ path: '/event/dashboard' });
     }
 
-    function handleFileChange(event){
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Walidacja typu pliku
-        if (!file.type.startsWith('image/')) {
-            errors.image = 'Please upload a valid image file';
-            photo.value = null;
-            if (photoPreview.value) {
-                URL.revokeObjectURL(photoPreview.value);
-                photoPreview.value = null;
-            }
-            return;
-        }
-
-        // Walidacja rozmiaru (max 5MB)
-        const maxSizeMB = 5;
-        if (file.size / 1024 / 1024 > maxSizeMB) {
-            errors.image = `Image must be smaller than ${maxSizeMB}MB`;
-            photo.value = null;
-            if (photoPreview.value) {
-                URL.revokeObjectURL(photoPreview.value);
-                photoPreview.value = null;
-            }
-            return;
-        }
-
-        if (photoPreview.value) {
-        URL.revokeObjectURL(photoPreview.value);
-        }
-        photo.value = file;
-        photoPreview.value = URL.createObjectURL(file);
-        photoError.value = '';
-    }
-
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>

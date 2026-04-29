@@ -1,13 +1,13 @@
 <template>
-  <div class="event-card">
+  <div class="event-card" @click="$emit('select', event.eventId)">
     <div class="image-wrapper">
-      <img :src="event.image" :alt="event.title" class="event-img" />
+      <img :src="event.image?.url" :alt="event.title" class="event-img" />
     </div>
     
     <div class="event-details">
-      <h3 class="event-title">{{ event.title }}</h3>
-      <p class="event-info">{{ event.date }}, {{ event.time }}</p>
-      <p class="event-info location">{{ event.location }}</p>
+      <h3 class="event-title">{{ event.eventName }}</h3>
+      <p class="event-info">{{ formatDate(event.eventDateTime) }}</p>
+      <p class="event-info location">Lat: {{ event.locationLatitude || '?' }}, Lng: {{ event.locationLongitude || '?' }}</p>
     </div>
 
     <button 
@@ -21,21 +21,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-defineProps({
-  event: Object
-});
+  import { ref } from 'vue';
 
-const isLiked = ref(false);
-const clicked = ref(false);
+  defineProps({ event: Object });
+  defineEmits (['select']);
 
-const toggleLike = () => {
-  isLiked.value = !isLiked.value;
-  clicked.value = true;
-  setTimeout(() => {
-    clicked.value = false;
-  }, 400);
-};
+  const isLiked = ref(false);
+  const clicked = ref(false);
+
+  const toggleLike = () => {
+    isLiked.value = !isLiked.value;
+    clicked.value = true;
+    setTimeout(() => {
+      clicked.value = false;
+    }, 400);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  };
 </script>
 
 <style scoped>
