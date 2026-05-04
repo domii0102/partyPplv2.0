@@ -1,0 +1,14 @@
+model Notification {
+  notificationId   Int      @id @default(autoincrement())
+  userId           String
+  type             String   @db.VarChar(32)
+  isRead           Boolean  @default(false)
+  relatedEventId   Int?
+  relatedPostId    Int?
+  relatedCommentId Int?
+  createdAt        DateTime @default(now())
+
+  userCredentials UserCredentials @relation(fields: [userId], references: [userId])
+  @@index([userId])
+  @@map("Notification")
+}
