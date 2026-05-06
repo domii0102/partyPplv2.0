@@ -102,9 +102,9 @@ router.post('/', eventExists, isMember, eventNotFinished, createPost);
                 * images: []
             }
     OUTPUT: success: false, error
-    URL:    PUT /api/events/:eventId/forum/posts/:postId
+    URL:    PATCH /api/events/:eventId/forum/posts/:postId
 */
-router.put('/:postId', eventExists, isMember, eventNotFinished, isPostOwner, editPost);
+router.patch('/:postId', eventExists, isMember, eventNotFinished, isPostOwner, editPost);
 
 
 /*

@@ -10,7 +10,10 @@ import accountRouter from './routes/account.js';
 import userRouter from './routes/user.js';
 import eventRouter from './routes/event.js';
 import invitationRouter from './routes/invites.js';
-
+import postRouter from './routes/post.js';
+import commentRouter from './routes/comment.js';
+import notificationRouter from './routes/notification.js';
+import reminderRouter from './routes/reminder.js';
 
 
 const PORT = parseInt(process.env.PORT);
@@ -45,6 +48,10 @@ app.use(authMiddleware);
 app.use("/api/event", eventRouter);
 app.use('/api/events/:eventId/invites', invitationRouter);
 app.use('/api/invites', invitationRouter);
+app.use('/api/events/:eventId/forum/posts', postRouter);
+app.use('/api/events/:eventId/forum/posts/:postId/comments', commentRouter);
+app.use('/api/notifications', notificationRouter);
+app.use('/api/events/:eventId/reminder', reminderRouter);
 
 
 app.use((req, res) => {

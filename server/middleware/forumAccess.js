@@ -6,7 +6,8 @@ export const eventExists = async (req, res, next) => {
     try {
 
         const event = await prisma.event.findUnique({
-            where: { eventId: eventId }
+            where: { eventId: eventId },
+            include: { forum: true }
         });
 
         if (!event || event.deletedAt) {
