@@ -9,6 +9,7 @@ const router = express.Router({ mergeParams: true });
     Wyświetlenie listy komentarzy danego posta
     MIDDLEWARE:  eventExists, isMember
     PARAMS: eventId, postId
+    QUERY: page, limit
     OUTPUT: success: true, message,
             data: [
                 {   
@@ -51,8 +52,7 @@ router.get('/', eventExists, isMember, showComments);
                 * author: {
                         * nickname,
                         * avatar
-                    },
-                * replies: []
+                    }
             }
     OUTPUT: success: false, error
     URL:    POST /api/events/:eventId/forum/posts/:postId/comments
