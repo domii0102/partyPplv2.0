@@ -8,41 +8,54 @@ export async function showNotifications(req, res) {
     const onlyUnread = req.query.onlyUnread === 'true';
 
     try {
-        const notifications = await  prisma.Notification.findMany({
+        const data = await  prisma.notification.findMany({
             where: { 
                 userId, 
                 ...(onlyUnread && { isRead: false }) 
             },
-            orderBy: { createdAt: 'asc' }
-        }); // Zliczamy wszystkie powiadomienia
-
-        if (!data) return res.status(404).json({ success: false, error: "No notifications to show" });
-        
-        const notifications = data.map((comment) => ({
-            commentId: comment.commentId,
-            textContent: comment.textContent,
-            createdAt: comment.createdAt,
-            author: {
-                nickname: comment.userCredentials.userProfile.nickname,
-                avatar: comment.userCredentials.userProfile.avatar?.url ?? null
-            },
-            replies: comment.replies.map((reply) => ({
-                commentId: reply.commentId,
-                textContent: reply.textContent,
-                createdAt: reply.createdAt,
-                parentId: reply.parentId,
-                author: {
-                    nickname: reply.userCredentials.userProfile.nickname,
-                    avatar: reply.userCredentials.userProfile.avatar?.url ?? null
+            include: {
+                triggeredBy: {
+                    select: {
+                        userProfile: {
+                            select: {
+                                nickname: true,
+                                name: true,
+                                surname: true,
+                                avatar: { select: { url: true } }
+                            }
+                        }
+                    }
+                },
+                relatedEvent: {
+                    select: { eventName: true }
                 }
-            }))
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+  
+        const notifications = data.map((notification) => ({
+            notificationId: notification.notificationId,
+            type: notification.type,
+            isRead: notification.isRead,
+            relatedEvent: {
+                relatedEventId: notification.relatedEventId,
+                relatedEventName: notification.relatedEvent.eventName
+            },
+            relatedPostId: notification.relatedPostId,
+            relatedCommentId: notification.relatedCommentId,
+            createdAt: notification.createdAt,
+            author: {
+                triggeredById: notification.triggeredById,
+                triggeredByName: notification.triggeredBy.userProfile.nickname,
+                triggeredByNickname: notification.triggeredBy.userProfile.name,
+                triggeredByProfilePicture: notification.triggeredBy.userProfile.avatar?.url ?? null
+            }
         }));
 
         return res.status(200).json({ 
             success: true, 
-            message: `Pomyślnie zebrano i wyświetlono ${limit} komentarzy z ${total} odnośnie postu ${postId}`,
-            data: comments,
-            pagination: { total, page, limit }
+            message: `Pomyślnie zebrano i wyświetlono powiadomienia`,
+            data: notifications
         });
             
     } catch (err) {
@@ -52,65 +65,85 @@ export async function showNotifications(req, res) {
 }
 
 export async function readAllNotifications(req, res) {
-    const commentId = parseInt(req.params.commentId);
+    const userId = req.user.userId;
   
-    // Walidacja
-    const validation = createCommentSchema.safeParse(req.body);
-    if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-    
-    const { textContent } = validation.data;
-
-    if (textContent === undefined) return res.status(404).json({ success: false, error: "No changes to apply" });
-
     try {
-        const updated = await prisma.comment.update({
-            where: { commentId },
-            data: { textContent }
+        const data = await  prisma.notification.findMany({
+            where: { 
+                userId, 
+                ...({ isRead: false })
+            },
+            isRead: true
         });
 
-        return res.status(200).json({ 
+        return res.status(204).json({ 
             success: true, 
-            message: "Komentarz został zaktualizowany.",
-            data: {
-                commentId: commentId,
-                textContent: updated.textContent
-            }
+            message: "Powiadomienia zostały odczytane."
         });
-
     } catch (err) {
-        console.error("Nastąpił błąd podczas zapisywania zmian w komentarzu.", err);
+        console.error("Nastąpił błąd podczas zmiany stanu powiadomień.", err);
         return res.status(500).json({ success: false, error: "A database error has occurred" });
     }
 }
 
 export async function readNotification(req, res) {
-    const commentId = parseInt(req.params.commentId);
+    const userId = req.user.userId;
+    const notificationId = parseInt(req.params.notificationId);
   
-    // Walidacja
-    const validation = createCommentSchema.safeParse(req.body);
-    if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-    
-    const { textContent } = validation.data;
-
-    if (textContent === undefined) return res.status(404).json({ success: false, error: "No changes to apply" });
-
     try {
-        const updated = await prisma.comment.update({
-            where: { commentId },
-            data: { textContent }
+        const data = await  prisma.notification.findMany({
+            where: { 
+                notificationId,
+                ...({ isRead: false })
+            },
+            isRead: true
         });
 
-        return res.status(200).json({ 
+        return res.status(204).json({ 
             success: true, 
-            message: "Komentarz został zaktualizowany.",
+            message: "Powiadomienie zostało odczytane."
+        });
+    } catch (err) {
+        console.error("Nastąpił błąd podczas zmiany stanu powiadomień.", err);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
+    }
+}
+
+export async function sendReminder(req, res) {
+    const eventId = parseInt(req.event.eventId);
+
+    try {
+        const guests = await prisma.eventGuest.findMany({
+            where: { eventId },
+            select: {
+                userId: true
+            }
+        });
+
+        if (!guests.length) return res.status(404).json({ success: false, error: "No user to send reminders to" });
+
+        const notifictions = guests.map(guest => ({
+            userId: guest.userId,
+            type: "reminder",
+            relatedEvent: guest.eventId,
+            triggeredById: req.user.userId
+        }));
+
+        await prisma.notification.createMany({
+            data: notifictions
+        });
+
+
+        return res.status(201).json({ 
+            success: true, 
+            message: `Pomyślnie utworzono przypomnienia.`,
             data: {
-                commentId: commentId,
-                textContent: updated.textContent
+                sentTo: guests.length
             }
         });
 
     } catch (err) {
-        console.error("Nastąpił błąd podczas zapisywania zmian w komentarzu.", err);
-        return res.status(500).json({ success: false, error: "A database error has occurred" });
+        console.error(err);
+        return res.status(500).json({ success: false, error: err.message });
     }
 }

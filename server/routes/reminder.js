@@ -1,7 +1,7 @@
 import express from 'express';
 import { eventExists } from '../middleware/forumAccess.js';
 import { isEventOwner } from '../middleware/postOwner.js';
-import { sendReminder } from '../controllers/reminderController.js';
+import { sendReminder } from '../controllers/notificationController.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -9,9 +9,9 @@ const router = express.Router({ mergeParams: true });
     Wysłanie przypomnienia do wszystkich członków eventu
     MIDDLEWARE:  eventExists, isEventOwner
     PARAMS:      eventId
-    OUTPUT:      success: true,
+    OUTPUT:      success: true, message,
                  data: {
-                     sentTo
+                    * sentTo: []
                  }
     ERROR:       success: false, error
     URL:         POST /api/events/:eventId/reminder

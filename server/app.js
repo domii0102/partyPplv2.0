@@ -51,7 +51,7 @@ app.use('/api/invites', invitationRouter);
 app.use('/api/events/:eventId/forum/posts', postRouter);
 app.use('/api/events/:eventId/forum/posts/:postId/comments', commentRouter);
 app.use('/api/notifications', notificationRouter);
-app.use('/api/events/:eventId/reminder', reminderRouter);
+app.use('/api/events/:eventId/reminder', notificationRouter);
 
 
 app.use((req, res) => {

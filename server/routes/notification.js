@@ -12,10 +12,20 @@ const router = express.Router({ mergeParams: true });
                     * notificationId,
                     * type,
                     * isRead,
-                    * relatedEventId,
+                    * relatedEvent: {
+                        * relatedEventId,
+                        * relatedEventName
+                        },
                     * relatedPostId,
                     * relatedCommentId,
-                    * createdAt
+                    * createdAt,
+                    * author: {
+                        * triggeredById,
+                        * triggeredByName,
+                        * triggeredBySurname,
+                        * triggeredByNickname,
+                        * triggeredByProfilePicture
+                        }
                 }, ...
             ]
     OUTPUT: success: false, error
