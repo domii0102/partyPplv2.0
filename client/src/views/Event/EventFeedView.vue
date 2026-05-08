@@ -148,6 +148,9 @@ const store = useUserStore();
 const loading = ref(false);
 const searchQuery = ref("");
 
+const showFilters = ref(false);
+const sortBy = ref("default");
+
 const events = ref([]);
 const status = reactive({
   error: null,
@@ -196,10 +199,6 @@ watch(searchQuery, () => {
 
 onMounted(fetchEvents);
 
-const searchQuery = ref("");
-const showFilters = ref(false);
-const sortBy = ref("default");
-
 const filters = ref({
   city: "",
   date: "",
@@ -221,63 +220,6 @@ function resetAllFilters() {
   sortBy.value = "default";
   resetModalFilters();
 }
-
-const events = ref([
-  {
-    id: 1,
-    title: "Hulanki w garażu",
-    date: "02.06.2026",
-    time: "22:00",
-    location: "Białystok, ul. Garażowa 69",
-    hashtags: "#garage #party",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-  {
-    id: 2,
-    title: "Wielki test makowców",
-    date: "23.12.2025",
-    time: "16:00",
-    location: "Grajewo",
-    hashtags: "#food #christmas",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-  {
-    id: 3,
-    title: "67 urodziny Bożenki",
-    date: "15.06.2026",
-    time: "23:00",
-    location: "Bielsk Podlaski, Wrzosowa 7",
-    hashtags: "#birthday #party",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-  {
-    id: 4,
-    title: "Wigilia klasowa",
-    date: "22.12.2032",
-    time: "13:00",
-    location: "Białystok, al. Tysiąclecia 14",
-    hashtags: "#school #christmas",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-  {
-    id: 5,
-    title: "67 urodziny Evil Bożenki",
-    date: "15.06.2026",
-    time: "23:13",
-    location: "Bielsk Podlaski, Wrzosowa 13",
-    hashtags: "#birthday #night",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-  {
-    id: 6,
-    title: "Rave w mojej stodole",
-    date: "20.04.2026",
-    time: "22:00",
-    location: "Lipinki Łużyckie, Łączna 46",
-    hashtags: "#rave #music",
-    image: "https://placehold.co/600x400/2a1b33/white",
-  },
-]);
 
 const hasActiveFilters = computed(() => {
   return (
