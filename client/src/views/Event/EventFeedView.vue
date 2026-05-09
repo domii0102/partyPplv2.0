@@ -24,8 +24,7 @@
 
       <div class="toolbar-section">
         <div class="results-info">
-          Showing {{ filteredEvents.length }} event<span
-            v-if="filteredEvents.length !== 1"
+          Showing {{ events.length }} event<span v-if="events.length !== 1"
             >s</span
           >
         </div>
@@ -52,21 +51,21 @@
 
         <div v-if="filters.city" class="filter-chip">
           City: {{ filters.city }}
-          <button @click="filters.city = ''">
+          <button @click="removeFilter('city')">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
         <div v-if="filters.date" class="filter-chip">
           Date: {{ filters.date }}
-          <button @click="filters.date = ''">
+          <button @click="removeFilter('date')">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
         <div v-if="filters.hashtags" class="filter-chip">
           Hashtags: {{ filters.hashtags }}
-          <button @click="filters.hashtags = ''">
+          <button @click="removeFilter('hashtags')">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
@@ -81,9 +80,9 @@
         <div class="title-underline"></div>
       </div>
 
-      <div v-if="filteredEvents.length" class="events-grid">
+      <div v-if="events.length" class="events-grid">
         <EventCard
-          v-for="event in filteredEvents"
+          v-for="event in events"
           :key="event.id"
           :event="event"
           @select="router.push(`/event/dashboard/${$event}`)"
@@ -157,6 +156,12 @@ const status = reactive({
   empty: false,
 });
 
+const filters = ref({
+  city: "",
+  date: "",
+  hashtags: "",
+});
+
 const fetchEvents = async () => {
   loading.value = true;
   status.error = null;
@@ -169,6 +174,25 @@ const fetchEvents = async () => {
     //Trzeba dodac wyszukiwanie i filtry po stronie backendu!!!
     if (searchQuery.value)
       fetchURL.searchParams.append("search", searchQuery.value);
+
+    if (filters.value.city)
+      fetchURL.searchParams.append("city", filters.value.city);
+
+    if (filters.value.date)
+      fetchURL.searchParams.append("date", filters.value.date);
+
+    if (filters.value.hashtags) {
+      const hashtagsArray = filters.value.hashtags
+        .split(" ")
+        .map((tag) => tag.replace("#", "").trim())
+        .filter(Boolean);
+
+      hashtagsArray.forEach((tag) => {
+        fetchURL.searchParams.append("hashtags", tag);
+      });
+    }
+
+    if (sortBy.value) fetchURL.searchParams.append("sortBy", sortBy.value);
 
     const res = await fetch(fetchURL, {
       method: "GET",
@@ -193,32 +217,33 @@ const fetchEvents = async () => {
   }
 };
 
-watch(searchQuery, () => {
+watch([searchQuery, sortBy], () => {
   fetchEvents();
 });
 
 onMounted(fetchEvents);
 
-const filters = ref({
-  city: "",
-  date: "",
-  hashtags: "",
-});
-
-function applyFilters() {
+async function applyFilters() {
   showFilters.value = false;
+  await fetchEvents();
 }
 
-function resetModalFilters() {
+async function resetModalFilters() {
   filters.value.city = "";
   filters.value.date = "";
   filters.value.hashtags = "";
+  await fetchEvents();
 }
 
-function resetAllFilters() {
+async function resetAllFilters() {
   searchQuery.value = "";
   sortBy.value = "default";
   resetModalFilters();
+}
+
+async function removeFilter(key) {
+  filters.value[key] = "";
+  await fetchEvents();
 }
 
 const hasActiveFilters = computed(() => {
@@ -229,60 +254,6 @@ const hasActiveFilters = computed(() => {
     !!filters.value.hashtags
   );
 });
-
-const filteredEvents = computed(() => {
-  let result = events.value.filter((event) => {
-    const matchesSearch =
-      !searchQuery.value ||
-      event.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      event.hashtags.toLowerCase().includes(searchQuery.value.toLowerCase());
-
-    const matchesCity =
-      !filters.value.city ||
-      event.location.toLowerCase().includes(filters.value.city.toLowerCase());
-
-    const matchesDate =
-      !filters.value.date ||
-      formatDateForInput(event.date) === filters.value.date;
-
-    const matchesHashtags =
-      !filters.value.hashtags ||
-      event.hashtags
-        .toLowerCase()
-        .includes(filters.value.hashtags.toLowerCase());
-
-    return matchesSearch && matchesCity && matchesDate && matchesHashtags;
-  });
-
-  if (sortBy.value === "soonest") {
-    result = [...result].sort(
-      (a, b) => parseEventDate(a.date, a.time) - parseEventDate(b.date, b.time),
-    );
-  } else if (sortBy.value === "latest") {
-    result = [...result].sort(
-      (a, b) => parseEventDate(b.date, b.time) - parseEventDate(a.date, a.time),
-    );
-  } else if (sortBy.value === "title-asc") {
-    result = [...result].sort((a, b) => a.title.localeCompare(b.title));
-  } else if (sortBy.value === "title-desc") {
-    result = [...result].sort((a, b) => b.title.localeCompare(a.title));
-  }
-
-  return result;
-});
-
-function formatDateForInput(dateString) {
-  const parts = dateString.split(".");
-  if (parts.length !== 3) return "";
-  const [day, month, year] = parts;
-  return `${year}-${month}-${day}`;
-}
-
-function parseEventDate(dateString, timeString) {
-  const [day, month, year] = dateString.split(".");
-  return new Date(`${year}-${month}-${day}T${timeString}`);
-}
 </script>
 
 <style scoped>

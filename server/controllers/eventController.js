@@ -45,17 +45,53 @@ export async function getEvent(req, res) {
 
 //POPRAWIĆ JAK BĘDZIE DOŁĄCZANIE DO WYDARZEŃ
 export async function getEvents(req, res) {
-  const userId = req.user.userId;
   const visibility = req.query.visibility || null;
   const search = req.query.search || null;
-  const mindist = req.query.mindist ? Number(req.query.mindist) : null;
-  const maxdist = req.query.maxdist ? Number(req.query.maxdist) : null;
-  const minguest = req.query.minguest ? Number(req.query.minguest) : null;
-  const maxguest = req.query.maxguest ? Number(req.query.maxguest) : null;
+  const city = req.query.city || null;
+  const hashtags = req.query.hashtags
+    ? Array.isArray(req.query.hashtags)
+      ? req.query.hashtags
+      : [req.query.hashtags]
+    : [];
   const date = req.query.date ? new Date(req.query.date) : null;
+  const orderBy = req.query.sortBy || "default";
+
+  let prismaOrderBy = undefined;
+
+  switch (orderBy) {
+    case "soonest":
+      prismaOrderBy = {
+        eventDateTime: "desc",
+      };
+      break;
+
+    case "latest":
+      prismaOrderBy = {
+        eventDateTime: "asc",
+      };
+      break;
+
+    case "title-asc":
+      prismaOrderBy = {
+        eventName: "asc",
+      };
+      break;
+
+    case "title-desc":
+      prismaOrderBy = {
+        eventName: "desc",
+      };
+      break;
+
+    default:
+      prismaOrderBy = {
+        createdAt: "desc",
+      };
+  }
 
   try {
     let events;
+
     if (visibility === "public") {
       events = await prisma.event.findMany({
         where: {
@@ -70,34 +106,49 @@ export async function getEvents(req, res) {
                 },
               },
               {
-                hashtags: {
-                  some: {
-                    name: {
-                      contains: search,
-                      mode: "insensitive",
-                    },
-                  },
+                description: {
+                  contains: search,
+                  mode: "insensitive",
                 },
               },
             ],
           }),
-          ...((minguest || maxguest) && {
-            guestLimit: {
-              ...(minguest && { gte: minguest }),
-              ...(maxguest && { lte: maxguest }),
+          ...(city && {
+            locationAddress: {
+              contains: city,
+              mode: "insensitive",
             },
           }),
-
           ...(date && {
             eventDateTime: {
-              gte: date,
-              lte: new Date(date.setHours(23, 59, 59, 999)),
+              gte: new Date(new Date(date).setHours(0, 0, 0, 0)),
+              lte: new Date(new Date(date).setHours(23, 59, 59, 999)),
+            },
+          }),
+          ...(hashtags.length > 0 && {
+            hashtags: {
+              some: {
+                OR: hashtags.map((tag) => ({
+                  name: {
+                    equals: tag,
+                    mode: "insensitive",
+                  },
+                })),
+              },
             },
           }),
         },
-        include: { image: true },
+        orderBy: prismaOrderBy,
+        include: {
+          image: true,
+          hashtags: true,
+        },
       });
-      return res.status(200).json({ success: true, data: events });
+
+      return res.status(200).json({
+        success: true,
+        data: events,
+      });
     } else if (visibility === "mine") {
       events = await prisma.event.findMany({
         where: { deletedAt: null, organizerId: userId },
