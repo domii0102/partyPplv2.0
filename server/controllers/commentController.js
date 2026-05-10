@@ -3,7 +3,6 @@ import { createCommentSchema } from '../schemas/createCommentSchema.js';
 
 
 export async function showComments(req, res) {
-
     const postId = parseInt(req.params.postId);
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -15,6 +14,7 @@ export async function showComments(req, res) {
                 where: { postId, parentId: null },
                 skip,
                 take: limit,
+                orderBy: { createdAt: 'asc' },
                 include: {
                     userCredentials: {
                         select: {
@@ -39,15 +39,12 @@ export async function showComments(req, res) {
                                 }
                             }
                         }
-                    },
-                    orderBy: { createdAt: 'asc' }
+                    }
                 }
             }),
             prisma.comment.count({ where: { postId } }) // Zliczamy wszystkie komentarze, główne i odpowiedzi
         ]);
 
-        if (!data) return res.status(404).json({ success: false, error: "No comments to show" });
-        
         const comments = data.map((comment) => ({
             commentId: comment.commentId,
             textContent: comment.textContent,
@@ -87,7 +84,6 @@ export async function createComment(req, res) {
     // Walidacja
     const validation = createCommentSchema.safeParse(req.body);
     if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-      
     const { textContent } = validation.data;
 
     try {
@@ -139,7 +135,6 @@ export async function createReply(req, res) {
     // Walidacja
     const validation = createCommentSchema.safeParse(req.body);
     if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-      
     const { textContent } = validation.data;
 
     try {
@@ -191,10 +186,7 @@ export async function editComment(req, res) {
     // Walidacja
     const validation = createCommentSchema.safeParse(req.body);
     if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-    
     const { textContent } = validation.data;
-
-    if (textContent === undefined) return res.status(404).json({ success: false, error: "No changes to apply" });
 
     try {
         const updated = await prisma.comment.update({
@@ -218,7 +210,6 @@ export async function editComment(req, res) {
 }
 
 export async function deleteComment(req, res) {
-
   const postId = parseInt(req.params.postId);
   const commentId = parseInt(req.params.commentId);
   const userId = req.user.userId;
@@ -226,24 +217,20 @@ export async function deleteComment(req, res) {
 
   try {
     const comment = await prisma.comment.findUnique({ where: { commentId } });
-  
     if (!comment) return res.status(404).json({ success: false, error: "Comment not found" });
+    
+    const post = await prisma.post.findUnique({ where: { postId: comment.postId } });
+    if (!comment) return res.status(404).json({ success: false, error: "Post not found" });
 
-    if (comment.authorId !== userId && req.event.organizerId !== userId && userRole !== 'admin') {
+    if (comment.authorId !== userId && post.authorId !==userId && req.event.organizerId !== userId && userRole !== 'admin') {
         return res.status(403).json({ success: false, error: "Access denied" });
     }
 
-    await prisma.comment.delete({
-        where: { commentId }
-    });
+    await prisma.comment.delete({ where: { commentId } });
 
-    return res.status(200).json({ 
-        success: true, 
-        message: "Komentarz został usunięty.",
-     });
-
+    return res.status(200).json({ success: true, message: "Komentarz został usunięty." });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, error: "A database error has occurred" });
+        console.error(err);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
 }

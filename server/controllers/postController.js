@@ -3,7 +3,6 @@ import { createPostSchema, editPostSchema } from "../schemas/createPostSchema.js
 
 
 export async function showEventPosts(req, res) {
-
     const forumId = req.event.forum.forumId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -41,7 +40,7 @@ export async function showEventPosts(req, res) {
             prisma.post.count({ where: { forumId } }) // Zliczanie wszystkich postów z danego forum
         ]);
 
-        if (!data) return res.status(404).json({ success: false, error: "No posts to show" });
+        if (data.length = 0) return res.status(404).json({ success: false, error: "No posts to show" });
         
         const posts = data.map((post) => ({
             postId: post.postId,
@@ -70,7 +69,6 @@ export async function showEventPosts(req, res) {
 }
 
 export async function showPost(req, res) {
-
     const postId = parseInt(req.params.postId);
     const forumId = req.event.forum.forumId;
 
@@ -100,7 +98,7 @@ export async function showPost(req, res) {
             }
         });
 
-        if (!data) return res.status(404).json({ success: false, error: "Post not fund" });
+        if (!data) return res.status(404).json({ success: false, error: "Post not found" });
         
         const post = {
             postId: data.postId,
@@ -133,7 +131,6 @@ export async function createPost(req, res) {
     // Walidacja
     const validation = createPostSchema.safeParse(req.body);
     if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-      
     const { textContent, images } = validation.data;
 
     try {
@@ -192,18 +189,16 @@ export async function editPost(req, res) {
     // Walidacja
     const validation = editPostSchema.safeParse(req.body);
     if (!validation.success) return res.status(400).json({ success: false, details: validation.error.format() });
-    
     const { textContent, images } = validation.data;
 
     const updatedData = {};
-
     if (textContent !== undefined) updatedData.textContent = textContent;
     if (images !== undefined) updatedData.images = {
         deleteMany: {},
         create: images.map(img => ({ url: img.url, publicId: img.publicId }) )
     }
 
-    // Sprawdzanie czy są jakieś polaa do zmiany
+    // Sprawdzanie czy są jakieś pola do zmiany
     if (Object.keys(updatedData).length === 0) { // Czy updatedData ma jakieś pola/klucze biektu
         return res.status(400).json({ success: false, error: "No fields to update" });
     }
@@ -226,7 +221,6 @@ export async function editPost(req, res) {
                 images: updated.images
             }
         });
-
     } catch (err) {
         console.error("Nastąpił błąd podczas zapisywania zmian w poście.", err);
         return res.status(500).json({ success: false, error: "A database error has occurred" });
@@ -234,7 +228,6 @@ export async function editPost(req, res) {
 }
 
 export async function deletePost(req, res) {
-
   const postId = parseInt(req.params.postId);
   const userId = req.user.userId;
   const userRole = req.user.userRole;
@@ -248,18 +241,12 @@ export async function deletePost(req, res) {
         return res.status(403).json({ success: false, error: "Access denied" });
     }
 
-    await prisma.post.delete({
-        where: { postId }
-    });
+    await prisma.post.delete({ where: { postId } });
 
-    return res.status(200).json({ 
-        success: true, 
-        message: "Post został usunięty.",
-     });
-
+    return res.status(200).json({ success: true, message: "Post został usunięty." });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, error: "A database error has occurred" });
+        console.error(err);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
 }
 
@@ -268,16 +255,12 @@ export async function likePost(req, res) {
     const authorId = req.user.userId;
 
     try {
-        const reactionCheck = await prisma.postLike.findUnique({
-            where: { authorId_postId: { authorId, postId } }
-        });
+        const reactionCheck = await prisma.postLike.findUnique({ where: { authorId_postId: { authorId, postId } } });
 
         if (reactionCheck) {
-            await prisma.postLike.delete({
-                where: { authorId_postId: { authorId, postId } }
-            });
+            await prisma.postLike.delete({ where: { authorId_postId: { authorId, postId } } });
         } else {
-            const post = await prisma.postLike.create({
+            await prisma.postLike.create({
                 data: {
                     authorId: req.user.userId,
                     postId
@@ -287,7 +270,7 @@ export async function likePost(req, res) {
 
         const likesCount = await prisma.postLike.count({ where: { postId } });
 
-        return res.status(201).json({ 
+        return res.status(200).json({ 
             success: true, 
             message: `Pomyślnie plubiono post.`,
             data: {
@@ -295,7 +278,6 @@ export async function likePost(req, res) {
                 likesCount
             }
         });
-
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, error: err.message });

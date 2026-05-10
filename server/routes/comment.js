@@ -33,7 +33,7 @@ const router = express.Router({ mergeParams: true });
                     ]
                 }, ...
             ]
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    GET /api/events/:eventId/forum/posts/:postId/comments
 */
 router.get('/', eventExists, isMember, showComments);
@@ -54,7 +54,7 @@ router.get('/', eventExists, isMember, showComments);
                         * avatar
                     }
             }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    POST /api/events/:eventId/forum/posts/:postId/comments
 */
 router.post('/', eventExists, isMember, eventNotFinished, createComment);
@@ -66,7 +66,7 @@ router.post('/', eventExists, isMember, eventNotFinished, createComment);
     ! Usunąć komentarz może: autor komentarza, autor postu, właściciel wydarzenia, admin
     PARAMS: eventId, postId, commentId
     OUTPUT: success: true, message
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    DELETE /api/events/:eventId/forum/posts/:postId/comments/:commentId
 */
 router.delete('/:commentId', eventExists, isMember, deleteComment);
@@ -88,7 +88,7 @@ router.delete('/:commentId', eventExists, isMember, deleteComment);
                     },
                 * parentId
             }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    POST /api/events/:eventId/forum/posts/:postId/comments/:commentId/reply
 */
 router.post('/:commentId/reply', eventExists, isMember, eventNotFinished, createReply);
@@ -104,10 +104,10 @@ router.post('/:commentId/reply', eventExists, isMember, eventNotFinished, create
                 * commentId,
                 * textContent
             }
-    OUTPUT: success: false, error
-    URL:    PUT /api/events/:eventId/forum/posts/:postId/comments/:commentId
+    ERROR: success: false, error
+    URL:    PATCH /api/events/:eventId/forum/posts/:postId/comments/:commentId
 */
-router.put('/:commentId', eventExists, isMember, eventNotFinished, isCommentOwner, editComment);
+router.patch('/:commentId', eventExists, isMember, eventNotFinished, isCommentOwner, editComment);
 
 
 export default router;

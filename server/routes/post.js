@@ -25,7 +25,7 @@ const router = express.Router({ mergeParams: true });
                     * commentsCount 
                 }, ...
             ]
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    GET /api/events/:eventId/forum/posts
 */
 router.get('/', eventExists, isMember, showEventPosts);
@@ -48,7 +48,7 @@ router.get('/', eventExists, isMember, showEventPosts);
                     * likesCount,
                     * commentsCount
                 }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    GET /api/events/:eventId/forum/posts/:postId
 */
 router.get('/:postId', eventExists, isMember, showPost);
@@ -77,7 +77,7 @@ router.get('/:postId', eventExists, isMember, showPost);
                     },
                 * images: []
             }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    POST /api/events/:eventId/forum/posts
 */
 router.post('/', eventExists, isMember, eventNotFinished, createPost);
@@ -101,7 +101,7 @@ router.post('/', eventExists, isMember, eventNotFinished, createPost);
                 * textContent,
                 * images: []
             }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    PATCH /api/events/:eventId/forum/posts/:postId
 */
 router.patch('/:postId', eventExists, isMember, eventNotFinished, isPostOwner, editPost);
@@ -113,7 +113,7 @@ router.patch('/:postId', eventExists, isMember, eventNotFinished, isPostOwner, e
     ! Usunąć post może: autor, właściciel wydarzenia, admin
     PARAMS: eventId, postId
     OUTPUT: success: true, message
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    DELETE /api/events/:eventId/forum/posts/:postId
 */
 router.delete('/:postId', eventExists, isMember, deletePost);
@@ -128,7 +128,7 @@ router.delete('/:postId', eventExists, isMember, deletePost);
                 * liked: true/false,
                 * likesCount
             }
-    OUTPUT: success: false, error
+    ERROR: success: false, error
     URL:    POST /api/events/:eventId/forum/posts/:postId/like
 */
 router.post('/:postId/like', eventExists, isMember, eventNotFinished, likePost);
