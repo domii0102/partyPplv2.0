@@ -1,6 +1,6 @@
 import prisma from "../db.js";
 
-export const eventExists =  (req, res, next) => {
+export const eventExists = async (req, res, next) => {
     const eventId = parseInt(req.params.eventId);
 
     try {
@@ -20,6 +20,9 @@ export const isMember = async (req, res, next) => {
     const userId = req.user.userId;
     const event = req.event;
 
+        console.log('userId:', userId);
+    console.log('organizerId:', event.organizerId);
+    console.log('są równe:', event.organizerId === userId);
     if (event.organizerId === userId) return next();
 
     try {

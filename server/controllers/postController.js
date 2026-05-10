@@ -1,5 +1,6 @@
 import prisma from "../db.js";
 import { createPostSchema, editPostSchema } from "../schemas/createPostSchema.js"
+import { notify, notifyAllMembers, emitToEvent } from '../services/notificationService.js';
 
 
 export async function showEventPosts(req, res) {
@@ -40,8 +41,6 @@ export async function showEventPosts(req, res) {
             prisma.post.count({ where: { forumId } }) // Zliczanie wszystkich postów z danego forum
         ]);
 
-        if (data.length = 0) return res.status(404).json({ success: false, error: "No posts to show" });
-        
         const posts = data.map((post) => ({
             postId: post.postId,
             textContent: post.textContent,
@@ -161,6 +160,22 @@ export async function createPost(req, res) {
             }
         });
 
+        // Powiadomienia
+        await notifyAllMembers(req.event.eventId, 'new_post', req.user.userId, {
+            eventId: req.event.eventId,
+            postId: post.postId
+        });
+
+        emitToEvent(req.event.eventId, 'new_post', {
+            postId: post.postId,
+            textContent: post.textContent,
+            createdAt: post.createdAt,
+            author: {
+                nickname: post.userCredentials.userProfile.nickname,
+                avatar: post.userCredentials.userProfile.avatar?.url ?? null
+            }
+        });
+
         return res.status(201).json({ 
             success: true, 
             message: `Pomyślnie stworzono post.`,
@@ -207,9 +222,13 @@ export async function editPost(req, res) {
         const updated = await prisma.post.update({
             where: { postId, forumId },
             data: updatedData,
-            include: {
-                images: { select: { url: true, publicId: true } }
-            }
+            include: { images: { select: { url: true, publicId: true } } }
+        });
+
+        emitToEvent(req.event.eventId, 'post_updated', {
+            postId,
+            textContent: updated.textContent,
+            images: updated.images
         });
 
         return res.status(200).json({ 
@@ -241,7 +260,11 @@ export async function deletePost(req, res) {
         return res.status(403).json({ success: false, error: "Access denied" });
     }
 
+    await prisma.comment.deleteMany({ where: { postId } });
+    await prisma.postLike.deleteMany({ where: { postId } });
     await prisma.post.delete({ where: { postId } });
+
+    emitToEvent(req.event.eventId, 'post_deleted', { postId });
 
     return res.status(200).json({ success: true, message: "Post został usunięty." });
   } catch (err) {
@@ -256,6 +279,8 @@ export async function likePost(req, res) {
 
     try {
         const reactionCheck = await prisma.postLike.findUnique({ where: { authorId_postId: { authorId, postId } } });
+        const post = await prisma.post.findUnique({ where: { postId } });
+        if (!post) return res.status(404).json({ success: false, error: "Post not found" });
 
         if (reactionCheck) {
             await prisma.postLike.delete({ where: { authorId_postId: { authorId, postId } } });
@@ -269,6 +294,19 @@ export async function likePost(req, res) {
         }
 
         const likesCount = await prisma.postLike.count({ where: { postId } });
+
+        if (!reactionCheck && post.authorId !== req.user.userId) {
+            await notify(post.authorId, 'new_like', req.user.userId, {
+                eventId: req.event.eventId,
+                postId
+            });
+        }
+
+        emitToEvent(req.event.eventId, 'post_liked', {
+            postId,
+            liked: !reactionCheck,
+            likesCount
+        });
 
         return res.status(200).json({ 
             success: true, 

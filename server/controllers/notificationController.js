@@ -1,4 +1,5 @@
 import prisma from "../db.js";
+import { io } from '../app.js';
 
 
 export async function showNotifications(req, res) {
@@ -100,7 +101,7 @@ export async function readNotification(req, res) {
 }
 
 export async function sendReminder(req, res) {
-    const eventId = parseInt(req.event.eventId);
+    const eventId = req.event.eventId;
 
     try {
         const guests = await prisma.eventGuest.findMany({
@@ -118,6 +119,13 @@ export async function sendReminder(req, res) {
         }));
 
         await prisma.notification.createMany({ data: notifictions });
+
+        guests.forEach(guest => {
+            io.to(`user_${guest.userId}`).emit('notification', {
+                type: 'reminder',
+                relatedEventId: eventId
+            });
+        });
 
         return res.status(201).json({ 
             success: true, 

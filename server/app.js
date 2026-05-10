@@ -13,16 +13,56 @@ import invitationRouter from './routes/invites.js';
 import postRouter from './routes/post.js';
 import commentRouter from './routes/comment.js';
 import notificationRouter from './routes/notification.js';
-import reminderRouter from './routes/reminder.js';
+import { Server } from "socket.io";
+import jwt from 'jsonwebtoken';
 
-
+const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL
 const PORT = parseInt(process.env.PORT);
+const JWT_SECRET = process.env.JWT_SECRET;
 
 var app = express();
 const server = createServer(app);
 
-const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL
+// Socket setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_BASE_URL,
+    credentials: true
+  }
+});
 
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(new Error('Unauthorized'));
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    socket.user = decoded;
+    next();
+  } catch { next(new Error('Invalid token')); }
+});
+
+io.on('connection', (socket) => {
+    console.log(`User connected: ${socket.user.userId}`);
+
+    //Prywatny pokój (dla powiadomień)
+    socket.join(`user_${socket.user.userId}`);
+
+    //Pokój eventu (dla aktualizacji forum)
+    socket.on('join_event', (eventId) => {
+        socket.join(`event_${eventId}`);
+        console.log(`User ${socket.user.userId} joined event_${eventId}`);
+    });
+
+    socket.on('leave_event', (eventId) => {
+        socket.leave(`event_${eventId}`);
+        console.log(`User ${socket.user.userId} left event_${eventId}`);
+    });
+
+    socket.on('disconnect', () => { console.log(`User disconnected: ${socket.user.userId}`); });
+});
+
+export { io };
 
 app.use(cors({
   origin: CLIENT_BASE_URL,
@@ -41,23 +81,28 @@ app.get(["/","/home"], (req, res) => {
   res.send("<h2>Strona główna</h2>");
 })*/
 
+// Dostępne bez zalogowania
 app.use("/api/account", accountRouter);
 app.use("/api/user", userRouter);
 app.use("/api/public", invitationRouter);
+
 app.use(authMiddleware); 
+
+// Event + zaproszenia
 app.use("/api/event", eventRouter);
 app.use('/api/events/:eventId/invites', invitationRouter);
 app.use('/api/invites', invitationRouter);
+
+// Forum (posty + komentarze)
 app.use('/api/events/:eventId/forum/posts', postRouter);
 app.use('/api/events/:eventId/forum/posts/:postId/comments', commentRouter);
-app.use('/api/notifications', notificationRouter);
-app.use('/api/events/:eventId/reminder', notificationRouter);
 
+// Powiadomienia
+app.use('/api/notifications', notificationRouter);
 
 app.use((req, res) => {
     res.status(404).send("<h2>404 - nie znaleziono strony</h2>");
 });
-
 
 app.use((err, req, res, next) => {
  console.error('Unhandled error:', err);
@@ -70,6 +115,5 @@ app.use((err, req, res, next) => {
 server.listen(PORT, () =>{
   console.log(`Server running at http://localhost:${PORT} `);
 });
-
 
 export default app;

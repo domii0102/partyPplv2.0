@@ -1,5 +1,7 @@
 import prisma from "../db.js";
 import { createCommentSchema } from '../schemas/createCommentSchema.js';
+import { io } from '../app.js';
+import { notify, emitToEvent, notifyAboutReply } from '../services/notificationService.js';
 
 
 export async function showComments(req, res) {
@@ -38,7 +40,8 @@ export async function showComments(req, res) {
                                     }
                                 }
                             }
-                        }
+                        },
+                        orderBy: { createdAt: 'asc' }
                     }
                 }
             }),
@@ -108,6 +111,26 @@ export async function createComment(req, res) {
             }
         });
 
+        const post = await prisma.post.findUnique({ where: { postId } });
+        if (post.authorId !== req.user.userId) {
+            await notify(post.authorId, 'new_comment', req.user.userId, {
+                eventId: req.event.eventId,
+                postId,
+                commentId: comment.commentId
+            });
+        }
+
+        emitToEvent(req.event.eventId, 'new_comment', {
+             postId,
+            commentId: comment.commentId,
+            textContent: comment.textContent,
+            createdAt: comment.createdAt,
+            author: {
+                nickname: comment.userCredentials.userProfile.nickname,
+                avatar: comment.userCredentials.userProfile.avatar?.url ?? null
+            }
+        });
+
         return res.status(201).json({ 
             success: true, 
             message: `Pomyślnie stworzono komentarz.`,
@@ -159,6 +182,24 @@ export async function createReply(req, res) {
             }
         });
 
+       await notifyAboutReply(postId, parentId, 'new_reply', req.user.userId, {
+            eventId: req.event.eventId,
+            postId,
+            commentId: comment.commentId
+        });
+
+        emitToEvent(req.event.eventId, 'new_reply', {
+            postId,
+            parentId,
+            commentId: comment.commentId,
+            textContent: comment.textContent,
+            createdAt: comment.createdAt,
+            author: {
+                nickname: comment.userCredentials.userProfile.nickname,
+                avatar: comment.userCredentials.userProfile.avatar?.url ?? null
+            }
+        });
+
         return res.status(201).json({ 
             success: true, 
             message: `Pomyślnie stworzono odpowiedź na komentarz.`,
@@ -194,6 +235,11 @@ export async function editComment(req, res) {
             data: { textContent }
         });
 
+        emitToEvent(req.event.eventId, 'comment_updated', {
+            commentId,
+            textContent: updated.textContent
+        });
+
         return res.status(200).json({ 
             success: true, 
             message: "Komentarz został zaktualizowany.",
@@ -220,13 +266,15 @@ export async function deleteComment(req, res) {
     if (!comment) return res.status(404).json({ success: false, error: "Comment not found" });
     
     const post = await prisma.post.findUnique({ where: { postId: comment.postId } });
-    if (!comment) return res.status(404).json({ success: false, error: "Post not found" });
+    if (!post) return res.status(404).json({ success: false, error: "Post not found" });
 
     if (comment.authorId !== userId && post.authorId !==userId && req.event.organizerId !== userId && userRole !== 'admin') {
         return res.status(403).json({ success: false, error: "Access denied" });
     }
 
     await prisma.comment.delete({ where: { commentId } });
+
+    emitToEvent(req.event.eventId, 'comment_deleted', { commentId });
 
     return res.status(200).json({ success: true, message: "Komentarz został usunięty." });
   } catch (err) {
