@@ -45,7 +45,7 @@
           </button>
           <button
             class="action-btn comment-action"
-            @click="post.showComments = !post.showComments"
+            @click="toggleComments(post)"
           >
             <i class="bi bi-chat"></i>
             <span>{{ post.comments.length }}</span>
@@ -79,6 +79,49 @@
                   <span class="post-time">{{ comment.time }}</span>
                 </div>
                 <p class="comment-text">{{ comment.text }}</p>
+
+                <div  
+                  v-if="comment.replies?.length"
+                  class="replies-list">
+                    <div
+                      v-for="reply in comment.replies"
+                      :key="reply.id"
+                      class="reply-item">
+                        <img
+                          :src="reply.author.avatar"
+                          class="avatar avatar--xs" />
+                        
+                          <div class="reply-content">
+                            <div class="comment-header">
+                              <span class="author-name author-name--sm">
+                                {{ reply.author.nickname }}
+                              </span>
+
+                              <span class="post-time">
+                                {{ new Date(reply.createdAt).toLocaleString() }}
+                              </span>
+                            </div>
+                            <p class="comment-text reply-text">
+                                {{ reply.textContent }}
+                            </p>
+                          </div>
+                    </div>
+                </div>
+                <div class="reply-input-wrapper">
+                  <input
+                    v-model="comment.replyText"
+                    placeholder="Reply..."
+                    class="comment-input"
+                    @keyup.enter="submitReply(post, comment)"
+                  />
+
+                  <button
+                    class="send-btn send-btn--sm"
+                    @click="submitReply(post, comment)"
+                  >
+                    <i class="bi bi-arrow-up"></i>
+                  </button>
+                </div>
               </div>
               <button
                 class="action-btn like-action like-action--sm"
@@ -93,137 +136,212 @@
 
         </div>
       </div>
+      <div
+        ref="loadMoreTrigger"
+        class="load-more-trigger"
+      ></div>
+
+      <div v-if="loadingMore" class="loading-posts">
+        Loading more posts...
+      </div>
+
+      <div v-if="!hasMore" class="no-more-posts">
+        No more posts
+      </div>
     </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import postService from '../../services/forum/postService';
+import { mapPost } from '../../mappers/postMapper';
+import commentService from '../../services/forum/commentService';
 
+const route = useRoute();
+
+const eventId = route.params.id;
+const posts = ref([]);
 const newPostText = ref('');
-//jak będzie chciał zobaczyć z przykładowymi danymi 
-/*
-const defaultAvatars = [
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Agnieszka',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Evil',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Tomek',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Mariolka',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Piotrek',
-];
 
-const posts = ref([
-  {
-    id: 1,
-    author: 'Agnieszka',
-    avatar: defaultAvatars[0],
-    time: '20.12 23:17',
-    text: 'Będzie ktoś ogarniał jakieś sianko czy ja mam skolować??? <3',
-    likes: 6,
-    liked: false,
-    showComments: true,
-    newComment: '',
-    comments: [
-      {
-        id: 101,
-        author: 'Evil Bożenka',
-        avatar: defaultAvatars[1],
-        time: '6h ago',
-        text: 'bożence panienka już i tak z butów wysyłaje zbzdnś',
-        likes: 0,
-        liked: false,
-      },
-      {
-        id: 102,
-        author: 'Mariolka',
-        avatar: defaultAvatars[3],
-        time: '5h ago',
-        text: 'boshea ogarnij sb evil bożenka bo cia zgłosze',
-        likes: 0,
-        liked: false,
-      },
-      {
-        id: 103,
-        author: 'Piotrek',
-        avatar: defaultAvatars[4],
-        time: '5h ago',
-        text: 'Nie maam ale moge dac papierosy po moim wujku zafoliowane',
-        likes: 0,
-        liked: false,
-      },
-    ],
-  },
-  {
-    id: 2,
-    author: 'Evil Bożenka',
-    avatar: defaultAvatars[1],
-    time: '25.12 06:07',
-    text: 'mn nie bedzie bo jestem evil i nie lubie bozenki',
-    likes: 0,
-    liked: false,
-    showComments: false,
-    newComment: '',
-    comments: [],
-  },
-  {
-    id: 3,
-    author: 'Tomek',
-    avatar: defaultAvatars[2],
-    time: '04.01 16:09',
-    text: 'łup łup łup',
-    likes: 100,
-    liked: false,
-    showComments: false,
-    newComment: '',
-    comments: [],
-  },
-]);
+const currentPage = ref(1);
+const limit = 10;
+const loadingMore = ref(false);
+const hasMore = ref(true);
+const loadMoreTrigger = ref(null);
 
-let nextId = 1000;
+let observer;
 
-function submitPost() {
-  const text = newPostText.value.trim();
-  if (!text) return;
-  posts.value.unshift({
-    id: ++nextId,
-    author: 'Ty',
-    avatar: 'https://api.dicebear.com/7.x/thumbs/svg?seed=Me',
-    time: 'Teraz',
-    text,
-    likes: 0,
-    liked: false,
-    showComments: false,
-    newComment: '',
-    comments: [],
-  });
-  newPostText.value = '';
+async function loadPosts(reset=false) {
+    if (loadingMore.value) return;
+    if (!hasMore.value && !reset) return;
+
+    loadingMore.value = true;
+
+    try {
+        if (reset) {
+            currentPage.value = 1;
+            hasMore.value = true;
+            posts.value = [];
+        }
+        const response = await postService.getPosts(eventId, currentPage.value, limit);
+        const mappedPosts = response.data.map(mapPost);
+        posts.value.push(...mappedPosts);
+        
+        if (mappedPosts.length < limit) { hasMore.value = false; } 
+        else { currentPage.value++; }
+    } catch(err) { console.error(err); 
+    } finally { loadingMore.value = false; }
+
 }
 
-function submitComment(post) {
-  const text = post.newComment?.trim();
-  if (!text) return;
-  post.comments.push({
-    id: ++nextId,
-    author: 'Ty',
-    avatar: 'https://api.dicebear.com/7.x/thumbs/svg?seed=Me',
-    time: 'Teraz',
-    text,
-    likes: 0,
-    liked: false,
-  });
-  post.newComment = '';
+async function submitPost() {
+    const text = newPostText.value.trim();
+
+    if (!text) return;
+
+    try {
+        const response = await postService.createPost(eventId, { textContent: text });
+
+        posts.value.unshift( mapPost(response.data) );
+
+        newPostText.value = '';
+    } catch(err) { console.error(err); }
 }
 
-function togglePostLike(post) {
-  post.liked = !post.liked;
-  post.likes += post.liked ? 1 : -1;
+async function togglePostLike(post) {
+    const previousLiked = post.liked;
+    const previousLikes = post.likes;
+
+    post.liked = !post.liked;
+    post.likes += post.liked ? 1 : -1;
+
+    try {
+        const response = await postService.likePost(
+            eventId,
+            post.id
+        );
+
+        post.liked = response.data.liked;
+        post.likes = response.data.likesCount;
+    } catch(err) {
+        post.liked = previousLiked;
+        post.likes = previousLikes;
+        console.error(err);
+    }
 }
 
-function toggleCommentLike(comment) {
-  comment.liked = !comment.liked;
-  comment.likes += comment.liked ? 1 : -1;
+async function loadComments(post) {
+    try {
+        const response = await commentService.getComments(
+            eventId,
+            post.id
+        );
+
+        post.comments = response.data.map(comment => ({
+            id: comment.commentId,
+            text: comment.textContent,
+            time: new Date(comment.createdAt).toLocaleString(),
+            author: comment.author.nickname,
+            avatar: comment.author.avatar,
+            likes: 0,
+            liked: false,
+            replies: comment.replies?.map(reply => ({
+                id: reply.commentId,
+                textContent: reply.textContent,
+                createdAt: reply.createdAt,
+                author: reply.author
+            })) || []
+        }));
+
+    } catch(err) { console.error(err); }
 }
-  */
+
+async function toggleComments(post) {
+    post.showComments = !post.showComments;
+    if (post.showComments && post.comments.length === 0) { await loadComments(post); }
+}
+
+async function submitComment(post) {
+    const text = post.newComment?.trim();
+    if (!text) return;
+
+    try {
+        const response = await commentService.createComment(
+            eventId,
+            post.id,
+            { textContent: text }
+        );
+
+        post.comments.push({
+            id: response.data.commentId,
+            text: response.data.textContent,
+            time: new Date(response.data.createdAt).toLocaleString(),
+            author: response.data.author.nickname,
+            avatar: response.data.author.avatar,
+            likes: 0,
+            liked: false
+        });
+
+        post.newComment = '';
+
+    } catch(err) { console.error(err); }
+}
+
+async function submitReply(post, comment) {
+    const text = comment.replyText?.trim();
+    if (!text) return;
+
+    try {
+        const response = await commentService.createReply(
+            eventId,
+            post.id,
+            comment.id,
+            { textContent: text }
+        );
+        if (!comment.replies) { comment.replies = []; }
+        comment.replies.push({
+            id: response.data.commentId,
+            textContent: response.data.textContent,
+            createdAt: response.data.createdAt,
+            author: response.data.author
+        });
+        comment.replyText = '';
+
+    } catch(err) { console.error(err); }
+}
+
+onMounted(async () => {
+    await loadPosts();
+
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !loadingMore.value && hasMore.value) {
+            loadPosts();
+        }
+    });
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value);
+    }
+});
+
+watch(() => route.params.id, async () => {
+    observer?.disconnect();
+
+    await loadPosts(true);
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value);
+    }
+});
+
+onBeforeUnmount(() => {
+    if (observer && loadMoreTrigger.value) {
+        observer.unobserve(loadMoreTrigger.value);
+    }
+});
 </script>
 
 <style scoped>
@@ -251,6 +369,7 @@ function toggleCommentLike(comment) {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  animation: fadeIn 0.25s ease;
 }
 
 .post-header {
@@ -460,5 +579,74 @@ function toggleCommentLike(comment) {
 .flag-btn:hover {
   color: var(--accent-orange);
   opacity: 1;
+}
+
+.load-more-trigger {
+  height: 1px;
+}
+
+.loading-posts,
+.no-more-posts {
+  text-align: center;
+  font-size: 0.82rem;
+  opacity: 0.6;
+  padding: 0.75rem 0;
+}
+
+.replies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  margin-left: 1.75rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+
+.reply-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 0.85rem;
+  padding: 0.7rem 0.8rem;
+  backdrop-filter: blur(6px);
+}
+
+.reply-content {
+  flex: 1;
+  text-align: left;
+}
+
+.reply-text {
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.avatar--xs {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+}
+
+.author-name--sm {
+  font-size: 0.78rem;
+}
+
+.reply-item .post-time {
+  font-size: 0.65rem;
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

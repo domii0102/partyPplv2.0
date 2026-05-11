@@ -2,14 +2,19 @@ import { SERVER_BASE_URL } from '../config/env';
 
 
 export class requestService {
-
     async request(url, options = {}) {
         const response = await fetch(`${SERVER_BASE_URL}${url}`, {
             credentials: 'include',
             ...options
         });
 
-        const data = await response.json();
+        let data = null;
+
+        const contentType = response.headers.get('content-type'); // Przy braku body mogloby sie wykrzaczyc chyba
+
+        if (contentType?.includes('application/json')) { data = await response.json(); }
+
+        if (!response.ok) {  throw new Error(data?.error || 'Request failed'); }
 
         return data;
     }
