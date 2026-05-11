@@ -1,0 +1,18 @@
+model Notification {
+  notificationId   Int      @id @default(autoincrement())
+  userId           String
+  type             String   @db.VarChar(32)
+  isRead           Boolean  @default(false)
+  relatedEventId   Int?
+  relatedPostId    Int?
+  relatedCommentId Int?
+  triggeredById    String?
+  createdAt        DateTime @default(now())
+
+  userCredentials  UserCredentials @relation("NotificationOwner", fields: [userId], references: [userId])
+  triggeredBy      UserCredentials? @relation("NotificationTrigger", fields: [triggeredById], references: [userId])
+  relatedEvent     Event?   @relation(fields: [relatedEventId], references: [eventId])
+  
+  @@index([userId])
+  @@map("Notification")
+}

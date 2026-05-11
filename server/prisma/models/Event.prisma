@@ -26,6 +26,7 @@ model Event {
   eventLikes      EventLike[]
   forum           Forum?
   image Image? @relation("ImageToEvent")
+  notifications Notification[]
 
   @@index([organizerId])
   @@map("Event")

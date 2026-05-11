@@ -267,7 +267,6 @@ export async function deleteInvite(req, res) {
     if (err.code === 'P2025') {
       return res.status(404).json({ success: false, error: "Nie znaleziono zaproszenia." });
     }
-    console.error("Nastąpił błąd podczas zapisywania zmian w zaproszeniu.", err);
     return res
       .status(500)
       .json({ success: false, error: "A database error has occurred" });
