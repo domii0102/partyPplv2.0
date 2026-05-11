@@ -1,21 +1,5 @@
 <template>
     <div class="guests-container">
-        <div class="invite-section">
-            <div class="invite-input-wrapper">
-                <input 
-                    type="text" 
-                    v-model="searchQuery" 
-                    placeholder="Invite user" 
-                    @keyup.enter="inviteUser"
-                />
-                <button class="add-btn" @click="inviteUser">
-                    <span>+</span>
-                </button>
-            </div>
-            <button class="share-btn">
-                <span class="share-icon">⏏</span>
-            </button>
-        </div>
 
         <div v-for="(group, status) in groupedGuests" :key="status" class="guest-group">
             <h3 class="group-title">

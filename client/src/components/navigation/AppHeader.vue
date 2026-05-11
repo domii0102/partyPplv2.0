@@ -43,7 +43,7 @@
     import { ref } from 'vue';
     import { useUserStore } from '../../stores/user.js';
     import { storeToRefs } from 'pinia';
-    import NotificationSidebar from './NotificationSidebar.vue'; 
+    import NotificationSidebar from '../layout/NotificationSidebar.vue'; 
 
     const store = useUserStore();
     const { user } = storeToRefs(store);
@@ -111,9 +111,10 @@ span{
 }
 
 .slide-enter-active, .slide-leave-active {
-    transition: transform 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .slide-enter-from, .slide-leave-to {
-    transform: translateX(100%);
+    transform: translateY(-20px); 
+    opacity: 0;
 }
 </style>

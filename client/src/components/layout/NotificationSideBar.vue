@@ -54,28 +54,29 @@ const defaultAvatar = 'https://www.gravatar.com/avatar/0?d=mp&f=y';
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
     z-index: 9999;
 }
 
 .notification-sidebar {
     position: absolute;
-    right: 0;
-    top: 0;
+    right: 2rem; 
+    top: calc(var(--header-height) + 10px); 
     width: 100%;
-    max-width: 480px;
-    height: 100vh;
+    max-width: 400px; 
+    max-height: 80vh;
     background: #110d26;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem;
     color: white;
     overflow-y: auto;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
 }
 
 .sidebar-title {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 300;
+    text-align: left;
+    font-size: 1.8rem;
+    font-weight: 400;
     margin-bottom: 0.5rem;
 }
 
