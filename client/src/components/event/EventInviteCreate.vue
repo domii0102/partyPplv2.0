@@ -8,6 +8,12 @@
                 </button>
             </div>
             <div class="friend-list-container">
+                <EventInviteUserBox></EventInviteUserBox>
+                <EventInviteUserBox></EventInviteUserBox>
+                <EventInviteUserBox></EventInviteUserBox>
+                <EventInviteUserBox></EventInviteUserBox>
+                <EventInviteUserBox></EventInviteUserBox>
+                <EventInviteUserBox></EventInviteUserBox>
             </div>
             <h2>...or send them an invitation link!</h2>
             <div class="link-container">
@@ -22,7 +28,10 @@
 
 <script setup>
     import { ref } from 'vue'
+    import EventInviteUserBox from './EventInviteUserBox.vue';
+
     defineEmits(['close']);
+
 
     const isLinkCopied = ref(false);
     const inviteLink = ref(null);
@@ -46,10 +55,9 @@
     align-items: center;
 }
 main{
-    min-height: 600px;
     min-width: 600px;
     max-width: 720px;
-    max-height: 720px;
+    max-height: calc(100vh - var(--header-height) - 2rem);
     align-items: center;
     justify-content: center;
     background-color: var(--bg-main);
