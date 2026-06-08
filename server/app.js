@@ -32,7 +32,17 @@ const io = new Server(server, {
 });
 
 io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
+  const cookieHeader = socket.handshake.headers.cookie;
+  if (!cookieHeader) return next(new Error('Unauthorized'));
+
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(c => {
+      const [k, ...v] = c.trim().split('=');
+      return [k, v.join('=')];
+    })
+  );
+  
+  const token = cookies['token'];
   if (!token) return next(new Error('Unauthorized'));
 
   try {

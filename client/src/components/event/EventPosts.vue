@@ -25,13 +25,47 @@
             <span class="author-name">{{ post.author }}</span>
             <span class="post-time">{{ post.time }}</span>
           </div>
-          <button class="flag-btn">
-            <i class="bi bi-flag"></i>
-          </button>
+
+          <div class="post-controls">
+
+            <template v-if="canModify(post.authorId)">
+              <button class="ctrl-btn" @click="startEditPost(post)" title="Edytuj">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="ctrl-btn ctrl-btn--danger" @click="deletePost(post)" title="Usuń">
+                <i class="bi bi-trash"></i>
+              </button>
+            </template>
+
+            <button class="flag-btn" title="Zgłoś">
+              <i class="bi bi-flag"></i>
+            </button>
+
+          </div>
+
         </div>
 
         <div class="post-body">
-          <p>{{ post.text }}</p>
+
+          <template v-if="post.editing">
+            <div class="edit-wrapper">
+              <textarea
+                v-model="post.editText"
+                class="edit-input"
+                rows="3"
+                @keyup.ctrl.enter="saveEditPost(post)"
+              ></textarea>
+              <div class="edit-actions">
+                <button class="edit-cancel" @click="cancelEditPost(post)">Anuluj</button>
+                <button class="edit-save" @click="saveEditPost(post)">Zapisz</button>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <p>{{ post.text }}</p>
+          </template>
+
         </div>
 
         <div class="post-actions">
@@ -48,7 +82,7 @@
             @click="toggleComments(post)"
           >
             <i class="bi bi-chat"></i>
-            <span>{{ post.comments.length }}</span>
+            <span>{{ post.commentsCount }}</span>
           </button>
         </div>
 
@@ -66,6 +100,10 @@
             </button>
           </div>
 
+          <div v-if="post.loadingComments" class="loading-inline">
+            Ładowanie...
+          </div>
+
           <div class="comments-list">
             <div
               v-for="comment in post.comments"
@@ -77,36 +115,76 @@
                 <div class="comment-header">
                   <span class="author-name author-name--sm">{{ comment.author }}</span>
                   <span class="post-time">{{ comment.time }}</span>
+                  <div class="comment-controls" v-if="canModify(comment.authorId)">
+                    <button class="ctrl-btn ctrl-btn--xs" @click="startEditComment(comment)" title="Edytuj">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="ctrl-btn ctrl-btn--xs ctrl-btn--danger" @click="deleteComment(post, comment)" title="Usuń">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
                 </div>
-                <p class="comment-text">{{ comment.text }}</p>
+
+                <template v-if="comment.editing">
+                  <div class="edit-wrapper edit-wrapper--sm">
+                    <input
+                      v-model="comment.editText"
+                      class="comment-input"
+                      @keyup.enter="saveEditComment(post, comment)"
+                    />
+                    <div class="edit-actions">
+                      <button class="edit-cancel" @click="cancelEditComment(comment)">Anuluj</button>
+                      <button class="edit-save" @click="saveEditComment(post, comment)">Zapisz</button>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <p class="comment-text">{{ comment.text }}</p>
+                </template>
 
                 <div  
-                  v-if="comment.replies?.length"
-                  class="replies-list">
+                  v-if="comment.replies?.length" class="replies-list">
                     <div
                       v-for="reply in comment.replies"
                       :key="reply.id"
                       class="reply-item">
-                        <img
-                          :src="reply.author.avatar"
-                          class="avatar avatar--xs" />
+                        <img :src="reply.author.avatar" class="avatar avatar--xs" />
                         
                           <div class="reply-content">
                             <div class="comment-header">
-                              <span class="author-name author-name--sm">
-                                {{ reply.author.nickname }}
-                              </span>
+                              <span class="author-name author-name--sm">{{ reply.author.nickname }}</span>
+                              <span class="post-time">{{ new Date(reply.createdAt).toLocaleString() }}</span>
 
-                              <span class="post-time">
-                                {{ new Date(reply.createdAt).toLocaleString() }}
-                              </span>
+                              <div class="comment-controls" v-if="canModify(reply.authorId)">
+                                <button class="ctrl-btn ctrl-btn--xs" @click="startEditReply(reply)" title="Edytuj">
+                                  <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="ctrl-btn ctrl-btn--xs ctrl-btn--danger" @click="deleteReply(post, comment, reply)" title="Usuń">
+                                  <i class="bi bi-trash"></i>
+                                </button>
+                              </div>
                             </div>
-                            <p class="comment-text reply-text">
-                                {{ reply.textContent }}
-                            </p>
+
+                            <template v-if="reply.editing">
+                              <div class="edit-wrapper edit-wrapper--sm">
+                                <input
+                                  v-model="reply.editText"
+                                  class="comment-input"
+                                  @keyup.enter="saveEditReply(post, comment, reply)"
+                                />
+                                <div class="edit-actions">
+                                  <button class="edit-cancel" @click="cancelEditReply(reply)">Anuluj</button>
+                                  <button class="edit-save" @click="saveEditReply(post, comment, reply)">Zapisz</button>
+                                </div>
+                              </div>
+                            </template>
+                            <template v-else>
+                              <p class="comment-text reply-text">{{ reply.textContent }}</p>
+                            </template>
                           </div>
                     </div>
                 </div>
+
                 <div class="reply-input-wrapper">
                   <input
                     v-model="comment.replyText"
@@ -115,14 +193,12 @@
                     @keyup.enter="submitReply(post, comment)"
                   />
 
-                  <button
-                    class="send-btn send-btn--sm"
-                    @click="submitReply(post, comment)"
-                  >
+                  <button class="send-btn send-btn--sm" @click="submitReply(post, comment)" :disabled="!comment.replyText?.trim()">
                     <i class="bi bi-arrow-up"></i>
                   </button>
                 </div>
               </div>
+
               <button
                 class="action-btn like-action like-action--sm"
                 :class="{ liked: comment.liked }"
@@ -136,31 +212,25 @@
 
         </div>
       </div>
-      <div
-        ref="loadMoreTrigger"
-        class="load-more-trigger"
-      ></div>
-
-      <div v-if="loadingMore" class="loading-posts">
-        Loading more posts...
-      </div>
-
-      <div v-if="!hasMore" class="no-more-posts">
-        No more posts
-      </div>
+      <div ref="loadMoreTrigger" class="load-more-trigger"></div>
+      <div v-if="loadingMore" class="loading-posts">Ładowanie postów...</div>
+      <div v-if="!hasMore && posts.length > 0" class="no-more-posts">Nie ma więcej postów</div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useUserStore } from '../../stores/user';
 import postService from '../../services/forum/postService';
-import { mapPost } from '../../mappers/postMapper';
 import commentService from '../../services/forum/commentService';
+import { mapPost } from '../../mappers/postMapper';
+import { useForumSocket } from '../../composables/useForumSocket';
+
 
 const route = useRoute();
+const userStore = useUserStore();
 
 const eventId = route.params.id;
 const posts = ref([]);
@@ -172,7 +242,20 @@ const loadingMore = ref(false);
 const hasMore = ref(true);
 const loadMoreTrigger = ref(null);
 
+
 let observer;
+
+let socket = null;
+
+const { joinEvent, leaveEvent } = useForumSocket(posts);
+
+function canModify(resourceAuthorId) {
+  const currentUser = userStore.user;
+  if (!currentUser) return false;
+  if (String(currentUser.userId) === String(resourceAuthorId)) return true;
+  if (currentUser.userRole === 'admin') return true;
+  return false;
+}
 
 async function loadPosts(reset=false) {
     if (loadingMore.value) return;
@@ -187,11 +270,17 @@ async function loadPosts(reset=false) {
             posts.value = [];
         }
         const response = await postService.getPosts(eventId, currentPage.value, limit);
-        const mappedPosts = response.data.map(mapPost);
+        console.log('raw post:', response.data[0]);
+        const mappedPosts = response.data.map(p => ({
+          ...mapPost(p),
+          editing: false,
+          editText: '',
+          loadingComments: false
+        }));
         posts.value.push(...mappedPosts);
         
-        if (mappedPosts.length < limit) { hasMore.value = false; } 
-        else { currentPage.value++; }
+        if (mappedPosts.length < limit) hasMore.value = false;
+        else currentPage.value++; 
     } catch(err) { console.error(err); 
     } finally { loadingMore.value = false; }
 
@@ -199,7 +288,6 @@ async function loadPosts(reset=false) {
 
 async function submitPost() {
     const text = newPostText.value.trim();
-
     if (!text) return;
 
     try {
@@ -209,6 +297,47 @@ async function submitPost() {
 
         newPostText.value = '';
     } catch(err) { console.error(err); }
+}
+
+function startEditPost(post) {
+  post.editText = post.text;
+  post.editing = true;
+}
+
+function cancelEditPost(post) {
+  post.editing = false;
+  post.editText = '';
+}
+
+async function saveEditPost(post) {
+  const text = post.editText.trim();
+  if (!text || text === post.text) { cancelEditPost(post); return; }
+ 
+  const previousText = post.text;
+  post.text = text;
+  post.editing = false;
+ 
+  try {
+    await postService.editPost(eventId, post.id, { textContent: text });
+  } catch (err) {
+    post.text = previousText;
+    post.editing = true;
+    console.error(err);
+  }
+}
+
+async function deletePost(post) {
+  if (!confirm('Usunąć ten post?')) return;
+ 
+  const snapshot = [...posts.value];
+  posts.value = posts.value.filter(p => p.id !== post.id);
+ 
+  try {
+    await postService.deletePost(eventId, post.id);
+  } catch (err) {
+    posts.value = snapshot;
+    console.error(err);
+  }
 }
 
 async function togglePostLike(post) {
@@ -234,6 +363,7 @@ async function togglePostLike(post) {
 }
 
 async function loadComments(post) {
+    post.loadingComments = true;
     try {
         const response = await commentService.getComments(
             eventId,
@@ -242,6 +372,7 @@ async function loadComments(post) {
 
         post.comments = response.data.map(comment => ({
             id: comment.commentId,
+            authorId: comment.authorId,
             text: comment.textContent,
             time: new Date(comment.createdAt).toLocaleString(),
             author: comment.author.nickname,
@@ -250,13 +381,20 @@ async function loadComments(post) {
             liked: false,
             replies: comment.replies?.map(reply => ({
                 id: reply.commentId,
+                authorId: reply.authorId,
                 textContent: reply.textContent,
                 createdAt: reply.createdAt,
-                author: reply.author
-            })) || []
+                author: reply.author,
+                editing: false,
+                editText: ''
+            })) || [],
+            replyText: '',
+            editing: false,
+            editText: ''
         }));
 
     } catch(err) { console.error(err); }
+    finally { post.loadingComments = false; }
 }
 
 async function toggleComments(post) {
@@ -265,83 +403,189 @@ async function toggleComments(post) {
 }
 
 async function submitComment(post) {
-    const text = post.newComment?.trim();
-    if (!text) return;
+  const text = post.newComment?.trim();
+  if (!text) return;
+ 
+  post.newComment = '';
+ 
+  try {
+    const response = await commentService.createComment(eventId, post.id, { textContent: text });
+    const alreadyAdded = post.comments.some(c => c.id === response.data.commentId);
+    if (!alreadyAdded) {
+      post.comments.push({
+        id: response.data.commentId,
+        authorId: response.data.authorId || userStore.user?.userId,
+        text: response.data.textContent,
+        time: new Date(response.data.createdAt).toLocaleString(),
+        author: response.data.author.nickname,
+        avatar: response.data.author.avatar,
+        likes: 0,
+        liked: false,
+        replies: [],
+        replyText: '',
+        editing: false,
+        editText: ''
+      });
+      post.commentsCount++;
+    }
+  } catch (err) {
+    post.newComment = text;
+    console.error(err);
+  }
+}
 
-    try {
-        const response = await commentService.createComment(
-            eventId,
-            post.id,
-            { textContent: text }
-        );
+function startEditComment(comment) {
+  comment.editText = comment.text;
+  comment.editing = true;
+}
+ 
+function cancelEditComment(comment) {
+  comment.editing = false;
+  comment.editText = '';
+}
+ 
+async function saveEditComment(post, comment) {
+  const text = comment.editText.trim();
+  if (!text || text === comment.text) { cancelEditComment(comment); return; }
+ 
+  const prev = comment.text;
+  comment.text = text;
+  comment.editing = false;
+ 
+  try {
+    await commentService.editComment(eventId, post.id, comment.id, { textContent: text });
+  } catch (err) {
+    comment.text = prev;
+    comment.editing = true;
+    console.error(err);
+  }
+}
 
-        post.comments.push({
-            id: response.data.commentId,
-            text: response.data.textContent,
-            time: new Date(response.data.createdAt).toLocaleString(),
-            author: response.data.author.nickname,
-            avatar: response.data.author.avatar,
-            likes: 0,
-            liked: false
-        });
-
-        post.newComment = '';
-
-    } catch(err) { console.error(err); }
+async function deleteComment(post, comment) {
+  if (!confirm('Usunąć ten komentarz?')) return;
+ 
+  const snapshot = [...post.comments];
+  post.comments = post.comments.filter(c => c.id !== comment.id);
+  post.commentsCount--;
+ 
+  try {
+    await commentService.deleteComment(eventId, post.id, comment.id);
+  } catch (err) {
+    post.comments = snapshot;
+    post.commentsCount++;
+    console.error(err);
+  }
 }
 
 async function submitReply(post, comment) {
-    const text = comment.replyText?.trim();
-    if (!text) return;
+  const text = comment.replyText?.trim();
+  if (!text) return;
+ 
+  comment.replyText = '';
+ 
+  try {
+    const response = await commentService.createReply(eventId, post.id, comment.id, { textContent: text });
+    if (!comment.replies) comment.replies = [];
+    const alreadyAdded = comment.replies.some(r => r.id === response.data.commentId);
+    if (!alreadyAdded) {
+      comment.replies.push({
+        id: response.data.commentId,
+        authorId: response.data.authorId || userStore.user?.userId,
+        textContent: response.data.textContent,
+        createdAt: response.data.createdAt,
+        author: response.data.author,
+        editing: false,
+        editText: ''
+      });
+    }
+  } catch (err) {
+    comment.replyText = text;
+    console.error(err);
+  }
+}
 
-    try {
-        const response = await commentService.createReply(
-            eventId,
-            post.id,
-            comment.id,
-            { textContent: text }
-        );
-        if (!comment.replies) { comment.replies = []; }
-        comment.replies.push({
-            id: response.data.commentId,
-            textContent: response.data.textContent,
-            createdAt: response.data.createdAt,
-            author: response.data.author
-        });
-        comment.replyText = '';
+function startEditReply(reply) {
+  reply.editText = reply.textContent;
+  reply.editing = true;
+}
+ 
+function cancelEditReply(reply) {
+  reply.editing = false;
+  reply.editText = '';
+}
+ 
+async function saveEditReply(post, comment, reply) {
+  const text = reply.editText.trim();
+  if (!text || text === reply.textContent) { cancelEditReply(reply); return; }
+ 
+  const prev = reply.textContent;
+  reply.textContent = text;
+  reply.editing = false;
+ 
+  try {
+    await commentService.editComment(eventId, post.id, reply.id, { textContent: text });
+  } catch (err) {
+    reply.textContent = prev;
+    reply.editing = true;
+    console.error(err);
+  }
+}
 
-    } catch(err) { console.error(err); }
+async function deleteReply(post, comment, reply) {
+  if (!confirm('Usunąć tę odpowiedź?')) return;
+ 
+  const snapshot = [...(comment.replies || [])];
+  comment.replies = comment.replies.filter(r => r.id !== reply.id);
+ 
+  try {
+    await commentService.deleteComment(eventId, post.id, reply.id);
+  } catch (err) {
+    comment.replies = snapshot;
+    console.error(err);
+  }
+}
+
+function toggleCommentLike(comment) {
+  comment.liked = !comment.liked;
+  comment.likes += comment.liked ? 1 : -1;
 }
 
 onMounted(async () => {
-    await loadPosts();
+  await loadPosts(true);
+    joinEvent(eventId);
 
-    observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !loadingMore.value && hasMore.value) {
-            loadPosts();
-        }
-    });
-
-    if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value);
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !loadingMore.value && hasMore.value) {
+      loadPosts();
     }
+  });
+
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value);
+  }
 });
 
-watch(() => route.params.id, async () => {
-    observer?.disconnect();
-
+watch(() => route.params.id, async (newId, oldId) => {
+  observer?.disconnect();
+    leaveEvent(oldId);
     await loadPosts(true);
+    joinEvent(newId);
 
-    if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value);
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !loadingMore.value && hasMore.value) {
+      loadPosts();
     }
-});
+  });
 
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value);
+  }
+});
+ 
 onBeforeUnmount(() => {
-    if (observer && loadMoreTrigger.value) {
-        observer.unobserve(loadMoreTrigger.value);
-    }
+    leaveEvent(eventId);
 });
+
 </script>
 
 <style scoped>
@@ -649,4 +893,47 @@ onBeforeUnmount(() => {
     transform: translateY(0);
   }
 }
+
+.post-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.ctrl-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #aaa);
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0.25rem;
+  border-radius: 0.4rem;
+  transition: color 0.2s, background 0.2s;
+  opacity: 0.6;
+}
+
+.ctrl-btn:hover {
+  opacity: 1;
+  color: var(--text-main, #fff);
+  background: rgba(255,255,255,0.08);
+}
+
+.ctrl-btn--danger:hover {
+  color: #ff4d6d;
+  background: rgba(255, 77, 109, 0.1);
+}
+
+.ctrl-btn--xs {
+  font-size: 0.72rem;
+  padding: 0.15rem;
+}
+
+.comment-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
 </style>

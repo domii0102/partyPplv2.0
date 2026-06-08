@@ -5,6 +5,7 @@ import { notify, notifyAllMembers, emitToEvent } from '../services/notificationS
 
 export async function showEventPosts(req, res) {
     const forumId = req.event.forum.forumId;
+    const userId = req.user.userId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -30,6 +31,10 @@ export async function showEventPosts(req, res) {
                     images: {
                         select: { url: true, publicId: true }
                     },
+                    postLikes: {
+                        where: { authorId: userId },
+                        select: { likeId: true }
+                    },
                     _count: {
                         select: {
                             postLikes: true,
@@ -43,6 +48,7 @@ export async function showEventPosts(req, res) {
 
         const posts = data.map((post) => ({
             postId: post.postId,
+            authorId: post.authorId,
             textContent: post.textContent,
             createdAt: post.createdAt,
             images: post.images,
@@ -51,7 +57,8 @@ export async function showEventPosts(req, res) {
                 avatar: post.userCredentials.userProfile.avatar?.url ?? null
             },
             likesCount: post._count.postLikes,
-            commentsCount: post._count.comments
+            commentsCount: post._count.comments,
+            isLiked: post.postLikes.length > 0 
         }));
 
         return res.status(200).json({ 
@@ -168,6 +175,7 @@ export async function createPost(req, res) {
 
         emitToEvent(req.event.eventId, 'new_post', {
             postId: post.postId,
+            authorId: req.user.userId,
             textContent: post.textContent,
             createdAt: post.createdAt,
             author: {
@@ -183,6 +191,7 @@ export async function createPost(req, res) {
                 postId: post.postId,
                 textContent: post.textContent,
                 createdAt: post.createdAt,
+                authorId: req.user.userId,
                 images: post.images ?? [],
                 author: {
                     nickname: post.userCredentials.userProfile.nickname,
