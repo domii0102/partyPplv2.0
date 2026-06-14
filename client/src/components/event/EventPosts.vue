@@ -164,6 +164,7 @@
                                 </button>
                               </div>
                             </div>
+                            
 
                             <template v-if="reply.editing">
                               <div class="edit-wrapper edit-wrapper--sm">
@@ -177,11 +178,16 @@
                                   <button class="edit-save" @click="saveEditReply(post, comment, reply)">Zapisz</button>
                                 </div>
                               </div>
+                              
                             </template>
                             <template v-else>
                               <p class="comment-text reply-text">{{ reply.textContent }}</p>
                             </template>
                           </div>
+                          
+                          <button class="flag-btn" title="Zgłoś">
+                              <i class="bi bi-flag"></i>
+                          </button>
                     </div>
                 </div>
 
@@ -199,14 +205,9 @@
                 </div>
               </div>
 
-              <button
-                class="action-btn like-action like-action--sm"
-                :class="{ liked: comment.liked }"
-                @click="toggleCommentLike(comment)"
-              >
-                <i :class="comment.liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
-                <span v-if="comment.likes > 0">{{ comment.likes }}</span>
-              </button>
+                <button class="flag-btn" title="Zgłoś">
+                  <i class="bi bi-flag"></i>
+                </button>
             </div>
           </div>
 
