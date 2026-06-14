@@ -18,6 +18,7 @@ export function useForumSocket(posts) {
         socket.off('new_reply');
 
         socket.on('new_post', (data) => {
+            if (data.authorId === userStore.user?.userId) return;
             if (posts.value.some(p => p.id === data.postId)) return;
             posts.value.unshift({
                 id: data.postId,
@@ -47,6 +48,7 @@ export function useForumSocket(posts) {
         });
 
         socket.on('new_comment', ({ postId, commentId, textContent, createdAt, author, authorId }) => {
+            if (authorId === userStore.user?.userId) return;
             const post = posts.value.find(p => p.id === postId);
             if (!post || post.comments.some(c => c.id === commentId)) return;
             post.comments.push({
@@ -85,6 +87,7 @@ export function useForumSocket(posts) {
         });
 
         socket.on('new_reply', ({ postId, parentId, commentId, textContent, createdAt, author, authorId }) => {
+            if (authorId === userStore.user?.userId) return;
             const post = posts.value.find(p => p.id === postId);
             if (!post) return;
             const comment = post.comments.find(c => c.id === parentId);

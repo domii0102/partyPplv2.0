@@ -97,9 +97,52 @@ export async function inviteUser(req, res) {
   try {
     // Trzeba by było dodać warunek z data/statusem jezeli chcemy zapraaszac tylko do aktywnych eventów
     const event = await prisma.event.findUnique({  where: { eventId: eventId, deletedAt: null } });
+    const users = await prisma.userProfile.findMany({ 
+        where: { userId: { in: receiverIds } },
+        select: { userId: true, dateOfBirth: true, nickname: true }
+    });
 
     if (!event) {
-      return res.status(404).json({ success: false, error: "No event not found" });
+      return res.status(404).json({ success: false, error: "No event found" });
+    }
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, error: "No users found" });
+    }
+
+
+    if (event.guestLimit) {
+        const currentCount = await prisma.eventGuest.count({ where: { eventId } });
+        const remaining = event.guestLimit - currentCount;
+        if (remaining <= 0) {
+            return res.status(400).json({ success: false, error: "Event jest już pełny - nie można wysłać zaproszeń." });
+        }
+        if (receiverIds.length > remaining) {
+            return res.status(400).json({ success: false, error: `Zostało tylko ${remaining} wolnych miejsc, a próbujesz zaprosić ${receiverIds.length} osób.` });
+        }
+    }
+
+    if (event.ageRestriction) {
+      const today = new Date();
+
+      const tooYoung = users.filter(u => {
+        const birth = new Date(u.dateOfBirth);
+
+        let age = today.getFullYear() - birth.getFullYear();
+        const notYetHadBirthday = today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+        
+        if (notYetHadBirthday) age--;
+
+        return age < event.ageRestriction;
+      });
+ 
+      if (tooYoung.length > 0) {
+        const names = tooYoung.map(u => u.nickname).join(', ');
+        return res.status(400).json({ 
+          success: false, 
+          error: `Następujący użytkownicy nie spełniają wymogu wieku (${event.ageRestriction}+): ${names}` 
+        });
+      }
     }
 
     const invitations = await Promise.all(
@@ -171,6 +214,13 @@ export async function inviteViaLink(req, res) {
 
     if (!event) {
       return res.status(404).json({ success: false, error: "No event not found" });
+    }
+
+    if (event.guestLimit) {
+        const currentCount = await prisma.eventGuest.count({ where: { eventId } });
+        if (currentCount >= event.guestLimit) {
+            return res.status(400).json({ success: false, error: "Event jest już pełny - nie można generować nowych linków." });
+        }
     }
 
     const token = crypto.randomBytes(16).toString('hex');
@@ -419,6 +469,38 @@ export async function acceptInvite(req, res) {
 
     if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
         return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    const event = invitation.event;
+    
+    if (event.guestLimit) {
+        const currentCount = await prisma.eventGuest.count({ where: { eventId: event.eventId } });
+        if (currentCount >= event.guestLimit) {
+            return res.status(400).json({ success: false, error: "Niestety event jest już pełny." });
+        }
+    }
+
+    if (event.ageRestriction) {
+        const profile = await prisma.userProfile.findUnique({
+            where: { userId },
+            select: { dateOfBirth: true }
+        });
+ 
+        if (!profile) return res.status(404).json({ success: false, error: "Nie znaleziono profilu użytkownika." });
+
+        const today = new Date();
+        const birth = new Date(profile.dateOfBirth);
+        let age = today.getFullYear() - birth.getFullYear();
+
+        const notYetHadBirthday = today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+        if (notYetHadBirthday) age--;
+    
+        if (age < event.ageRestriction) {
+            return res.status(403).json({ 
+                success: false, 
+                error: `To wydarzenie jest przeznaczone dla osób w wieku ${event.ageRestriction}+.` 
+            });
+        }
     }
 
     await prisma.$transaction([
