@@ -2,7 +2,7 @@
     <event-invite-create v-if="showPopup" @close="showPopup = false"></event-invite-create>
     <div class="event-dashboard">
         <div class="event-header">
-            <img class="event-cover" :src="defaultImage"/>
+            <img class="event-cover" :src="event?.image?.url || defaultImage"/>
             <div class="event-header-content">
                 <div class="event-date">
                     {{ eventDate }}
@@ -142,6 +142,7 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    position: relative;
 }
 .event-header-content{
     position: absolute;

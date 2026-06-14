@@ -31,7 +31,7 @@
   --text-main: #ffffff;
   --text-muted: #cfcfe0;
 
-  --accent-purple: #9B5DE5;
+  --accent-purple: #9b5de5;
   --accent-orange: #FF9F1C;
   --accent-soft: #FFD191;
   /* do jest do logowania */
@@ -46,6 +46,10 @@
 
   --border: rgba(187, 120, 255, 0.18);
   --border2: rgba(120, 72, 255, 0.22);
+
+  /* scrollbar */
+  scrollbar-color: rgba(155, 93, 229, 0.5) transparent;
+  scrollbar-width: thin;
 }
 
 a {
