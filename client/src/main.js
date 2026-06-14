@@ -12,6 +12,10 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+import { useSocketStore } from './stores/socket';
+import { useUserStore } from './stores/user';
+import { watch } from 'vue';
+
 import {
     faSun,
     faMoon,
@@ -29,3 +33,11 @@ app.component('FontAwesomeIcon', FontAwesomeIcon);
 app.use(router);
 
 app.mount('#app');
+
+const userStore = useUserStore();
+const socketStore = useSocketStore();
+
+watch(() => userStore.user, (user) => {
+    if (user) socketStore.connect();
+    else socketStore.disconnect();
+}, { immediate: true });

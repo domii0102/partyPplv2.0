@@ -22,7 +22,8 @@ const router = express.Router({ mergeParams: true });
                     },
                     * images: [],
                     * likesCount,
-                    * commentsCount 
+                    * commentsCount,
+                    * isLiked
                 }, ...
             ]
     ERROR: success: false, error
@@ -71,6 +72,7 @@ router.get('/:postId', eventExists, isMember, showPost);
                 * postId,
                 * textContent,
                 * createdAt, 
+                * authorId
                 * author: {
                         * nickname,
                         * avatar

@@ -20,9 +20,6 @@ export const isMember = async (req, res, next) => {
     const userId = req.user.userId;
     const event = req.event;
 
-        console.log('userId:', userId);
-    console.log('organizerId:', event.organizerId);
-    console.log('są równe:', event.organizerId === userId);
     if (event.organizerId === userId) return next();
 
     try {

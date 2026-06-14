@@ -50,6 +50,7 @@ export async function showComments(req, res) {
 
         const comments = data.map((comment) => ({
             commentId: comment.commentId,
+            authorId: comment.authorId,
             textContent: comment.textContent,
             createdAt: comment.createdAt,
             author: {
@@ -58,6 +59,7 @@ export async function showComments(req, res) {
             },
             replies: comment.replies.map((reply) => ({
                 commentId: reply.commentId,
+                authorId: reply.authorId,
                 textContent: reply.textContent,
                 createdAt: reply.createdAt,
                 parentId: reply.parentId,
