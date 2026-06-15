@@ -271,7 +271,9 @@ export async function createEvent(req, res) {
         }
       }
 
-      return { event: savedEvent, image: savedImage };
+      const forum = await tx.forum.create({ data: { eventId: savedEvent.eventId } });
+
+      return { event: savedEvent, image: savedImage, forum };
     });
   } catch (err) {
     console.error(err);
