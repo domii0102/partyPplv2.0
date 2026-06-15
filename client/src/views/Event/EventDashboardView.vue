@@ -1,5 +1,5 @@
 <template>
-    <event-invite-create v-if="showPopup" @close="showPopup = false"></event-invite-create>
+    <event-invite-create v-show="showPopup" @close="showPopup = false"></event-invite-create>
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="event?.image?.url || defaultImage"/>
@@ -15,6 +15,11 @@
                 <div class="event-author">
                     by: <span>{{ organizer }}</span>
                 </div>
+
+                <div class="event-attendance">
+                    
+                </div>
+
                 <div class="event-tabs">
                     <div class="event-tab">
                         <button @click="select('Posts')">Posts</button>
@@ -24,11 +29,6 @@
                     <div class="event-tab">
                         <button @click="select('Guests')">Guests</button>
                         <div class="gradient-line" :class="{ active: activeTab === 'Guests' }"></div>
-                    </div>
-
-                    <div class="event-tab">
-                        <button @click="select('Playlist')">Playlist</button>
-                        <div class="gradient-line" :class="{ active: activeTab === 'Playlist' }"></div>
                     </div>
 
                     <div class="event-tab">
@@ -44,7 +44,7 @@
         </div>
 
         <div class="event-tabs-content">
-            <component :is="currentComponent"></component>
+            <component :is="currentComponent" v-bind="event"></component>
         </div>
     </div>
 </template>

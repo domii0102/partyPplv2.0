@@ -179,6 +179,11 @@ function handleFileChange(event) {
   photoError.value = "";
 }
 
+const validateText = (inputText) => {
+  const cleanedText = inputText.replace(/[^a-zA-Z0-9]/g, '');
+  return inputText === cleanedText;
+}
+
 const validateForm = () => {
   let isValid = true;
   Object.keys(errors).forEach((key) => (errors[key] = ""));
@@ -186,20 +191,32 @@ const validateForm = () => {
   if (!formData.nickname) {
     errors.nickname = "Nickname is required.";
     isValid = false;
+  } else if (!validateText(formData.nickname)) {
+    errors.nickname = "This field can only contain letters and numbers!";
+    isValid = false;
   } else if (formData.nickname.length > 64) {
     errors.nickname = "Nickname needs to be shorter than 64 characters!";
+    isValid = false;
   }
   if (!formData.name) {
     errors.name = "Name is required.";
     isValid = false;
+  } else if (!validateText(formData.name)) {
+    errors.name = "This field can only contain letters and numbers!";
+    isValid = false;
   } else if (formData.name.length > 64) {
     errors.name = "Name needs to be shorter than 64 characters!";
+    isValid = false;
   }
   if (!formData.surname) {
     errors.surname = "Surname is required.";
     isValid = false;
+  } else if (!validateText(formData.nickname)) {
+    errors.surname = "This field can only contain letters and numbers!";
+    isValid = false;
   } else if (formData.surname.length > 64) {
     errors.surname = "Surname needs to be shorter than 64 characters!";
+    isValid = false;
   }
   if (!formData.dateOfBirth) {
     errors.dateOfBirth = "Date of birth is required.";

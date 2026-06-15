@@ -11,7 +11,6 @@
           <div class="profile-info text-center text-md-start ms-md-4">
             <h1>{{ user?.name }}</h1>
             <div class="nickname">{{ user?.nickname }}</div>
-            <div class="stats">{{ 67 }} friends</div>
             <a class="btn btn-edit-profile"> Edit profile </a>
             <button class="btn btn-none log-out" @click="logOut">
               <i class="bi bi-box-arrow-right"></i>

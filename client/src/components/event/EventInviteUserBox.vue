@@ -66,11 +66,11 @@ span{
 button{
     margin-right: 1rem;
     font-size: 1.5rem;
-    color: var(--accent-purple);
+    color: var(--accent-orange);
 }
 
 .btn.invited {
-    color: var(--accent-purple);
+    color: var(--accent-orange);
     animation: invitePop 0.35s ease;
 }
 

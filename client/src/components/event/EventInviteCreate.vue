@@ -1,29 +1,37 @@
 <template>
-    <div @click.self="$emit('close')" class="blur-overlay">
-        <main>
-            <div class="popup-head">
-                <h1>Invite your friends</h1>
-                <button class="btn" @click="$emit('close')">
-                    <i class="bi bi-x"></i>
-                </button>
-            </div>
-            <div class="friend-list-container">
-                <EventInviteUserBox></EventInviteUserBox>
-                <EventInviteUserBox></EventInviteUserBox>
-                <EventInviteUserBox></EventInviteUserBox>
-                <EventInviteUserBox></EventInviteUserBox>
-                <EventInviteUserBox></EventInviteUserBox>
-                <EventInviteUserBox></EventInviteUserBox>
-            </div>
-            <h2>...or send them an invitation link!</h2>
-            <div class="link-container">
-                <div ref="inviteLink" class="invite-link">
-                    {{ "partyp.pl/676767" }}
+    <Transition name="blur">
+        <div @click.self="$emit('close')" class="blur-overlay">
+            <main>
+                <div class="popup-head">
+                    <h1>Invite your friends</h1>
+                    <button class="btn" @click="$emit('close')">
+                        <i class="bi bi-x"></i>
+                    </button>
                 </div>
-                <button class="copy-btn" @click="copyLink">{{ isLinkCopied ? "Copied" : "Copy" }}</button>
-            </div>
-        </main>
-    </div>
+                <div class="user-search">
+                    <input class="user-searchbar" type="text" placeholder="Search for a user">
+                    <button class="btn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div class="friend-list-container">
+                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox></EventInviteUserBox>
+                </div>
+                <h2>...or send them an invitation link!</h2>
+                <div class="link-container">
+                    <div ref="inviteLink" class="invite-link">
+                        {{ "partyp.pl/676767" }}
+                    </div>
+                    <button class="copy-btn" @click="copyLink">{{ isLinkCopied ? "Copied!" : "Copy" }}</button>
+                </div>
+            </main>
+        </div>
+    </Transition>
 </template>
 
 <script setup>
@@ -47,8 +55,9 @@
 .blur-overlay{
     display: flex;
     width: 100%;
-    height: calc(100vh - var(--header-height));
-    position: absolute;
+    height: 100%;
+    position: fixed;
+    top: 0;
     z-index: 10;
     backdrop-filter: blur(10px);
     justify-content: center;
@@ -67,6 +76,35 @@ main{
     display: flex;
     flex-direction: column;
 }
+
+.blur-enter-active,
+.blur-leave-active {
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+.blur-enter-from,
+.blur-leave-to {
+  opacity: 0;
+  backdrop-filter: blur(0px);
+}
+
+.user-search{
+    display: flex;
+    width: 100%;
+    margin: 0 0 1.5rem 0;
+}
+
+.user-searchbar{
+    border: solid;
+    border-color: var(--accent-purple);
+}
+
+.user-search > button{
+    color: var(--accent-purple);
+    font-size: 1.5rem;
+    transition: color 0.3s;
+}
+
 .popup-head{
     width: 100%;
     display: flex;
