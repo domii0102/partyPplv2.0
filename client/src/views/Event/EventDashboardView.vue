@@ -17,7 +17,18 @@
                 </div>
 
                 <div class="event-attendance">
-                    
+                    Your attendance:
+                    <span class="attendance-radio">
+                        <button class="btn" @click="selectAttendance('accept')" :class="{ active: confirmedAttendance === 'accept' }" :disabled="confirmedAttendance === 'accept' ">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn" @click="selectAttendance('unsure')" :class="{ active: confirmedAttendance === 'unsure' }" :disabled="confirmedAttendance === 'unsure'">
+                            <i class="bi bi-question"></i>
+                        </button>
+                        <button class="btn" @click="selectAttendance('decline')" :class="{ active: confirmedAttendance === 'decline' }" :disabled="confirmedAttendance === 'decline'">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
                 </div>
 
                 <div class="event-tabs">
@@ -66,6 +77,13 @@
     const error = ref(null);
     const event = ref(null);
     const showPopup = ref(false);
+
+
+    const confirmedAttendance = ref("unsure");
+
+    function selectAttendance(sel) {
+        confirmedAttendance.value = sel;
+    }
 
     const fetchEvent = async () => {
         loading.value = true;
@@ -121,7 +139,7 @@
     const currentComponent = computed(() => componentsMap[activeTab.value])
 
     function select(tab){
-        activeTab.value = tab
+        activeTab.value = tab;
     }
 
 </script>
@@ -175,7 +193,6 @@
     display: flex;
     justify-content: center;
     gap: 2rem;
-    margin-top: 2rem;
 }
 
 .event-tab button{
@@ -199,5 +216,39 @@
 }
 .gradient-line.active{
     opacity: 1;
+}
+
+.event-attendance{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.attendance-radio{
+    background-color: color-mix(in srgb, var(--bg-main) 50%, transparent);
+    border: solid 1px;
+    border-color: var(--border);
+    border-radius: 99px;
+    padding: 0.1rem;
+    margin-left: 1rem;
+}
+
+.attendance-radio button{
+    color: var(--text-muted);
+    border-radius: 99px;
+}
+
+.attendance-radio button.active{
+    color: var(--bg-main);
+    background-color: var(--accent-orange);
+}
+
+.attendance-radio button:hover{
+    color: var(--accent-orange);
+    backdrop-filter: blur(10px);
+    filter: drop-shadow(0px 0px 15px var(--accent-orange));
+    border: solid color-mix(in srgb, var(--accent-orange) 50%, transparent) 1px;
 }
 </style>
