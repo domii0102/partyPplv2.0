@@ -72,7 +72,7 @@ main{
     background-color: var(--bg-main);
     padding: 2rem;
     border-radius: 20px;
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     display: flex;
     flex-direction: column;
 }
@@ -95,8 +95,9 @@ main{
 }
 
 .user-searchbar{
-    border: solid;
+    border: solid 1px;
     border-color: var(--accent-purple);
+    background-color: color-mix(in srgb, var(--accent-purple) 5%, transparent);
 }
 
 .user-search > button{
@@ -136,7 +137,7 @@ main > h2 {
 .friend-list-container{
     width: 100%;
     border-radius: 20px;
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     overflow-y: auto;
     flex: 1;
 }
@@ -148,7 +149,7 @@ main > h2 {
 .invite-link{
     width: 100%;
     border-radius: 20px;
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     align-content: center;
     margin-right: 1rem;
     font-size: 1.25rem;
@@ -156,7 +157,7 @@ main > h2 {
 .copy-btn{
     color: var(--bg-main);
     background-color: var(--accent-purple);
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     border-radius: 20px;
     transition: 0.3s;
 }

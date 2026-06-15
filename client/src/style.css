@@ -19,8 +19,8 @@
   --header-height: 4.5rem;
 
   /* Zmienne - kolory i gradienty */
-  --frame-gradient: linear-gradient(135deg, #ff9f1c ,#9b5de5);
-  --line-gradient: linear-gradient(90deg,#ff9f1c ,#9b5de5);
+  --frame-gradient: linear-gradient(135deg, #e38502 ,#623994);
+  --line-gradient: linear-gradient(90deg,#e38502 ,#623994);
 
   /* Tryb Ciemny */
   /* (tryb jasny będzie dodany w przyszłości) */
@@ -31,15 +31,20 @@
   --text-main: #ffffff;
   --text-muted: #cfcfe0;
 
+  --accent-purple: #623994;
+  --accent-orange: #e38502;
+
+  /*
   --accent-purple: #9b5de5;
   --accent-orange: #FF9F1C;
+  */
   --accent-soft: #FFD191;
   /* do jest do logowania */
     --primary-orange: #ffb347;
     --primary-purple: #ad63ff;
     --auth-bg-overlay: rgba(15, 10, 31, 0.5);
 
-  --card-bg: radial-gradient(circle at 50% 30%, #2a1b33 0%, #1a1122 70%, #120b18 100%);
+  --card-bg: radial-gradient(circle at 50% 30%, #62399425 0%, #62399414 70%, #62399407 100%);
 
   --frame-grad: linear-gradient(145deg, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
   --ring-grad: radial-gradient(circle, #FF9F1C 0%, #9B5DE5 55%, #FFD191 100%);
@@ -48,7 +53,7 @@
   --border2: rgba(120, 72, 255, 0.22);
 
   /* scrollbar */
-  scrollbar-color: rgba(155, 93, 229, 0.5) transparent;
+  scrollbar-color: rgba(98, 57, 148, 0.5) transparent;
   scrollbar-width: thin;
 }
 

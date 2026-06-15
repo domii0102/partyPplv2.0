@@ -63,7 +63,7 @@ header{
 .brand-logo, .link-container{
     cursor: pointer;
     transition: color 0.5s;
-    color: var(--text-main);
+    color: var(--text-muted);
 }
 .brand-logo{
     font-size: 1.5rem;

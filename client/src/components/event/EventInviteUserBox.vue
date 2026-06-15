@@ -32,7 +32,7 @@
     display: flex;
     border-radius: 20px;
     margin: 0.5rem;
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
@@ -53,7 +53,7 @@ img{
     width: auto;
     aspect-ratio: 1/1;
     border-radius: 5rem;
-    border: solid var(--accent-purple);
+    border: solid var(--accent-purple) 1px;
     margin: 0.5rem;
 }
 
