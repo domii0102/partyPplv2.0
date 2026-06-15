@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "main": "app.js",
   "type": "module",
+  "perf": "artillery run tests/performance.yml",
   "scripts": {
     "dev": "node --watch app",
-    "start": "node app"
+    "start": "node app",
+    "test": "cross-env NODE_ENV=test vitest",
+    "perf": "artillery run tests/performance.yml" ,
+    "test:coverage": "vitest run --coverage --config vitest.config.js"
   },
   "author": "",
   "license": "ISC",
@@ -31,6 +35,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "prisma": "^7.4.2"
+    "@vitest/coverage-v8": "^4.1.9",
+    "artillery": "^2.0.32",
+    "cross-env": "^10.1.0",
+    "prisma": "^7.4.2",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.9"
   }
 }

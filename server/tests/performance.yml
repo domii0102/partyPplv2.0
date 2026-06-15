@@ -1,0 +1,15 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+
+scenarios:
+  - name: "Protected endpoints without login"
+    flow:
+      - get:
+          url: "/api/event"
+      - get:
+          url: "/api/events/1/forum/posts"
+      - get:
+          url: "/api/events/1/forum/posts/1/comments"

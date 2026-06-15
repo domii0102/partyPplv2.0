@@ -122,8 +122,10 @@ app.use((err, req, res, next) => {
  });
 });
 
-server.listen(PORT, () =>{
-  console.log(`Server running at http://localhost:${PORT} `);
-});
+if (process.env.NODE_ENV !== "test") {
+  server.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
 
 export default app;
