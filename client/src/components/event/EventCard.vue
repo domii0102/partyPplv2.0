@@ -7,7 +7,9 @@
     <div class="event-details">
       <h3 class="event-title">{{ event.eventName }}</h3>
       <p class="event-info">{{ formatDate(event.eventDateTime) }}</p>
+      <!-- 
       <p class="event-info location">Lat: {{ event.locationLatitude || '?' }}, Lng: {{ event.locationLongitude || '?' }}</p>
+      -->
     </div>
 
     <button 

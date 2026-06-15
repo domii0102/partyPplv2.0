@@ -1,7 +1,12 @@
 <template>
   <div class="posts-section">
 
-    <div class="post-input-wrapper">
+    <div v-if="accessDenied" class="access-denied">
+      <i class="bi bi-lock"></i>
+      <p>Join the event to see the posts and join the conversation!</p>
+    </div>
+
+    <div v-else class="post-input-wrapper">
       <input
         v-model="newPostText"
         class="post-input"
@@ -258,6 +263,8 @@ function canModify(resourceAuthorId) {
   return false;
 }
 
+const accessDenied = ref(false)
+
 async function loadPosts(reset=false) {
     if (loadingMore.value) return;
     if (!hasMore.value && !reset) return;
@@ -282,7 +289,12 @@ async function loadPosts(reset=false) {
         
         if (mappedPosts.length < limit) hasMore.value = false;
         else currentPage.value++; 
-    } catch(err) { console.error(err); 
+    } catch (err) {
+      if (err.status === 403) {
+        accessDenied.value = true;
+      } else {
+        console.error(err);
+      }
     } finally { loadingMore.value = false; }
 
 }
@@ -935,6 +947,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.3rem;
   margin-left: auto;
+}
+
+.access-denied i{
+  font-size: 2rem;
+  color: var(--accent-orange);
 }
 
 </style>

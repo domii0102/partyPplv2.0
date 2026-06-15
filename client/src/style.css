@@ -25,7 +25,7 @@
   /* Tryb Ciemny */
   /* (tryb jasny będzie dodany w przyszłości) */
   --bg-main: #0f0a1f;
-  --bg-hero: radial-gradient(1200px circle at 15% 10%, #2B1E4A 0%, #1a1230 45%, #0b0718 100%);
+  --bg-hero: radial-gradient(1200px circle at 15% 10%, #62399425 0%, #62399416 45%, #62399409 100%);
   --bg-about: #0b0718;
 
   --text-main: #ffffff;
