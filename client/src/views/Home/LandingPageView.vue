@@ -6,7 +6,7 @@
             <div class="hero-card neon-frame">
                 <h2 class="hero-card-title">PartyPpl</h2>
                 <p class="hero-card-text">
-                    Dołącz do społeczności imprezowiczów! Twórz, planuj i przeżywaj niezapomniane wydarzenia razem z nami.
+                    Join our community of party animals! Create, plan, and experience unforgettable events with us. 
                 </p>
 
                 <div class="hero-buttons">
