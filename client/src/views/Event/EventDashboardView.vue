@@ -13,7 +13,11 @@
                 </h1>
 
                 <div class="event-author">
-                    by: <span>{{ organizer }}</span>
+                    by: <span>
+                        <router-link :to="`/profile/${organizerId}`">
+                            {{ organizer.nickname}}
+                        </router-link>
+                    </span>
                 </div>
 
                 <div class="event-attendance">
@@ -77,6 +81,7 @@
     const error = ref(null);
     const event = ref(null);
     const showPopup = ref(false);
+    const organizerId = ref(null);
 
 
     const confirmedAttendance = ref("unsure");
@@ -99,7 +104,12 @@
             const serverData = await res.json();
             if (!res.ok) throw new Error(serverData.error || "Failed to fetch selected event.");
 
-            if (serverData.success) event.value = serverData.data;
+            if (serverData.success) 
+            {
+                event.value = serverData.data;
+                organizerId.value = event.value.organizerId;
+            }
+
         } catch (err) {
             console.error(err);
             error.value = "Problem occured while loading selected event, please try again later.";
@@ -122,7 +132,7 @@
         if (!event.value) return 'Loading...';
         const profile = event.value.userCredentials?.userProfile;
 
-        if (profile) return `${profile.name} ${profile.surname} - ${profile.nickname}`;
+        if (profile) return profile;
 
         return event.value.organizerId || null;
     });
@@ -185,9 +195,16 @@
     font-size: 0.9rem;
     opacity: 0.9;
 }
-.event-author span {
+.event-author span a{
     color: var(--accent-orange);
     font-weight: 600;
+    text-decoration: none;
+    font-size: medium;
+    font-style: italic;
+}
+
+.event-author span a:hover{
+    text-decoration: underline;
 }
 .event-tabs{
     display: flex;

@@ -18,7 +18,7 @@ import LandingPageView from "../views/Home/LandingPageView.vue";
 
 import ProfileView from "../views/Profile/ProfileView.vue";
 import NotificationsView from "../views/Profile/NotificationsView.vue";
-
+import EditProfileView from "../views/Profile/EditProfileView.vue";
 import { getActivePinia, setActivePinia, createPinia } from "pinia";
 
 const pinia = getActivePinia() || createPinia();
@@ -83,6 +83,20 @@ const routes = [
   // Profile
   {
     path: "/profile",
+    component: ProfileView,
+    meta: { requiresAuth: true, requiresVerification: true },
+  },
+  {
+  path: "/profile/edit",
+  component: EditProfileView,
+  meta: {
+    requiresAuth: true,
+    requiresVerification: true,
+  },
+},
+
+    {
+    path: "/profile/:id",
     component: ProfileView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
