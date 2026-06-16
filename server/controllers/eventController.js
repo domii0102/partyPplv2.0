@@ -32,10 +32,17 @@ export async function getEvent(req, res) {
         },
       },
     });
+
     if (!event) {
       return res.status(404).json({ success: false, error: "Event not found" });
     }
-    return res.status(200).json({ success: true, data: {...event, isOrganizer: String(event.organizerId)===String(userId), }});
+
+    const isGuest = userId ? await prisma.eventGuest.findUnique({
+      where: { userId_eventId: { userId: String(userId), eventId } },
+      select: { confirmedArrival: true }
+    }) : null;
+
+    return res.status(200).json({ success: true, data: {...event, isOrganizer: String(event.organizerId)===String(userId), isGuest: !!isGuest, confirmedArrival: isGuest?.confirmedArrival ?? null}});
   } catch (err) {
     console.error(err);
     return res
@@ -44,7 +51,7 @@ export async function getEvent(req, res) {
   }
 }
 
-//POPRAWIĆ JAK BĘDZIE DOŁĄCZANIE DO WYDARZEŃ
+//POPRAWIĆ JAK BĘDZIE DOŁĄCZANIE DO WYDARZEŃ - poprawiono ihi
 export async function getEvents(req, res) {
   const visibility = req.query.visibility || null;
   const search = req.query.search || null;
@@ -56,7 +63,8 @@ export async function getEvents(req, res) {
     : [];
   const date = req.query.date ? new Date(req.query.date) : null;
   const orderBy = req.query.sortBy || "default";
-
+  const userId = req.user.userId;
+  const profileUserId = req.query.userId || null;
   let prismaOrderBy = undefined;
 
   switch (orderBy) {
@@ -150,18 +158,86 @@ export async function getEvents(req, res) {
         success: true,
         data: events,
       });
-    } else if (visibility === "mine") {
-      const userId = req.user.userId;
-      if (!userId) {
-        return res.status(401).json({ success: false, error: "Unauthorized" });
-      }
+   } 
+   else if (visibility === "user") {
+          if (!profileUserId) {
+            return res.status(400).json({
+              success: false,
+              error: "User id is required",
+            });
+          }
 
-      events = await prisma.event.findMany({
-        where: { deletedAt: null, organizerId: userId },
-        include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy
-      });
-      return res.status(200).json({ success: true, data: events });
-    }
+          const organizedEvents = await prisma.event.findMany({
+            where: {
+              deletedAt: null,
+              organizerId: profileUserId,
+              isPublic: true,
+            },
+            orderBy: prismaOrderBy,
+            include: {
+              image: true,
+              hashtags: true,
+            },
+          });
+
+          return res.status(200).json({
+            success: true,
+            data: {
+              organizedEvents,
+              participatingEvents: [],
+            },
+          });
+}
+   
+   else if (visibility === "mine") {
+          const [organizedEvents, participatingEvents] = await prisma.$transaction([
+          prisma.event.findMany({
+            where: {
+              deletedAt: null,
+              organizerId: userId,
+            },
+            orderBy: prismaOrderBy,
+            include: {
+              image: true,
+              hashtags: true,
+            },
+          }),
+          prisma.event.findMany({
+            where: {
+              deletedAt: null,  
+              organizerId: {
+                not: userId,
+              },      
+              eventGuests: {
+                some: {
+                  userId: userId,    
+                  confirmedArrival: true,
+                },
+              },
+            },
+                orderBy: prismaOrderBy,
+                include: {
+                  image: true,
+                  hashtags: true,
+                  eventGuests:{
+                    where:{
+                      userId: userId,
+                    }
+                  }
+                },
+              }),
+            ]);
+            
+
+              return res.status(200).json({
+                success: true,
+                data: {
+                  organizedEvents,
+                  participatingEvents,
+                },
+              });
+            }
+
   } catch (err) {
     console.error(err);
     return res
@@ -638,7 +714,9 @@ export async function setConfirmedArrival(req, res) {
 
     await prisma.eventGuest.update({
       where: { userId_eventId: { userId, eventId } },
-      data: { confirmedArrival: confirmedArrival }
+      data: { 
+        confirmedArrival: confirmedArrival === null ? null : confirmedArrival
+      }
     });
 
     return res.status(200).json({ success: true, message: "Arrival status updated." });
@@ -646,5 +724,42 @@ export async function setConfirmedArrival(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+export async function getEventGuests(req, res) {
+  const eventId = parseInt(req.params.id);
+
+  try {
+    const eventGuests = await prisma.eventGuest.findMany({
+      where: { eventId: eventId },
+      select: {
+        guestId: true,
+        confirmedArrival: true,
+        userCredentials: {
+          select: {
+            userProfile: {
+              select: {
+                name: true,
+                surname: true,
+                nickname: true,
+                avatar: { select: { url: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (eventGuests.length <= 0) {
+      return res.status(200).json({ success: false, error: "No guestes to show..." });
+    }
+
+    return res.status(200).json({ success: true, data: eventGuests });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
   }
 }
