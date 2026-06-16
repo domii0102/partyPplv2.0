@@ -1,6 +1,6 @@
 import express from 'express';
 import { canCreateInvites,  canManageInvites} from '../middleware/userPermissionsMiddleware.js';
-import { showEventInvites, inviteUser, inviteViaLink, changeExpirationDate, deleteInvite, showUserInvites, showInvite, acceptInvite, rejectInvite } from '../controllers/invitationController.js';
+import { showEventInvites, inviteUser, inviteViaLink, changeExpirationDate, deleteInvite, showUserInvites, showInvite, acceptInvite, rejectInvite, searchUsers, showInviteLocal } from '../controllers/invitationController.js';
 
 
 const router = express.Router({ mergeParams: true });
@@ -73,6 +73,29 @@ router.post('/users', canCreateInvites, inviteUser);
 */
 router.post('/link', canCreateInvites, inviteViaLink);
 
+
+/*
+    Wyszukiwanie listy użytkowników
+    PARAMS:
+        * eventId
+    QUERY:
+        * query *opcjonalne*
+    OUTPUT: success: true, message,
+            data: [
+                {   
+                    * userId,
+                    * nickname,
+                    * name,
+                    * surname,
+                    * avatar
+                }, ...
+            ] 
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/search
+*/
+router.get('/search', canCreateInvites, searchUsers);
+
+
 /*
     Wyświetlenie listy zaproszeń DANEGO UŻYTKOWNIKA
     PARAMS:
@@ -142,7 +165,29 @@ router.delete('/:invitationId', canManageInvites, deleteInvite);
 
 
 /*
-    Wyświetlenie zaproszenia
+    Wyświetlenie zaproszenia lokalnego
+    PARAMS:
+        * invitationId
+    OUTPUT: success: true, message, 
+            data: {
+                * invitationId,
+                * event:
+                    * eventId,
+                    * eventName,
+                    * eventDateTime
+                * organizer:
+                    * name,
+                    * surname,
+                    * nick
+            }
+    OUTPUT: success: false, error
+    URL:   /api/public/invitation/:invitationId
+*/
+router.get('/invitation/:invitationId', showInviteLocal);
+
+
+/*
+    Wyświetlenie zaproszenia przez link
     PARAMS:
         * token
     OUTPUT: success: true, message, 
@@ -158,9 +203,9 @@ router.delete('/:invitationId', canManageInvites, deleteInvite);
                     * nick
             }
     OUTPUT: success: false, error
-    URL:   /api/public/:token
+    URL:   /api/public/link/:token
 */
-router.get('/:token', showInvite);
+router.get('/link/:token', showInvite);
 
 
 export default router;

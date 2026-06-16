@@ -6,10 +6,13 @@
             <div class="link-container" v-if="!user">
                 <RouterLink to="/login" class="nav-link">Sign in</RouterLink>
                 <RouterLink to="/register" class="nav-link">Sign up</RouterLink>
-                <FontAwesomeIcon icon="moon" class="icon" />
             </div>
 
             <div class="link-container" v-else>
+                <RouterLink to="/event/create" class="nav-link">
+                    <i class="bi bi-house-add"></i>
+                    <span class="d-none d-md-inline">Create Event</span>
+                </RouterLink>
                 <RouterLink to="/event/feed" class="nav-link">
                     <i class="bi bi-globe"></i>
                     <span class="d-none d-md-inline">Discover</span>
@@ -60,7 +63,7 @@ header{
 .brand-logo, .link-container{
     cursor: pointer;
     transition: color 0.5s;
-    color: var(--text-main);
+    color: var(--text-muted);
 }
 .brand-logo{
     font-size: 1.5rem;
@@ -75,15 +78,6 @@ header{
 }
 .brand-logo:hover, .nav-link:hover{
     color: var(--accent-purple);
-}
-.icon{
-    transition: color 0.5s;
-    cursor: pointer;
-    height: 100%;
-    align-self: center;
-}
-.icon:hover{
-    color: var(--accent-soft);
 }
 
 i {

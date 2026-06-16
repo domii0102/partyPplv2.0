@@ -18,7 +18,7 @@ import LandingPageView from "../views/Home/LandingPageView.vue";
 
 import ProfileView from "../views/Profile/ProfileView.vue";
 import NotificationsView from "../views/Profile/NotificationsView.vue";
-
+import EditProfileView from "../views/Profile/EditProfileView.vue";
 import { getActivePinia, setActivePinia, createPinia } from "pinia";
 import AdminPanelView from "../views/Admin/AdminPanelView.vue";
 const pinia = getActivePinia() || createPinia();
@@ -74,11 +74,11 @@ const routes = [
     component: EventDashboardView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
-    { 
-    path: '/event/invite', 
-    component: EventInviteView, 
-    meta: { hideHeader: true, isInvite: true }
-  },
+   // { 
+  //  path: '/event/invite', 
+  //  component: EventInviteView, 
+  //  meta: { hideHeader: true, isInvite: true }
+  //},
  {
   path: '/event/:id/update',
   name: 'event-update',
@@ -91,6 +91,20 @@ const routes = [
     component: ProfileView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
+  {
+  path: "/profile/edit",
+  component: EditProfileView,
+  meta: {
+    requiresAuth: true,
+    requiresVerification: true,
+  },
+},
+
+    {
+    path: "/profile/:id",
+    component: ProfileView,
+    meta: { requiresAuth: true, requiresVerification: true },
+  },
 
   {
     path: "/notifications",
@@ -98,6 +112,19 @@ const routes = [
     meta: { requiresAuth: true, requiresVerification: true },
   },
 
+  {
+    path: '/event/invite/link/:token',
+    name: 'invite-token',
+    component: EventInviteView,
+    meta: { hideHeader: true, isInvite: true }
+  },
+
+  {
+    path: '/event/invite/id/:invitationId',
+    name: 'invite-id',
+    component: EventInviteView,
+    meta: { hideHeader: true, isInvite: true }
+  },
   {
     path: "/admin",
     component: AdminPanelView,

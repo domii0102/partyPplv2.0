@@ -2,7 +2,7 @@ model EventGuest {
   guestId          Int      @id @default(autoincrement())
   userId           String
   eventId          Int
-  confirmedArrival Boolean
+  confirmedArrival Boolean?
 
   userCredentials UserCredentials @relation(fields: [userId], references: [userId])
   event           Event           @relation(fields: [eventId], references: [eventId])

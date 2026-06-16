@@ -1,10 +1,11 @@
 <template>
-    <event-invite-create v-if="showPopup" @close="showPopup = false"></event-invite-create>
+    <event-invite-create v-show="showPopup" @close="showPopup = false"></event-invite-create>
+
     <event-report-popup
-  v-if="showReportPopup"
-  :event-id="route.params.id"
-  @close="showReportPopup = false"
-></event-report-popup>
+      v-if="showReportPopup"
+      :event-id="route.params.id"
+      @close="showReportPopup = false"
+    ></event-report-popup>  
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="event?.image?.url || defaultImage"/>
@@ -45,8 +46,37 @@
 
 
                 <div class="event-author">
-                    by: <span>{{ organizer }}</span>
+                    by: <span>
+                        <router-link :to="`/profile/${organizerId}`">
+                            {{ organizer.nickname}}
+                        </router-link>
+                    </span>
                 </div>
+
+                <div v-if="accessDenied" class="join-container">
+                    <button class="join-btn">
+                        Join Event
+                    </button>
+                </div>
+
+                <div v-else class="event-attendance">
+                    Your attendance:
+                    <span class="attendance-radio">
+                        <button class="btn" @click="selectAttendance('accept')" :class="{ active: confirmedAttendance === 'accept' }" :disabled="confirmedAttendance === 'accept' ">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn" @click="selectAttendance('unsure')" :class="{ active: confirmedAttendance === 'unsure' }" :disabled="confirmedAttendance === 'unsure'">
+                            <i class="bi bi-question"></i>
+                        </button>
+                        <button class="btn" @click="selectAttendance('decline')" :class="{ active: confirmedAttendance === 'decline' }" :disabled="confirmedAttendance === 'decline'">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                    <button class="btn leave-btn">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+
                 <div class="event-tabs">
                     <div class="event-tab">
                         <button @click="select('Posts')">Posts</button>
@@ -56,11 +86,6 @@
                     <div class="event-tab">
                         <button @click="select('Guests')">Guests</button>
                         <div class="gradient-line" :class="{ active: activeTab === 'Guests' }"></div>
-                    </div>
-
-                    <div class="event-tab">
-                        <button @click="select('Playlist')">Playlist</button>
-                        <div class="gradient-line" :class="{ active: activeTab === 'Playlist' }"></div>
                     </div>
 
                     <div class="event-tab">
@@ -82,7 +107,7 @@
         </div>
 
         <div class="event-tabs-content">
-            <component :is="currentComponent"></component>
+            <component :is="currentComponent" v-bind="event"></component>
         </div>
     </div>
 </template>
@@ -100,6 +125,8 @@
     import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
     import EventReportPopup from '../../components/event/EventReportPopup.vue';
 
+    import postService from '../../services/forum/postService';
+
     const route = useRoute();
     const router = useRouter();
     const loading = ref(false);
@@ -107,6 +134,14 @@
     const event = ref(null);
     const currentUser =ref(null);
     const showPopup = ref(false);
+    const organizerId = ref(null);
+
+
+    const confirmedAttendance = ref("unsure");
+
+    function selectAttendance(sel) {
+        confirmedAttendance.value = sel;
+    }
     const showReportPopup =ref(false);
 
     const fetchEvent = async () => {
@@ -123,7 +158,12 @@
             const serverData = await res.json();
             if (!res.ok) throw new Error(serverData.error || "Failed to fetch selected event.");
 
-            if (serverData.success) event.value = serverData.data;
+            if (serverData.success) 
+            {
+                event.value = serverData.data;
+                organizerId.value = event.value.organizerId;
+            }
+
         } catch (err) {
             console.error(err);
             error.value = "Problem occured while loading selected event, please try again later.";
@@ -167,7 +207,7 @@
         if (!event.value) return 'Loading...';
         const profile = event.value.userCredentials?.userProfile;
 
-        if (profile) return `${profile.name} ${profile.surname} - ${profile.nickname}`;
+        if (profile) return profile;
 
         return event.value.organizerId || null;
     });
@@ -194,9 +234,35 @@
     const currentComponent = computed(() => componentsMap[activeTab.value])
 
     function select(tab){
-        activeTab.value = tab
+        activeTab.value = tab;
     }
 
+    //nie chce mi sie robic sprawdzania czy jestes czlonkiem wydarzenia w madrzejszy sposob wybaczcie czas goni
+    const accessDenied = ref(false);
+    const fetchAccess = async () => {
+        const eventId = route.params.id;
+
+        try{
+            const response = await postService.getPosts(
+            eventId,
+            1,
+            1
+            );
+        } catch (err){
+            if (err.status === 403) {
+                accessDenied.value = true;
+            } else {
+                console.error(err);
+            }
+        }
+        console.log(accessDenied);
+        console.log("chuj");
+    };
+
+    onMounted(async () => {
+        await fetchEvent();
+        await fetchAccess();
+    });
     function goToUpdateEvent() {
     router.push(`/event/${route.params.id}/update`);
 }
@@ -245,15 +311,21 @@
     font-size: 0.9rem;
     opacity: 0.9;
 }
-.event-author span {
+.event-author span a{
     color: var(--accent-orange);
     font-weight: 600;
+    text-decoration: none;
+    font-size: medium;
+    font-style: italic;
+}
+
+.event-author span a:hover{
+    text-decoration: underline;
 }
 .event-tabs{
     display: flex;
     justify-content: center;
     gap: 2rem;
-    margin-top: 2rem;
 }
 
 .event-tab button{
@@ -278,6 +350,72 @@
 .gradient-line.active{
     opacity: 1;
 }
+
+.event-attendance{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.attendance-radio{
+    background-color: color-mix(in srgb, var(--bg-main) 50%, transparent);
+    border: solid 1px;
+    border-color: var(--border);
+    border-radius: 99px;
+    padding: 0.1rem;
+    margin-left: 1rem;
+}
+
+.attendance-radio button{
+    color: var(--text-muted);
+    border-radius: 99px;
+}
+
+.attendance-radio button.active{
+    color: var(--bg-main);
+    background-color: var(--accent-orange);
+}
+
+.attendance-radio button:hover{
+    color: var(--accent-orange);
+    backdrop-filter: blur(10px);
+    filter: drop-shadow(0px 0px 15px var(--accent-orange));
+    border: solid color-mix(in srgb, var(--accent-orange) 50%, transparent) 1px;
+}
+
+.join-container{
+    padding: 0.5rem;
+}
+
+.join-btn {
+    background-color: color-mix(in srgb, var(--accent-orange) 40%, transparent);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent-orange) 67%, white);
+    
+    box-shadow: 0 0 0 transparent;
+    transform: translateY(0) scale(1);
+
+    transition: 
+        transform 0.2s ease,
+        box-shadow 0.3s ease,
+        background-color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.join-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent-orange) 60%, transparent);
+}
+
+.join-btn:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent-orange) 40%, transparent);
+}
+
+.leave-btn{
+    color: var(--text-muted);
 .event-title-row {
     display: flex;
     align-items: center;

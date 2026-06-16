@@ -4,11 +4,11 @@
       <div class="form-container">
         <div class="header">
           <div class="spacer"></div>
-          <h2 class="display-6">Fill in your profile info</h2>
+          <h2 class="display-6">Edit your profile info</h2>
           <router-link class="go-back" to="/">← Go back</router-link>
         </div>
 
-        <form @submit.prevent="handleFillInProfile" novalidate>
+        <form @submit.prevent="handleEditProfile" novalidate>
           <div class="form-inner">
             <div>
               <div class="form-group">
@@ -25,48 +25,7 @@
                 }}</span>
               </div>
 
-              <div class="form-inner">
-                <div class="form-group">
-                  <label for="firstname">First name</label>
-                  <input
-                    v-model="formData.name"
-                    type="text"
-                    id="firstname"
-                    placeholder="Your first name"
-                    :class="{ 'input-error': false }"
-                  />
-                  <span v-if="errors.name" class="error-text">{{
-                    errors.name
-                  }}</span>
-                </div>
-
-                <div class="form-group">
-                  <label for="surname">Surname</label>
-                  <input
-                    v-model="formData.surname"
-                    type="text"
-                    id="surname"
-                    placeholder="Your surname"
-                    :class="{ 'input-error': false }"
-                  />
-                  <span v-if="errors.surname" class="error-text">{{
-                    errors.surname
-                  }}</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="dateOfBirth">Date of Birth</label>
-                <input
-                  v-model="formData.dateOfBirth"
-                  type="date"
-                  id="dateOfBirth"
-                  :class="{ 'input-error': false }"
-                />
-                <span v-if="errors.dateOfBirth" class="error-text">{{
-                  errors.dateOfBirth
-                }}</span>
-              </div>
+             
             </div>
             <div class="pfp-container form-group">
               <label>Profile picture *</label>
@@ -94,14 +53,11 @@
           </div>
 
           <button type="submit" class="gradient-btn" :disabled="loading">
-            {{ loading ? "Saving profile..." : "Save" }}
+            {{ loading ? "Saving changes..." : "Save" }}
           </button>
         </form>
 
-        <p class="bottom-text">
-          Want to do this later?
-          <router-link to="/">Log out.</router-link>
-        </p>
+        
       </div>
     </div>
   </div>
@@ -112,22 +68,16 @@ import { reactive, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { service } from "../../services/requestService.js";
 import defaultImage from "../../assets/pfp.jpg";
-import { useAccountStore } from "../../stores/account.js";
 import { useUserStore } from "../../stores/user.js";
-
+import { useAccountStore } from "../../stores/account.js";
 const formData = reactive({
   nickname: "",
-  name: "",
-  surname: "",
-  dateOfBirth: "",
-  avatar: "",
+  avatar: null,
 });
-
+const userStore = useUserStore();
+const accountStore = useAccountStore();
 const errors = reactive({
   nickname: "",
-  name: "",
-  surname: "",
-  dateOfBirth: "",
   avatar: null,
 });
 
@@ -137,9 +87,21 @@ const router = useRouter();
 const fileInput = ref(null);
 const photoPreview = ref(null);
 const photoError = ref("");
-const accountStore = useAccountStore();
-const userStore = useUserStore();
 
+
+function getEmailFromToken() {
+  const token = localStorage.getItem("token");
+
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.email;
+  } catch (err) {
+    console.log("TOKEN DECODE ERROR:", err);
+    return null;
+  }
+}
 function uploadPhoto() {
   fileInput.value?.click();
 }
@@ -179,11 +141,6 @@ function handleFileChange(event) {
   photoError.value = "";
 }
 
-const validateText = (inputText) => {
-  const cleanedText = inputText.replace(/[^a-zA-Z0-9]/g, '');
-  return inputText === cleanedText;
-}
-
 const validateForm = () => {
   let isValid = true;
   Object.keys(errors).forEach((key) => (errors[key] = ""));
@@ -191,98 +148,67 @@ const validateForm = () => {
   if (!formData.nickname) {
     errors.nickname = "Nickname is required.";
     isValid = false;
-  } else if (!validateText(formData.nickname)) {
-    errors.nickname = "This field can only contain letters and numbers!";
-    isValid = false;
   } else if (formData.nickname.length > 64) {
     errors.nickname = "Nickname needs to be shorter than 64 characters!";
-    isValid = false;
   }
-  if (!formData.name) {
-    errors.name = "Name is required.";
-    isValid = false;
-  } else if (!validateText(formData.name)) {
-    errors.name = "This field can only contain letters and numbers!";
-    isValid = false;
-  } else if (formData.name.length > 64) {
-    errors.name = "Name needs to be shorter than 64 characters!";
-    isValid = false;
-  }
-  if (!formData.surname) {
-    errors.surname = "Surname is required.";
-    isValid = false;
-  } else if (!validateText(formData.nickname)) {
-    errors.surname = "This field can only contain letters and numbers!";
-    isValid = false;
-  } else if (formData.surname.length > 64) {
-    errors.surname = "Surname needs to be shorter than 64 characters!";
-    isValid = false;
-  }
-  if (!formData.dateOfBirth) {
-    errors.dateOfBirth = "Date of birth is required.";
-    isValid = false;
-  } else {
-    const birth = new Date(formData.dateOfBirth);
-
-    if (isNaN(birth.getTime())) {
-      errors.dateOfBirth = "Invalid date.";
-      isValid = false;
-    } else {
-      const today = new Date();
-
-      const age =
-        today.getFullYear() -
-        birth.getFullYear() -
-        (today.getMonth() < birth.getMonth() ||
-        (today.getMonth() === birth.getMonth() &&
-          today.getDate() < birth.getDate())
-          ? 1
-          : 0);
-
-      if (age < 13) {
-        errors.dateOfBirth = "You must be at least 13 years old.";
-        isValid = false;
-      }
-    }
-  }
-
   return isValid;
 };
 
-const handleFillInProfile = async () => {
+const handleEditProfile = async () => {
   if (!validateForm()) return;
-  loading.value = true;
-  const fetchData = new FormData();
 
-  console.log("Email w store:", accountStore.getEmail);
-  fetchData.append("email", accountStore.getEmail);
-  fetchData.append("nickname", formData.nickname);
-  fetchData.append("name", formData.name);
-  fetchData.append("surname", formData.surname);
-  fetchData.append("dateOfBirth", formData.dateOfBirth);
-  fetchData.append("avatar", formData.avatar);
+  loading.value = true;
 
   try {
-    const response = await service.post("/api/user/", fetchData);
-
-    console.log(response);
-
-    if (response && response.error) {
-      throw new Error(response.error);
-    }
-
-    console.log("Response success: ", response.success);
-    if (response.success) {
+    if (!userStore.user) {
       await userStore.loadUser();
-      router.push({ path: "/profile" });
-      return;
     }
+
+    const currentUser = userStore.user;
+
+    const profileData = {
+     
+      nickname: formData.nickname,
+      
+    };
+
+    console.log("PROFILE DATA:", profileData);
+
+    const profileResponse = await service.put("/api/user/", profileData);
+
+    console.log("EDIT PROFILE RESPONSE:", profileResponse);
+
+    if (formData.avatar instanceof File) {
+      const avatarData = new FormData();
+      avatarData.append("avatar", formData.avatar);
+
+      const avatarResponse = await service.patch(
+        "/api/user/update-avatar",
+        avatarData
+      );
+
+      console.log("EDIT AVATAR RESPONSE:", avatarResponse);
+    }
+
+    await userStore.loadUser();
+    router.push({ path: "/profile" });
   } catch (err) {
-    console.log(err);
+    console.log("EDIT PROFILE ERROR:", err);
   } finally {
     loading.value = false;
   }
 };
+onMounted(async () => {
+  if (!userStore.user) {
+    await userStore.loadUser();
+  }
+
+  formData.nickname = userStore.user?.nickname || "";
+
+  if (userStore.user?.avatar?.url) {
+    photoPreview.value = userStore.user.avatar.url;
+  }
+});
 </script>
 
 <style scoped>

@@ -130,7 +130,6 @@ export async function inviteUser(req, res) {
 
         let age = today.getFullYear() - birth.getFullYear();
         const notYetHadBirthday = today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
-        
         if (notYetHadBirthday) age--;
 
         return age < event.ageRestriction;
@@ -406,7 +405,19 @@ export async function showInvite(req, res) {
                     eventDateTime: true,
                     locationName: true,
                     locationAddress: true,
-                    eventStatus: true
+                    eventStatus: true,
+                    image: { select: { url: true } }
+                }
+            },
+            userCredentials: {
+                select: {
+                    userProfile: {
+                        select: {
+                            nickname: true,
+                            name: true,
+                            surname: true
+                        }
+                    }
                 }
             }
         }
@@ -432,7 +443,89 @@ export async function showInvite(req, res) {
         eventDateTime: invitation.event.eventDateTime,
         locationName: invitation.event.locationName,
         locationAddress: invitation.event.locationAddress,
-        eventStatus: invitation.event.eventStatus
+        eventStatus: invitation.event.eventStatus,
+        organizerName: invitation.userCredentials.userProfile.name,
+        organizerSurname: invitation.userCredentials.userProfile.surname,
+        organizerNickname: invitation.userCredentials.userProfile.nickname,
+        eventImage: invitation.event.image?.url || null
+    };
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Wysłano dane odnośnie zaproszenia ${invitation.invitationId} do wydarzenia ${invitation.event.eventName}`,
+        data: data });
+
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+export async function showInviteLocal(req, res) {
+  const invitationId = parseInt(req.params.invitationId);
+
+  try {
+    const invitation = await prisma.invitation.findUnique({  
+        where: { invitationId: invitationId },
+        select: {
+            invitationId: true,
+            status: true,
+            createdAt: true,
+            expiresAt: true,
+            event: {
+                select: {
+                    eventId: true,
+                    eventName: true,
+                    description: true,
+                    isPublic: true,
+                    eventDateTime: true,
+                    locationName: true,
+                    locationAddress: true,
+                    eventStatus: true,
+                    image: { select: { url: true } }
+                }
+            },
+            userCredentials: {
+                select: {
+                    userProfile: {
+                        select: {
+                            nickname: true,
+                            name: true,
+                            surname: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ success: false, error: "Invitation not found - cant show the invite" });
+    }
+
+    if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    const data = {
+        invitationId: invitation.invitationId,
+        status: invitation.status,
+        createdAt: invitation.createdAt,
+        expiresAt: invitation.expiresAt,
+        eventId: invitation.event.eventId,
+        eventName: invitation.event.eventName,
+        description: invitation.event.description,
+        isPublic: invitation.event.isPublic,
+        eventDateTime: invitation.event.eventDateTime,
+        locationName: invitation.event.locationName,
+        locationAddress: invitation.event.locationAddress,
+        eventStatus: invitation.event.eventStatus,
+        organizerName: invitation.userCredentials.userProfile.name,
+        organizerSurname: invitation.userCredentials.userProfile.surname,
+        organizerNickname: invitation.userCredentials.userProfile.nickname,
+        eventImage: invitation.event.image?.url || null
     };
 
     return res.status(200).json({ 
@@ -463,7 +556,7 @@ export async function acceptInvite(req, res) {
       return res.status(404).json({ success: false, error: "Invitation not found - cant be accepted" });
     }
 
-    if (invitation.status !== "PENDING") {
+    if (invitation.status !== "pending") {
       return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
     }
 
@@ -551,7 +644,7 @@ export async function rejectInvite(req, res) {
       return res.status(404).json({ success: false, error: "Invitation not found - cant be rejected" });
     }
 
-    if (invitation.status !== "PENDING") {
+    if (invitation.status !== "pending") {
       return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
     }
 
@@ -578,4 +671,67 @@ export async function rejectInvite(req, res) {
       .status(500)
       .json({ success: false, error: "A database error has occurred" });
   }
+}
+
+
+export async function searchUsers(req, res) {
+    
+    const eventId = parseInt(req.params.eventId);
+    const input = (req.query.query || "").trim();
+
+    try {
+        const event = await prisma.event.findUnique({  
+            where: { eventId: eventId },
+            select: { organizerId: true }
+        });
+        
+        if (!event) { return res.status(404).json({ success: false, error: "Event not found, can't search for users to invite." }); }
+
+        const guests = await prisma.eventGuest.findMany({  
+            where: { eventId: eventId },
+            select: { userId: true }
+        });
+
+        const invited = await prisma.invitation.findMany({
+            where: { eventId: eventId },
+            select: { receiverId: true }
+        })
+
+        const skip = [
+            event.organizerId,
+            ...invited.map(i => i.receiverId),
+            ...guests.map(g => g.userId)
+        ].filter(id => typeof id === "string" && id !== null);
+
+        const searchResult = await prisma.userProfile.findMany({
+            where: {
+                userId: { notIn: skip },
+                nickname: {
+                    contains: input || "",
+                    mode: "insensitive"
+                }
+            },
+            select: {
+                userId: true,
+                nickname: true,
+                name: true,
+                surname: true,
+                avatar: { select: { url: true } }
+            },
+            take: 100
+        });
+
+        return res.status(200).json({ 
+            success: true, 
+            message: `Pomyślnie zebrano i wyświetlono wszystkich użytkowników dopasowanych do frazy ${input}`,
+            data: searchResult });
+
+        } catch (err) {
+            console.error("SEARCH USERS ERROR:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message,
+                code: err.code
+            });
+        }
 }

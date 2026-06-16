@@ -151,6 +151,11 @@ export async function getEvents(req, res) {
         data: events,
       });
     } else if (visibility === "mine") {
+      const userId = req.user.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: "Unauthorized" });
+      }
+
       events = await prisma.event.findMany({
         where: { deletedAt: null, organizerId: userId },
         include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy
@@ -539,5 +544,107 @@ export async function deleteEvent(req, res) {
     return res
       .status(500)
       .json({ success: false, error: "Could not delete resource" });
+  }
+}
+
+
+export async function joinEvent(req, res) {
+  const eventId = parseInt(req.params.id);
+  const userId = req.user.userId;
+
+  try {
+    const event = await prisma.event.findUnique({
+      where: { eventId: eventId },
+    });
+
+    if (!event || event.deletedAt !== null) {
+      return res.status(404).json({ success: false, error: "Event not found" });
+    }
+
+    if (!event.isPublic) {
+      return res.status(403).json({ success: false, error: "This event is private." });
+    }
+
+    await prisma.eventGuest.create({
+      data: {
+        userId: userId,
+        eventId: eventId,
+        confirmedArrival: false
+      }
+    });
+
+    return res.status(200).json({ success: true, message: "You're now a member of this event." });
+
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(400).json({ success: false, error: "You're already a member of this event." });
+    }
+    console.error(err);
+    return res.status(500).json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+
+export async function leaveEvent(req, res) {
+  const eventId = parseInt(req.params.id);
+  const userId = req.user.userId;
+
+  try {
+    const event = await prisma.event.findUnique({
+      where: { eventId: eventId },
+    });
+
+    if (!event || event.deletedAt !== null) {
+      return res.status(404).json({ success: false, error: "Event not found" });
+    }
+
+    const guest = await prisma.eventGuest.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+
+    if (!guest) {
+      return res.status(400).json({ success: false, error: "You're not a member of this event." });
+    }
+
+    await prisma.eventGuest.delete({
+      where: { userId_eventId: { userId, eventId } },
+    });
+
+    return res.status(200).json({ success: true, message: "You've left the event." });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+export async function setConfirmedArrival(req, res) {
+  const eventId = parseInt(req.params.id);
+  const userId = req.user.userId;
+  const { confirmedArrival } = req.body;
+
+  if (confirmedArrival !== true && confirmedArrival !== false && confirmedArrival !== null) {
+    return res.status(400).json({ success: false, error: "confirmedArrival must be true, false or null." });
+  }
+
+  try {
+    const guest = await prisma.eventGuest.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+
+    if (!guest) {
+      return res.status(404).json({ success: false, error: "You're not a member of this event." });
+    }
+
+    await prisma.eventGuest.update({
+      where: { userId_eventId: { userId, eventId } },
+      data: { confirmedArrival: confirmedArrival }
+    });
+
+    return res.status(200).json({ success: true, message: "Arrival status updated." });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
 }

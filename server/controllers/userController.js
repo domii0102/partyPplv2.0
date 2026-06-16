@@ -168,12 +168,14 @@ export async function createProfile(req, res) {
 
     return res.status(201).json({ success: true, data: { profile: createdProfile, avatar: createdAvatar } });
 }
-
+const updateProfileSchema = z.object({
+    nickname: z.string().trim().min(1, "Nickname is required").max(64, "Nickname is too long")
+});
 export async function updateProfile(req, res) {
     console.log(req.body);
 
     const userId = req.user.userId;
-    const result = profileSchema.safeParse(req.body);
+    const result = updateProfileSchema.safeParse(req.body);
     let updatedProfile;
     let currentProfile;
     let existingNickname;
@@ -184,7 +186,7 @@ export async function updateProfile(req, res) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     };
 
-    const { nickname, name, surname, dateOfBirth } = result.data;
+    const { nickname } = result.data;
 
 
     try {
@@ -226,9 +228,7 @@ export async function updateProfile(req, res) {
             where: { userId: userId },
             data: {
                 nickname: nickname,
-                name: name,
-                surname: surname,
-                dateOfBirth: dateOfBirth
+               
             },
             include: { avatar: true }
         });

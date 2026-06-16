@@ -1,7 +1,9 @@
 import { useSocketStore } from '../stores/socket';
+import { useUserStore } from '../stores/user';
 
 export function useForumSocket(posts) {
     const socketStore = useSocketStore();
+    const userStore = useUserStore();
 
     function joinEvent(eventId) {
         socketStore.joinEvent(eventId);

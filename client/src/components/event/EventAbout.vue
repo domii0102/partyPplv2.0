@@ -17,10 +17,15 @@
         <section class="about-section">
             <h2 class="section-title">Location</h2>
             <div class="section-content address-block">
-                <p class="place-name">{{ location.name }}</p>  
-                <p>{{ location.city }}</p>
-                <p>{{ location.street }}</p>
-                <p>{{ location.zipCode }} {{ location.city }}</p>
+                <p class="place-name">{{ locationName }}</p>  
+                <p>{{ locationAddress }}</p>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2 class="section-title">Event playlist</h2>
+            <div class="section-content address-block">
+                <p class="place-name">to sie zrobi</p>
             </div>
         </section>
     </div>
@@ -30,15 +35,8 @@
 defineProps({
     description: String,
     isPublic: Boolean,
-    location: {
-        type: Object,
-        default: () => ({
-            name: '',
-            city: '',
-            street: '',
-            zipCode: ''
-        })
-    }
+    locationAddress: String,
+    locationName: String
 });
 </script>
 

@@ -1,6 +1,7 @@
 <template>
   <div class="posts-section">
-    <ReportPopup
+
+     <ReportPopup
       v-if="reportPopup.show"
       :target-type="reportPopup.type"
       :target-id="reportPopup.id"
@@ -9,7 +10,13 @@
       @close="closeReportPopup"
       @reported="onReported"
     />
-    <div class="post-input-wrapper">
+    
+    <div v-if="accessDenied" class="access-denied">
+      <i class="bi bi-lock"></i>
+      <p>Join the event to see the posts and join the conversation!</p>
+    </div>
+
+    <div v-else class="post-input-wrapper">
       <input
         v-model="newPostText"
         class="post-input"
@@ -28,7 +35,7 @@
         class="post-card"
       >
         <div class="post-header">
-          <img :src="post.avatar" :alt="post.author" class="avatar" />
+          <img :src="post.avatar || defaultImage" :alt="post.author" class="avatar" />
           <div class="post-meta">
             <span class="author-name">{{ post.author }}</span>
             <span class="post-time">{{ post.time }}</span>
@@ -118,7 +125,7 @@
               :key="comment.id"
               class="comment-item"
             >
-              <img :src="comment.avatar" :alt="comment.author" class="avatar avatar--sm" />
+              <img :src="comment.avatar || defaultImage" :alt="comment.author" class="avatar avatar--sm" />
               <div class="comment-content">
                 <div class="comment-header">
                   <span class="author-name author-name--sm">{{ comment.author }}</span>
@@ -156,7 +163,7 @@
                       v-for="reply in comment.replies"
                       :key="reply.id"
                       class="reply-item">
-                        <img :src="reply.author.avatar" class="avatar avatar--xs" />
+                        <img :src="reply.author.avatar || defaultImage" class="avatar avatar--xs" />
                         
                           <div class="reply-content">
                             <div class="comment-header">
@@ -236,6 +243,8 @@ import postService from '../../services/forum/postService';
 import commentService from '../../services/forum/commentService';
 import { mapPost } from '../../mappers/postMapper';
 import { useForumSocket } from '../../composables/useForumSocket';
+import defaultImage from "../../assets/pfp.jpg";
+
 import ReportPopup from "./ReportPopup.vue";
 
 const route = useRoute();
@@ -272,6 +281,8 @@ function canModify(resourceAuthorId) {
   return false;
 }
 
+const accessDenied = ref(false)
+
 async function loadPosts(reset=false) {
     if (loadingMore.value) return;
     if (!hasMore.value && !reset) return;
@@ -296,7 +307,12 @@ async function loadPosts(reset=false) {
         
         if (mappedPosts.length < limit) hasMore.value = false;
         else currentPage.value++; 
-    } catch(err) { console.error(err); 
+    } catch (err) {
+      if (err.status === 403) {
+        accessDenied.value = true;
+      } else {
+        console.error(err);
+      }
     } finally { loadingMore.value = false; }
 
 }
@@ -405,7 +421,6 @@ async function loadComments(post) {
             eventId,
             post.id
         );
-
         post.comments = response.data.map(comment => ({
             id: comment.commentId,
             authorId: comment.authorId,
@@ -642,7 +657,7 @@ onBeforeUnmount(() => {
 }
 
 .post-card {
-  background: var(--card-bg, rgba(255,255,255,0.05));
+  background: var(--card-bg);
   border: 1px solid var(--border, rgba(255,255,255,0.1));
   border-radius: 1rem;
   padding: 1.2rem;
@@ -724,7 +739,7 @@ onBeforeUnmount(() => {
 .post-input-wrapper, .comment-input-wrapper {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
+  background-color: color-mix(in srgb, var(--accent-purple) 5%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 2rem;
   padding: 0.5rem 1rem;
@@ -970,6 +985,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.3rem;
   margin-left: auto;
+}
+
+.access-denied i{
+  font-size: 2rem;
+  color: var(--accent-orange);
 }
 
 </style>

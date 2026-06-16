@@ -7,9 +7,12 @@
     <div class="event-details">
       <h3 class="event-title">{{ event.eventName }}</h3>
       <p class="event-info">{{ formatDate(event.eventDateTime) }}</p>
+      <!-- 
       <p class="event-info location">Lat: {{ event.locationLatitude || '?' }}, Lng: {{ event.locationLongitude || '?' }}</p>
+      -->
     </div>
 
+    <!--
     <button 
       class="like-btn" 
       :class="{ 'is-liked': isLiked, 'animate': clicked }" 
@@ -17,6 +20,7 @@
     >
       <i :class="isLiked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
     </button>
+  -->
   </div>
 </template>
 
