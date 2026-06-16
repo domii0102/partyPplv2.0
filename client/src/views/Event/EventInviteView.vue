@@ -34,7 +34,11 @@
 </template>
 
 <script setup>
+
+
 import defaultImage from '../../assets/horsegiirl.jpg';
+
+
 </script>
 
 <style scoped>

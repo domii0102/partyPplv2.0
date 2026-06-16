@@ -1,22 +1,30 @@
 <template>
     <div class="user-container">
         <div>
-            <img :src="defaultImage">
-            <span>Username</span>
+            <img :src="props.user.profilePicture || defaultImage">
+            <span>{{ props.user.nickname }}</span>
         </div>
-        <button class="btn btn-none" :class="{ invited: added }" @click="added = !added">
+        <button class="btn btn-none" :class="{ invited: added }" @click="inviteUser">
             <i :class="['bi', added ? 'bi-person-plus-fill' : 'bi-person-plus']"></i>
         </button>
     </div>
 </template>
 
 <script setup>
+
     import defaultImage from '../../assets/pfp.jpg';
     import { ref } from 'vue'
 
     const added = ref(false)
     const isAnimating = ref(false)
 
+    const props = defineProps({
+        user: Object
+    });
+    const emit = defineEmits(['invite'])
+
+
+    // Krzysiu jezeeli Ci te dwiee funkcje już nie beda potrzebne to je usun pls <3
     function handleClick() {
         added.value = !added.value
         isAnimating.value = true
@@ -25,6 +33,12 @@
     function onAnimationEnd() {
         isAnimating.value = false
     }
+
+    function inviteUser() {
+        added.value = true;
+        emit('invite', props.user.userId);
+    }
+
 </script>
 
 <style scoped>
