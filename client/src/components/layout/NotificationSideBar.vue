@@ -9,45 +9,30 @@
                     No new notifications
                 </div>
 
-                <div 
-                    v-for="notif in notifications" 
-                    :key="notif.id" 
-                    class="notif-card"
-                >
-                    <img :src="notif.senderAvatar || defaultAvatar" class="avatar" />
-                    
-                    <div class="notif-content">
-                        <p>{{ notif.message }}</p>
-                        <p v-if="notif.type === 'request'" class="emphasized">Accept?</p>
-                    </div>
-
-                    <div v-if="notif.type === 'request'" class="notif-actions">
-                        <i 
-                            class="bi bi-check2 accept-icon" 
-                            @click="$emit('respond', { id: notif.id, action: 'accept' })"
-                        ></i>
-                        <i 
-                            class="bi bi-x decline-icon" 
-                            @click="$emit('respond', { id: notif.id, action: 'decline' })"
-                        ></i>
-                    </div>
-                </div>
+            <NotificationItem 
+                        v-for="notif in notifications" 
+                        :key="notif.id" 
+                        :notification="notif"
+                        @respond="handleAction"
+                    />
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-const props = defineProps({
-    notifications: {
-        type: Array,
-        default: () => []
-    }
-});
+import { ref } from 'vue';
+import NotificationItem from './NotificationItem.vue';
 
-const emit = defineEmits(['close', 'respond']);
+const notifications = ref([]);
 
-const defaultAvatar = 'https://www.gravatar.com/avatar/0?d=mp&f=y';
+const handleAction = (payload) => {
+    console.log(`Action triggered: ${payload.action} for notification ID: ${payload.id}`);
+    
+    notifications.value = notifications.value.filter(
+        notif => notif.id !== payload.id
+    );
+};
 </script>
 
 <style scoped>
@@ -62,7 +47,7 @@ const defaultAvatar = 'https://www.gravatar.com/avatar/0?d=mp&f=y';
     right: 2rem; 
     top: calc(var(--header-height) + 10px); 
     width: 100%;
-    max-width: 400px; 
+    max-width: 600px; 
     max-height: 80vh;
     background: #110d26;
     padding: 1.5rem;
