@@ -6,6 +6,7 @@
       :event-id="route.params.id"
       @close="showReportPopup = false"
     ></event-report-popup>  
+
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="event?.image?.url || defaultImage"/>
@@ -43,7 +44,7 @@
                     </button>
                 </div>
 
-
+                
 
                 <div class="event-author">
                     by: <span>
@@ -53,26 +54,24 @@
                     </span>
                 </div>
 
-                <div v-if="accessDenied" class="join-container">
-                    <button class="join-btn">
-                        Join Event
-                    </button>
+                <div v-if="!isMember" class="join-container">
+                    <button class="join-btn" @click="handleJoin">Join Event</button>
                 </div>
 
-                <div v-else class="event-attendance">
+                <div v-else-if="!isOrganizer" class="event-attendance">
                     Your attendance:
                     <span class="attendance-radio">
-                        <button class="btn" @click="selectAttendance('accept')" :class="{ active: confirmedAttendance === 'accept' }" :disabled="confirmedAttendance === 'accept' ">
+                        <button class="btn" @click="selectAttendance(true)" :class="{ active: confirmedArrival === true }">
                             <i class="bi bi-check"></i>
                         </button>
-                        <button class="btn" @click="selectAttendance('unsure')" :class="{ active: confirmedAttendance === 'unsure' }" :disabled="confirmedAttendance === 'unsure'">
+                        <button class="btn" @click="selectAttendance(null)" :class="{ active: confirmedArrival === null }">
                             <i class="bi bi-question"></i>
                         </button>
-                        <button class="btn" @click="selectAttendance('decline')" :class="{ active: confirmedAttendance === 'decline' }" :disabled="confirmedAttendance === 'decline'">
+                        <button class="btn" @click="selectAttendance(false)" :class="{ active: confirmedArrival === false }">
                             <i class="bi bi-x"></i>
                         </button>
                     </span>
-                    <button class="btn leave-btn">
+                    <button class="btn leave-btn" @click="handleLeave">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
@@ -113,9 +112,10 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { SERVER_BASE_URL } from '../../config/env';
+    import { requestService } from '../../services/requestService.js';
 
     import defaultImage from '../../assets/user-form-bg.jpg';
     import EventAbout from '../../components/event/EventAbout.vue';
@@ -124,84 +124,39 @@
     import EventPosts from '../../components/event/EventPosts.vue';
     import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
     import EventReportPopup from '../../components/event/EventReportPopup.vue';
-
     import postService from '../../services/forum/postService';
 
     const route = useRoute();
     const router = useRouter();
+
     const loading = ref(false);
+    const service = new requestService();
     const error = ref(null);
     const event = ref(null);
     const currentUser =ref(null);
     const showPopup = ref(false);
+    const showReportPopup = ref(false);
     const organizerId = ref(null);
+    const activeTab = ref('Posts');
+    const confirmedArrival = ref(null);
+    const eventId = route.params.id;
 
-
-    const confirmedAttendance = ref("unsure");
-
-    function selectAttendance(sel) {
-        confirmedAttendance.value = sel;
-    }
-    const showReportPopup =ref(false);
-
-    const fetchEvent = async () => {
-        loading.value = true;
-        error.value = null;
-        const eventId = route.params.id;
-
-        try {
-            const res = await fetch(`${SERVER_BASE_URL}/api/event/${eventId}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
-
-            const serverData = await res.json();
-            if (!res.ok) throw new Error(serverData.error || "Failed to fetch selected event.");
-
-            if (serverData.success) 
-            {
-                event.value = serverData.data;
-                organizerId.value = event.value.organizerId;
-            }
-
-        } catch (err) {
-            console.error(err);
-            error.value = "Problem occured while loading selected event, please try again later.";
-        } finally {
-            loading.value = false;
-        }
+    const componentsMap = {
+        Posts: EventPosts,
+        Guests: EventGuests,
+        Playlist: EventPlaylist,
+        About: EventAbout
     };
-    const fetchCurrentUser = async () => {
-    try {
-        const res = await fetch(`${SERVER_BASE_URL}/api/user/me`, {
-            method: 'GET',
-            credentials: 'include'
-        });
 
-        const serverData = await res.json();
-
-        if (!res.ok) {
-            throw new Error(serverData.error || "Failed to fetch current user.");
-        }
-
-        currentUser.value = serverData.data.user;
-    } catch (err) {
-        console.error("CURRENT USER ERROR:", err);
-    }
-};
-    
-    onMounted(async () => {
-    await fetchCurrentUser();
-    await fetchEvent();
-});
+    const currentComponent = computed(() => componentsMap[activeTab.value]);
 
     const eventDate = computed(() => {
         if (!event.value?.eventDateTime) return '';
         const date = new Date(event.value.eventDateTime);
         return date.toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     });
+
     const eventName = computed(() => event.value?.eventName || 'No Data');
-    const coverImage = computed(() => event.value?.image?.url || defaultImage);
 
     const organizer = computed(() => {
         if (!event.value) return 'Loading...';
@@ -213,61 +168,77 @@
     });
 
     //funkcja do sprawdzania czy dany uzytkownik jest organizatorem
-   const isOrganizer = computed(() => {
-    const currentUserId = currentUser.value?.userId;
-    const organizerId = event.value?.organizerId;
+    const isOrganizer = computed(() => {
+        const currentUserId = currentUser.value?.userId;
+        const organizerId = event.value?.organizerId;
 
-    if (!currentUserId || !organizerId) return false;
+        if (!currentUserId || !organizerId) return false;
 
-    return String(currentUserId).trim() === String(organizerId).trim();
-});
+        return String(currentUserId).trim() === String(organizerId).trim();
+    });
 
-    const activeTab = ref('Posts')
+    const isMember = computed(() => event.value?.isGuest || isOrganizer.value);
 
-    const componentsMap = {
-        Posts: EventPosts,
-        Guests: EventGuests,
-        Playlist: EventPlaylist,
-        About: EventAbout
-    }
+    function select(tab){ activeTab.value = tab; }
+    
+    function goToUpdateEvent() { router.push(`/event/${route.params.id}/update`); }
 
-    const currentComponent = computed(() => componentsMap[activeTab.value])
+    watch(() => event.value, (val) => {
+        if (val) confirmedArrival.value = val.confirmedArrival ?? null;
+    }, { immediate: true });
 
-    function select(tab){
-        activeTab.value = tab;
-    }
-
-    //nie chce mi sie robic sprawdzania czy jestes czlonkiem wydarzenia w madrzejszy sposob wybaczcie czas goni
-    const accessDenied = ref(false);
-    const fetchAccess = async () => {
-        const eventId = route.params.id;
-
-        try{
-            const response = await postService.getPosts(
-            eventId,
-            1,
-            1
-            );
-        } catch (err){
-            if (err.status === 403) {
-                accessDenied.value = true;
-            } else {
-                console.error(err);
-            }
+    async function fetchCurrentUser() {
+        try {
+            const data = await service.get('/api/user/me');
+            currentUser.value = data?.data?.user;
+        } catch (err) {
+            console.error("CURRENT USER ERROR:", err);
         }
-        console.log(accessDenied);
-        console.log("chuj");
     };
 
+    async function fetchEvent() {
+        loading.value = true;
+        error.value = null;
+        try {
+            const data = await service.get(`/api/event/${route.params.id}`);
+            event.value = data?.data;
+            organizerId.value = event.value?.organizerId;
+        } catch (err) {
+            console.error(err);
+            error.value = "Problem occured while loading selected event, please try again later.";
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    async function handleJoin() {
+        try {
+            await service.post(`/api/event/${route.params.id}/join`);
+            await fetchEvent();
+        } catch (err) { console.error(err); }
+    }
+
+    async function handleLeave() {
+        try {
+            await service.post(`/api/event/${route.params.id}/leave`);
+            await fetchEvent();
+        } catch (err) { console.error(err); }
+    }
+
+    async function selectAttendance(value) {
+        confirmedArrival.value = value;
+        try {
+            await service.patch(`/api/event/${route.params.id}/arrival`, { confirmedArrival: value });
+        } catch (err) {
+            console.error(err);
+            await fetchEvent();
+        }
+    }
+    
     onMounted(async () => {
+        await fetchCurrentUser();
         await fetchEvent();
-        await fetchAccess();
     });
-    function goToUpdateEvent() {
-    router.push(`/event/${route.params.id}/update`);
-}
-
-
 </script>
 
 <style scoped>
@@ -417,6 +388,7 @@
 .leave-btn{
     color: var(--text-muted);
 }
+
 .event-title-row {
     display: flex;
     align-items: center;
