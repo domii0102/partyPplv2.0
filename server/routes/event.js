@@ -9,7 +9,8 @@ import {
   updateImage,
   joinEvent,
   leaveEvent,
-  setConfirmedArrival
+  setConfirmedArrival,
+  getEventGuests
 } from "../controllers/eventController.js";
 import invitationRouter from "./invites.js";
 
@@ -46,7 +47,6 @@ router.post("/", upload.single("image"), createEvent);
 //OUTPUT: success: true, data - obiekt zdjęcia LUB success: false, error
 router.patch("/update-image/:id", upload.single("image"), updateImage);
 
-
 //wyświetlenie konkretnego eventu
 //OUTPUT: success: true,  data - w tym obiekt z eventem i wewnątrz niego image (obiekt ze zdjęciem) LUB success: false, error
 router.get("/:id", getEvent);
@@ -59,6 +59,9 @@ router.put("/:id", updateEvent);
 //soft-delete eventu
 //OUTPUT: success: true, data - obiekt z usuniętym eventem LUB success: false, error
 router.delete("/:id", deleteEvent);
+
+// pobranie listy gosci
+router.get("/:id/guests", getEventGuests);
 
 // dołączenie do publicznego eventu
 router.post("/:id/join", joinEvent);

@@ -27,38 +27,42 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+    import { ref, computed, onMounted } from 'vue';
+    import { service } from '../../services/requestService.js';
+    import { useRoute } from 'vue-router';
 
-const props = defineProps({
-    guests: {
-        type: Array,
-        default: () => []
-    }
-});
+    const route = useRoute();
+    const guests = ref([]);
 
-const searchQuery = ref('');
-
-const statusLabels = {
-    confirmed: 'Confirmed Attendance',
-    unsure: 'Unsure',
-    declined: "Won't attend"
-};
-
-const groupedGuests = computed(() => {
-    return {
-        confirmed: props.guests.filter(g => g.status === 'confirmed'),
-        unsure: props.guests.filter(g => g.status === 'unsure'),
-        declined: props.guests.filter(g => g.status === 'declined')
+    const statusLabels = {
+        confirmed: 'Confirmed Attendance',
+        unsure: 'Unsure',
+        declined: "Won't attend"
     };
-});
 
-const emit = defineEmits(['invite']);
+    const groupedGuests = computed(() => {
+        return {
+            confirmed: guests.value.filter(g => g.confirmedArrival === true),
+            unsure: guests.value.filter(g => g.confirmedArrival === null),
+            declined: guests.value.filter(g => g.confirmedArrival === false)
+        };
+    });
 
-function inviteUser() {
-    if (!searchQuery.value.trim()) return;
-    emit('invite', searchQuery.value);
-    searchQuery.value = '';
-}
+    async function fetchGuests() {
+        try {
+            const data = await service.get(`/api/event/${route.params.id}/guests`);
+            guests.value = (data?.data || []).map(g => ({
+                id: g.guestId,
+                confirmedArrival: g.confirmedArrival,
+                name: g.userCredentials?.userProfile?.nickname || 'Anonim',
+                avatar: g.userCredentials?.userProfile?.avatar?.url || null
+            }));
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    onMounted(() => fetchGuests());
 </script>
 
 <style scoped>

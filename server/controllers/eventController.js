@@ -726,3 +726,40 @@ export async function setConfirmedArrival(req, res) {
     return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
 }
+
+export async function getEventGuests(req, res) {
+  const eventId = parseInt(req.params.id);
+
+  try {
+    const eventGuests = await prisma.eventGuest.findMany({
+      where: { eventId: eventId },
+      select: {
+        guestId: true,
+        confirmedArrival: true,
+        userCredentials: {
+          select: {
+            userProfile: {
+              select: {
+                name: true,
+                surname: true,
+                nickname: true,
+                avatar: { select: { url: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (eventGuests.length <= 0) {
+      return res.status(200).json({ success: false, error: "No guestes to show..." });
+    }
+
+    return res.status(200).json({ success: true, data: eventGuests });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
