@@ -1,5 +1,10 @@
 <template>
     <event-invite-create v-if="showPopup" @close="showPopup = false"></event-invite-create>
+    <event-report-popup
+  v-if="showReportPopup"
+  :event-id="route.params.id"
+  @close="showReportPopup = false"
+></event-report-popup>
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="event?.image?.url || defaultImage"/>
@@ -39,6 +44,12 @@
                         <button @click="showPopup = true"><i class="bi bi-share-fill"></i> Invite</button>
                         <div class="gradient-line"></div>
                     </div>
+                    <div class="event-tab">
+  <button @click="showReportPopup = true">
+    <i class="bi bi-flag-fill"></i> Report
+  </button>
+  <div class="gradient-line"></div>
+</div>
                 </div>
             </div>
         </div>
@@ -60,12 +71,14 @@
     import EventPlaylist from '../../components/event/EventPlaylist.vue';
     import EventPosts from '../../components/event/EventPosts.vue';
     import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
+    import EventReportPopup from '../../components/event/EventReportPopup.vue';
 
     const route = useRoute();
     const loading = ref(false);
     const error = ref(null);
     const event = ref(null);
     const showPopup = ref(false);
+    const showReportPopup =ref(false);
 
     const fetchEvent = async () => {
         loading.value = true;

@@ -110,14 +110,14 @@ export async function login(req, res) {
       });
     }
 
-    /* nie ma póki co takiego pola
-    if (user.isDeleted) {
+    
+    if (user.deletedAt) {
       return res.status(403).json({
         success: false,
         error: "Account has been removed",
       });
     }
-      */
+      
 
     const valid = await bcrypt.compare(password, user.passwordHash);
 
