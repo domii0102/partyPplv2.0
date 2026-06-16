@@ -11,10 +11,10 @@
           <div class="profile-info text-center text-md-start ms-md-4">
             <h1>{{ profileUser?.name }} {{ profileUser?.surname }}</h1>
             <div class="nickname">{{ profileUser?.nickname }}</div>
-            <router-link class="btn btn-edit-profile" to="/profile/edit">
-  Edit profile
-</router-link>
-            <button class="btn btn-none log-out" @click="logOut">
+            <router-link v-if="!userId" class="btn btn-edit-profile" to="/profile/edit">
+              Edit profile
+            </router-link>
+            <button v-if="!userId" class="btn btn-none log-out" @click="logOut">
               <i class="bi bi-box-arrow-right"></i>
               Log out
             </button>
@@ -32,7 +32,8 @@
         class="section-title col-12 d-flex justify-content-between align-items-center"
       >
         <div>
-          <h2>Your events</h2>
+          <h2 v-if="!userId">Your events</h2>
+          <h2 v-else>User's events</h2>
           <div class="gradient-line"></div>
         </div>
       </div>
@@ -48,7 +49,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row" v-if="!userId">
       <div
         class="section-title col-12 d-flex justify-content-between align-items-center"
       >
@@ -56,12 +57,18 @@
           <h2>Events you're participating in</h2>
           <div class="gradient-line"></div>
         </div>
-        <div>
-          <FontAwesomeIcon icon="chevron-left" class="icon"></FontAwesomeIcon>
-          <FontAwesomeIcon icon="chevron-right" class="icon"></FontAwesomeIcon>
-        </div>
       </div>
-      <div class="col-12 event-scroll-container">Tu bylas i bylo fajnie</div>
+
+      <div class="col-12 event-scroll-container" ref="yourEventsContainer">
+        <EventCard
+          v-for="event in userEvents"
+          :key="event.id"
+          :event="event"
+          class="eventCard"
+          @select="router.push(`/event/dashboard/${$event}`)"
+        />
+      </div>
+      
     </div>
   </div>
 </template>
