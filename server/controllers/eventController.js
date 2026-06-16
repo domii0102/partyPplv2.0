@@ -44,7 +44,7 @@ export async function getEvent(req, res) {
   }
 }
 
-//POPRAWIĆ JAK BĘDZIE DOŁĄCZANIE DO WYDARZEŃ
+//POPRAWIĆ JAK BĘDZIE DOŁĄCZANIE DO WYDARZEŃ - poprawiono ihi
 export async function getEvents(req, res) {
   const visibility = req.query.visibility || null;
   const search = req.query.search || null;
@@ -56,7 +56,8 @@ export async function getEvents(req, res) {
     : [];
   const date = req.query.date ? new Date(req.query.date) : null;
   const orderBy = req.query.sortBy || "default";
-
+  const userId = req.user.userId;
+  const profileUserId = req.query.userId || null;
   let prismaOrderBy = undefined;
 
   switch (orderBy) {
@@ -150,18 +151,86 @@ export async function getEvents(req, res) {
         success: true,
         data: events,
       });
-    } else if (visibility === "mine") {
-      const userId = req.user.userId;
-      if (!userId) {
-        return res.status(401).json({ success: false, error: "Unauthorized" });
-      }
+   } 
+   else if (visibility === "user") {
+          if (!profileUserId) {
+            return res.status(400).json({
+              success: false,
+              error: "User id is required",
+            });
+          }
 
-      events = await prisma.event.findMany({
-        where: { deletedAt: null, organizerId: userId },
-        include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy
-      });
-      return res.status(200).json({ success: true, data: events });
-    }
+          const organizedEvents = await prisma.event.findMany({
+            where: {
+              deletedAt: null,
+              organizerId: profileUserId,
+              isPublic: true,
+            },
+            orderBy: prismaOrderBy,
+            include: {
+              image: true,
+              hashtags: true,
+            },
+          });
+
+          return res.status(200).json({
+            success: true,
+            data: {
+              organizedEvents,
+              participatingEvents: [],
+            },
+          });
+}
+   
+   else if (visibility === "mine") {
+          const [organizedEvents, participatingEvents] = await prisma.$transaction([
+          prisma.event.findMany({
+            where: {
+              deletedAt: null,
+              organizerId: userId,
+            },
+            orderBy: prismaOrderBy,
+            include: {
+              image: true,
+              hashtags: true,
+            },
+          }),
+          prisma.event.findMany({
+            where: {
+              deletedAt: null,  
+              organizerId: {
+                not: userId,
+              },      
+              eventGuests: {
+                some: {
+                  userId: userId,    
+                  confirmedArrival: true,
+                },
+              },
+            },
+                orderBy: prismaOrderBy,
+                include: {
+                  image: true,
+                  hashtags: true,
+                  eventGuests:{
+                    where:{
+                      userId: userId,
+                    }
+                  }
+                },
+              }),
+            ]);
+            
+
+              return res.status(200).json({
+                success: true,
+                data: {
+                  organizedEvents,
+                  participatingEvents,
+                },
+              });
+            }
+
   } catch (err) {
     console.error(err);
     return res
