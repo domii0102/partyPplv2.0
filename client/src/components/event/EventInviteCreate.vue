@@ -68,8 +68,6 @@
     }
 
     async function searchUsers() {
-       
-
         try {
             const usersFound = await service.get(`/api/events/${eventId}/invites/search?query=${encodeURIComponent(searchQuery.value)}`);
             searchResult.value = usersFound.data;

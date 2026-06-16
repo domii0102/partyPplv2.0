@@ -405,7 +405,19 @@ export async function showInvite(req, res) {
                     eventDateTime: true,
                     locationName: true,
                     locationAddress: true,
-                    eventStatus: true
+                    eventStatus: true,
+                    image: { select: { url: true } }
+                }
+            },
+            userCredentials: {
+                select: {
+                    userProfile: {
+                        select: {
+                            nickname: true,
+                            name: true,
+                            surname: true
+                        }
+                    }
                 }
             }
         }
@@ -431,7 +443,89 @@ export async function showInvite(req, res) {
         eventDateTime: invitation.event.eventDateTime,
         locationName: invitation.event.locationName,
         locationAddress: invitation.event.locationAddress,
-        eventStatus: invitation.event.eventStatus
+        eventStatus: invitation.event.eventStatus,
+        organizerName: invitation.userCredentials.userProfile.name,
+        organizerSurname: invitation.userCredentials.userProfile.surname,
+        organizerNickname: invitation.userCredentials.userProfile.nickname,
+        eventImage: invitation.event.image?.url || null
+    };
+
+    return res.status(200).json({ 
+        success: true, 
+        message: `Wysłano dane odnośnie zaproszenia ${invitation.invitationId} do wydarzenia ${invitation.event.eventName}`,
+        data: data });
+
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, error: "A database error has occurred" });
+  }
+}
+
+export async function showInviteLocal(req, res) {
+  const invitationId = parseInt(req.params.invitationId);
+
+  try {
+    const invitation = await prisma.invitation.findUnique({  
+        where: { invitationId: invitationId },
+        select: {
+            invitationId: true,
+            status: true,
+            createdAt: true,
+            expiresAt: true,
+            event: {
+                select: {
+                    eventId: true,
+                    eventName: true,
+                    description: true,
+                    isPublic: true,
+                    eventDateTime: true,
+                    locationName: true,
+                    locationAddress: true,
+                    eventStatus: true,
+                    image: { select: { url: true } }
+                }
+            },
+            userCredentials: {
+                select: {
+                    userProfile: {
+                        select: {
+                            nickname: true,
+                            name: true,
+                            surname: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ success: false, error: "Invitation not found - cant show the invite" });
+    }
+
+    if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(410).json({ success: false, error: "To zaproszenie już wygasło." });
+    }
+
+    const data = {
+        invitationId: invitation.invitationId,
+        status: invitation.status,
+        createdAt: invitation.createdAt,
+        expiresAt: invitation.expiresAt,
+        eventId: invitation.event.eventId,
+        eventName: invitation.event.eventName,
+        description: invitation.event.description,
+        isPublic: invitation.event.isPublic,
+        eventDateTime: invitation.event.eventDateTime,
+        locationName: invitation.event.locationName,
+        locationAddress: invitation.event.locationAddress,
+        eventStatus: invitation.event.eventStatus,
+        organizerName: invitation.userCredentials.userProfile.name,
+        organizerSurname: invitation.userCredentials.userProfile.surname,
+        organizerNickname: invitation.userCredentials.userProfile.nickname,
+        eventImage: invitation.event.image?.url || null
     };
 
     return res.status(200).json({ 
@@ -462,7 +556,7 @@ export async function acceptInvite(req, res) {
       return res.status(404).json({ success: false, error: "Invitation not found - cant be accepted" });
     }
 
-    if (invitation.status !== "PENDING") {
+    if (invitation.status !== "pending") {
       return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
     }
 
@@ -550,7 +644,7 @@ export async function rejectInvite(req, res) {
       return res.status(404).json({ success: false, error: "Invitation not found - cant be rejected" });
     }
 
-    if (invitation.status !== "PENDING") {
+    if (invitation.status !== "pending") {
       return res.status(400).json({ success: false, error: "To zaproszenie nie jest już aktywne" });
     }
 

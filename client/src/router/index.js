@@ -74,11 +74,11 @@ const routes = [
     component: EventDashboardView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
-    { 
-    path: '/event/invite', 
-    component: EventInviteView, 
-    meta: { hideHeader: true, isInvite: true }
-  },
+   // { 
+  //  path: '/event/invite', 
+  //  component: EventInviteView, 
+  //  meta: { hideHeader: true, isInvite: true }
+  //},
 
   // Profile
   {
@@ -92,6 +92,20 @@ const routes = [
     component: NotificationsView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
+
+  {
+    path: '/event/invite/link/:token',
+    name: 'invite-token',
+    component: EventInviteView,
+    meta: { hideHeader: true, isInvite: true }
+  },
+
+  {
+    path: '/event/invite/id/:invitationId',
+    name: 'invite-id',
+    component: EventInviteView,
+    meta: { hideHeader: true, isInvite: true }
+  }
 ];
 
 const router = createRouter({
