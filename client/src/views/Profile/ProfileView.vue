@@ -33,13 +33,17 @@
           <h2>Your events</h2>
           <div class="gradient-line"></div>
         </div>
-        <div>
-          <FontAwesomeIcon icon="chevron-left" class="icon"></FontAwesomeIcon>
-          <FontAwesomeIcon icon="chevron-right" class="icon"></FontAwesomeIcon>
-        </div>
       </div>
 
-      <div class="col-12 event-scroll-container">To twoje</div>
+      <div class="col-12 event-scroll-container" ref="yourEventsContainer">
+        <EventCard
+          v-for="event in userEvents"
+          :key="event.id"
+          :event="event"
+          class="eventCard"
+          @select="router.push(`/event/dashboard/${$event}`)"
+        />
+      </div>
     </div>
 
     <div class="row">
@@ -61,16 +65,61 @@
 </template>
 
 <script setup>
+import { ref, reactive, onMounted } from 'vue';
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import defaultImage from "../../assets/horsegiirl.jpg";
 import { useUserStore } from "../../stores/user.js";
 import { storeToRefs } from "pinia";
 import { service } from "../../services/requestService.js";
 import { useRouter } from "vue-router";
+import EventCard from "../../components/event/EventCard.vue";
+import { SERVER_BASE_URL } from "../../config/env";
 
 const router = useRouter();
 const store = useUserStore();
 const { user } = storeToRefs(store);
+
+const loading = ref(false);
+const userEvents = ref([]);
+const status = reactive({
+  error: null,
+  empty: false,
+});
+
+const fetchUserEvents = async () => {
+  loading.value = true;
+  status.error = null;
+  status.empty = false;
+
+  try {
+    const fetchURL = new URL(`${SERVER_BASE_URL}/api/event/`);
+    fetchURL.searchParams.append("visibility", "mine");
+    fetchURL.searchParams.append("sortBy", "default");
+
+    const res = await fetch(fetchURL, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const serverData = await res.json();
+    if (!res.ok) throw new Error(serverData.error || "Failed to fetch events.");
+
+    userEvents.value = serverData.data;
+
+    if (userEvents.value.length === 0) status.empty = true;
+  } catch (err) {
+    console.error(err);
+    status.error =
+      "Problem occured while loading events, please try again later.";
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(fetchUserEvents);
 
 const logOut = async () => {
   store.logout();
@@ -170,5 +219,20 @@ const logOut = async () => {
   margin-left: 2rem;
   color: var(--text-main);
   text-decoration: none;
+}
+
+.event-scroll-container{
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.eventCard{
+  flex: 0 0 auto;
+  width: 300px;
 }
 </style>
