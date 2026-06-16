@@ -58,7 +58,7 @@
                     <button class="join-btn" @click="handleJoin">Join Event</button>
                 </div>
 
-                <div v-else class="event-attendance">
+                <div v-else-if="!isOrganizer" class="event-attendance">
                     Your attendance:
                     <span class="attendance-radio">
                         <button class="btn" @click="selectAttendance(true)" :class="{ active: confirmedArrival === true }">
