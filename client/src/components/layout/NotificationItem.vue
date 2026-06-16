@@ -1,10 +1,9 @@
 <template>
-    <div class="notif-card">
-        <img :src="notification.senderAvatar || defaultAvatar" class="avatar" alt="Avatar" />
+    <div class="notif-card" @click="emit('open', notification)">
+        <img :src="notification.author?.triggeredByProfilePicture || defaultAvatar" class="avatar" alt="Avatar" />
         
         <div class="notif-content">
             <p>{{ generatedMessage }}</p>
-            
             <p v-if="notification.type === 'invite'" class="emphasized">Accept?</p>
         </div>
 
@@ -12,14 +11,17 @@
             <i 
                 class="bi bi-check2 accept-icon" 
                 title="Accept"
-                @click="$emit('respond', { id: notification.id, action: 'accept' })"
+                @click.stop="$emit('respond', { id: notification.id, action: 'accept' })"
             ></i>
             <i 
                 class="bi bi-x decline-icon" 
                 title="Decline"
-                @click="$emit('respond', { id: notification.id, action: 'decline' })"
+                @click.stop="$emit('respond', { id: notification.id, action: 'decline' })"
             ></i>
         </div>
+        <button class="delete-btn" title="Usuń" @click.stop="emit('delete', notification.id)">
+            <i class="bi bi-trash3"></i>
+        </button>
     </div>
 </template>
 
@@ -33,23 +35,27 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['respond']);
+const emit = defineEmits(['respond', 'open', 'delete']);
 const defaultAvatar = 'assets/pfp.jpg';
 
 const generatedMessage = computed(() => {
     const n = props.notification;
-    
+    const senderName = n.author?.triggeredByNickname ?? 'Someone';
+    const eventName = n.relatedEvent?.relatedEventName ?? 'an event';
+
     switch (n.type) {
         case 'invite':
-            return `New Invitation: ${n.eventName}`;
+            return `New Invitation: ${eventName}`;
         case 'invite_accepted':
-            return `${n.senderName} accepted your invitation to: ${n.eventName}`;
+            return `${senderName} accepted your invitation to: ${eventName}`;
         case 'reaction':
-            return `${n.senderName} reacted to your post in: ${n.eventName}`;
+            return `${senderName} reacted to your post in: ${eventName}`;
         case 'comment':
-            return `${n.senderName} commented on your post in: ${n.eventName}`;
+            return `${senderName} commented on your post in: ${eventName}`;
         case 'new_post':
-            return `${n.senderName} added a new post in: ${n.eventName}`;
+            return `${senderName} added a new post in: ${eventName}`;
+        case 'reminder':
+            return `Reminder for event: ${eventName}`;
         default:
             return 'You have a new notification';
     }
@@ -66,6 +72,12 @@ const generatedMessage = computed(() => {
     align-items: center;
     gap: 1.2rem;
     width: 100%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notif-card:hover {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .avatar {
@@ -73,7 +85,7 @@ const generatedMessage = computed(() => {
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .notif-content {
@@ -102,7 +114,7 @@ const generatedMessage = computed(() => {
 }
 
 .accept-icon {
-    color: #7f39fb; /* Twój fioletowy akcent */
+    color: #7f39fb;
     cursor: pointer;
     transition: transform 0.2s;
 }
@@ -115,5 +127,21 @@ const generatedMessage = computed(() => {
 
 .accept-icon:hover, .decline-icon:hover {
     transform: scale(1.2);
+}
+
+.delete-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    flex-shrink: 0;
+    transition: color 0.2s, transform 0.15s;
+}
+
+.delete-btn:hover {
+    color: #ff4d6d;
+    transform: scale(1.15);
 }
 </style>

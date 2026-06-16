@@ -6,12 +6,14 @@ model Notification {
   relatedEventId   Int?
   relatedPostId    Int?
   relatedCommentId Int?
+  relatedInvitationId Int?
   triggeredById    String?
   createdAt        DateTime @default(now())
 
   userCredentials  UserCredentials @relation("NotificationOwner", fields: [userId], references: [userId])
   triggeredBy      UserCredentials? @relation("NotificationTrigger", fields: [triggeredById], references: [userId])
   relatedEvent     Event?   @relation(fields: [relatedEventId], references: [eventId])
+  relatedInvitation Invitation? @relation(fields: [relatedInvitationId], references: [invitationId])
   
   @@index([userId])
   @@map("Notification")

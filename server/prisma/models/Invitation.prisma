@@ -11,7 +11,8 @@ model Invitation {
 
   event           Event           @relation(fields: [eventId], references: [eventId])
   userCredentials UserCredentials? @relation(fields: [receiverId], references: [userId])
-
+  notifications Notification[]
+  
   @@index([eventId])
   @@index([receiverId])
 

@@ -42,12 +42,15 @@ export async function showNotifications(req, res) {
             } : null,
             relatedPostId: notification.relatedPostId,
             relatedCommentId: notification.relatedCommentId,
+            relatedInvitationId: notification.relatedInvitationId,
             createdAt: notification.createdAt,
             author: notification.triggeredById ? {
                 triggeredById: notification.triggeredById,
-                triggeredByName: notification.triggeredBy.userProfile.nickname,
-                triggeredByNickname: notification.triggeredBy.userProfile.name,
-                triggeredByProfilePicture: notification.triggeredBy.userProfile.avatar?.url ?? null
+                triggeredByName: notification.triggeredBy?.userProfile
+                    ? `${notification.triggeredBy.userProfile.name} ${notification.triggeredBy.userProfile.surname}`
+                    : null,
+                triggeredByNickname: notification.triggeredBy?.userProfile?.nickname ?? null,
+                triggeredByProfilePicture: notification.triggeredBy?.userProfile?.avatar?.url ?? null
             } : null
         }));
 
@@ -135,5 +138,28 @@ export async function sendReminder(req, res) {
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+export async function deleteNotification(req, res) {
+    const userId = req.user.userId;
+    const notificationId = parseInt(req.params.notificationId);
+
+    if (Number.isNaN(notificationId)) {
+        return res.status(400).json({ success: false, error: "Invalid notification id" });
+    }
+
+    try {
+        const notification = await prisma.notification.findUnique({ where: { notificationId } });
+
+        if (!notification) return res.status(404).json({ success: false, error: "Notification not found" });
+        if (notification.userId !== userId) return res.status(403).json({ success: false, error: "Access denied" });
+
+        await prisma.notification.delete({ where: { notificationId } });
+
+        return res.status(200).json({ success: true, message: "Powiadomienie zostało usunięte." });
+    } catch (err) {
+        console.error("Nastąpił błąd podczas usuwania powiadomienia.", err);
+        return res.status(500).json({ success: false, error: "A database error has occurred" });
     }
 }

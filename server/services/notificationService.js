@@ -16,7 +16,8 @@ export async function notify(userId, type, triggeredById, relatedIds = {}) {
                 triggeredById,
                 relatedEventId: relatedIds.eventId      ?? null,
                 relatedPostId: relatedIds.postId       ?? null,
-                relatedCommentId: relatedIds.commentId    ?? null
+                relatedCommentId: relatedIds.commentId    ?? null,
+                relatedInvitationId: relatedIds.invitationId ?? null
             }
         });
         io.to(`user_${userId}`).emit('notification', notification);

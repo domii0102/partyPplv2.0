@@ -5,6 +5,7 @@
             <div class="header-line"></div>
 
             <div class="notifications-list">
+                <div v-if="loading" class="empty-state">Loading...</div>
                 <div v-if="notifications.length === 0" class="empty-state">
                     No new notifications
                 </div>
@@ -14,6 +15,8 @@
                         :key="notif.id" 
                         :notification="notif"
                         @respond="handleAction"
+                        @open="handleOpen"
+                        @delete="handleDelete"
                     />
             </div>
         </div>
@@ -21,18 +24,88 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSocketStore } from '../../stores/socket';
+import { SERVER_BASE_URL } from '../../config/env';
 import NotificationItem from './NotificationItem.vue';
+import { fetchNotifications, markNotificationRead, deleteNotification  } from '../../services/notificationService.js';
+
+const emit = defineEmits(['close']);
+const router = useRouter();
+const socketStore = useSocketStore();
 
 const notifications = ref([]);
+const loading = ref(false);
 
-const handleAction = (payload) => {
-    console.log(`Action triggered: ${payload.action} for notification ID: ${payload.id}`);
-    
-    notifications.value = notifications.value.filter(
-        notif => notif.id !== payload.id
-    );
-};
+onMounted(async () => {
+    loading.value = true;
+    try {
+        const data = await fetchNotifications();
+        notifications.value = data.map(n => ({ ...n, id: n.notificationId }));
+    } catch (err) {
+        console.error(err);
+    } finally {
+        loading.value = false;
+    }
+
+    socketStore.onNotificationReceived((notification) => {
+        notifications.value.unshift({ ...notification, id: notification.notificationId });
+    });
+});
+
+onUnmounted(() => {
+    socketStore.onNotification = null;
+});
+
+async function handleOpen(notification) {
+    if (!notification.isRead) {
+        markNotificationRead(notification.notificationId).catch(err => console.error(err));
+        notification.isRead = true;
+    }
+
+    if (notification.type === 'invite') {
+        if (!notification.relatedInvitationId) return;
+        router.push({ name: 'invite-id', params: { invitationId: notification.relatedInvitationId } });
+        emit('close');
+        return;
+    }
+
+    if (notification.relatedEvent?.relatedEventId) {
+        router.push({
+            path: `/event/dashboard/${notification.relatedEvent.relatedEventId}`,
+            query: notification.relatedPostId ? { postId: notification.relatedPostId } : {}
+        });
+        emit('close');
+    }
+}
+
+async function handleAction(payload) {
+    const notification = notifications.value.find(n => n.id === payload.id);
+    if (!notification?.relatedInvitationId) return;
+
+    try {
+        const endpoint = payload.action === 'accept' ? 'accept' : 'reject';
+        await fetch(`${SERVER_BASE_URL}/api/invites/${notification.relatedInvitationId}/${endpoint}`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        notifications.value = notifications.value.filter(n => n.id !== payload.id);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function handleDelete(id) {
+    const snapshot = notifications.value;
+    notifications.value = notifications.value.filter(n => n.id !== id);
+    try {
+        await deleteNotification(id);
+    } catch (err) {
+        console.error(err);
+        notifications.value = snapshot;
+    }
+}
 </script>
 
 <style scoped>
