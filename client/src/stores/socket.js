@@ -26,6 +26,10 @@ export const useSocketStore = defineStore('socket', {
             this.socket.on('disconnect', () => {
                 console.log('Socket disconnected');
             });
+
+            this.socket.on('notification', (notification) => {
+                this.onNotification?.(notification);
+            });
         },
 
         disconnect() {
@@ -39,6 +43,10 @@ export const useSocketStore = defineStore('socket', {
 
         leaveEvent(eventId) {
             this.socket?.emit('leave_event', parseInt(eventId));
+        },
+
+        onNotificationReceived(callback) {
+            this.onNotification = callback;
         }
     }
 });

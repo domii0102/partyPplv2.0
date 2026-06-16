@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { inviteStatusOptions } from "../enums.js";
 import prisma from "../db.js";
 import { inviteUserSchema, expirationSchema } from "../schemas/invitationSchema.js"
+import { notify } from '../services/notificationService.js'; 
 
 const PENDING = inviteStatusOptions.PENDING;
 const ACCEPTED = inviteStatusOptions.ACCEPTED;
@@ -171,6 +172,20 @@ export async function inviteUser(req, res) {
                     }
                 }
             })
+        )
+    );
+
+    await Promise.all(
+        invitations.map(invitation =>
+            notify(
+                invitation.receiverId,
+                'invite',
+                req.user.userId,
+                {
+                    eventId: eventId,
+                    invitationId: invitation.invitationId
+                }
+            )
         )
     );
 

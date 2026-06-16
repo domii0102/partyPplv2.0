@@ -1,5 +1,5 @@
 import express from 'express';
-import { showNotifications, readNotification, readAllNotifications } from '../controllers/notificationController.js';
+import { showNotifications, readNotification, readAllNotifications, deleteNotification } from '../controllers/notificationController.js';
 
 const router = express.Router();
 
@@ -52,5 +52,7 @@ router.patch('/read', readAllNotifications);
 */
 router.patch('/:notificationId/read', readNotification);
 
+
+router.delete('/:notificationId', deleteNotification);
 
 export default router;
