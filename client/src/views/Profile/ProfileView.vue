@@ -40,8 +40,8 @@
 
       <div class="col-12 event-scroll-container" ref="yourEventsContainer">
         <EventCard
-          v-for="event in userEvents"
-          :key="event.id"
+          v-for="event in organizedEvents"
+          :key="event.eventId"
           :event="event"
           class="eventCard"
           @select="router.push(`/event/dashboard/${$event}`)"
@@ -61,8 +61,8 @@
 
       <div class="col-12 event-scroll-container" ref="yourEventsContainer">
         <EventCard
-          v-for="event in userEvents"
-          :key="event.id"
+          v-for="event in participatingEvents"
+          :key="event.eventId"
           :event="event"
           class="eventCard"
           @select="router.push(`/event/dashboard/${$event}`)"
@@ -126,7 +126,8 @@ watch(
   { immediate: true }
 );
 
-const userEvents = ref([]);
+const organizedEvents = ref([]);
+const participatingEvents = ref([]);
 const status = reactive({
   error: null,
   empty: false,
@@ -139,7 +140,16 @@ const fetchUserEvents = async () => {
 
   try {
     const fetchURL = new URL(`${SERVER_BASE_URL}/api/event/`);
-    fetchURL.searchParams.append("visibility", "mine");
+      if (userId.value) {
+        // profil innego użytkownika
+        fetchURL.searchParams.append("visibility", "user");
+        fetchURL.searchParams.append("userId", userId.value);
+      } else {
+        // mój profil
+        fetchURL.searchParams.append("visibility", "mine");
+      }
+
+
     fetchURL.searchParams.append("sortBy", "default");
 
     const res = await fetch(fetchURL, {
@@ -153,9 +163,16 @@ const fetchUserEvents = async () => {
     const serverData = await res.json();
     if (!res.ok) throw new Error(serverData.error || "Failed to fetch events.");
 
-    userEvents.value = serverData.data;
+    organizedEvents.value = serverData.data.organizedEvents || [];
+    participatingEvents.value = serverData.data.participatingEvents || [];
 
-    if (userEvents.value.length === 0) status.empty = true;
+
+     if (
+      organizedEvents.value.length === 0 &&
+      participatingEvents.value.length === 0
+    ) {
+      status.empty = true;
+    }
   } catch (err) {
     console.error(err);
     status.error =
@@ -165,8 +182,14 @@ const fetchUserEvents = async () => {
   }
 };
 
-onMounted(fetchProfile);
-onMounted(fetchUserEvents);
+watch(
+  userId,
+  async () => {
+    await fetchProfile();
+    await fetchUserEvents();
+  },
+  { immediate: true }
+);
 
 
 const logOut = async () => {
