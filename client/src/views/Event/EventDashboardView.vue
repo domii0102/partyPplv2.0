@@ -416,6 +416,7 @@
 
 .leave-btn{
     color: var(--text-muted);
+}
 .event-title-row {
     display: flex;
     align-items: center;
