@@ -9,24 +9,31 @@
                     </button>
                 </div>
                 <div class="user-search">
-                    <input class="user-searchbar" type="text" placeholder="Search for a user">
-                    <button class="btn">
+                    <input class="user-searchbar" type="text" placeholder="Search for a user" v-model="searchQuery">
+                    <button class="btn" @click="searchUsers">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
                 <div class="friend-list-container">
-                    <EventInviteUserBox></EventInviteUserBox>
-                    <EventInviteUserBox></EventInviteUserBox>
-                    <EventInviteUserBox></EventInviteUserBox>
-                    <EventInviteUserBox></EventInviteUserBox>
-                    <EventInviteUserBox></EventInviteUserBox>
-                    <EventInviteUserBox></EventInviteUserBox>
+                    <EventInviteUserBox
+                        v-for="user in searchResult"
+                        :key="user.userId"
+                        :user="user"
+                        @invite="handleInvite"></EventInviteUserBox>
                 </div>
                 <h2>...or send them an invitation link!</h2>
                 <div class="link-container">
                     <div ref="inviteLink" class="invite-link">
-                        {{ "partyp.pl/676767" }}
+                        {{ generatedLink || "Click generate to create a link" }}
                     </div>
+                    <button
+                        v-if="!generatedLink"
+                        class="copy-btn"
+                        @click="generateLink"
+                        :disabled="isGeneratingLink"
+                    >
+                        {{ isGeneratingLink ? "Generating..." : "Generate" }}
+                    </button>
                     <button class="copy-btn" @click="copyLink">{{ isLinkCopied ? "Copied!" : "Copy" }}</button>
                 </div>
             </main>
@@ -35,20 +42,68 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue'
+    import { ref, watch, onMounted } from 'vue';
+    import { useRoute } from 'vue-router';
     import EventInviteUserBox from './EventInviteUserBox.vue';
+    import { SERVER_BASE_URL } from '../../config/env';
+    import { requestService } from '../../services/requestService.js';
 
     defineEmits(['close']);
+    const route = useRoute();
+    const eventId = route.params.id;
+    const service = new requestService();
 
+    const searchQuery = ref('');
+    const searchResult = ref([]);
 
+    const isGeneratingLink = ref(false);
     const isLinkCopied = ref(false);
     const inviteLink = ref(null);
+    const generatedLink = ref('');
 
     const copyLink = async () => {
         await navigator.clipboard.writeText(inviteLink.value.innerText);
         isLinkCopied.value = true;
         setTimeout(() => isLinkCopied.value = false, 2000);
     }
+
+    async function searchUsers() {
+       
+
+        try {
+            const usersFound = await service.get(`/api/events/${eventId}/invites/search?query=${encodeURIComponent(searchQuery.value)}`);
+            searchResult.value = usersFound.data;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function handleInvite(userId) {
+        console.log('Inviting:', userId);
+        try {
+            await service.post(`/api/events/${eventId}/invites/users`, {
+                receiverIds: [userId]
+            });
+            searchResult.value = searchResult.value.filter(u => u.userId !== userId);
+        } catch (err) { console.error(err); }
+    }
+
+    async function generateLink() {
+        isGeneratingLink.value = true;
+         try {
+            const data = await service.post(`/api/events/${eventId}/invites/link`, {});
+            generatedLink.value = data.data.link;
+        } catch (err) { console.error(err); }
+        finally { isGeneratingLink.value = false;}
+    }
+
+    onMounted(searchUsers);
+
+    let debounceTimer;
+    watch(searchQuery, () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(searchUsers, 300);
+    });
 </script>
 
 <style scoped>
