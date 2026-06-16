@@ -21,13 +21,6 @@
                 <p>{{ locationAddress }}</p>
             </div>
         </section>
-
-        <section class="about-section">
-            <h2 class="section-title">Event playlist</h2>
-            <div class="section-content address-block">
-                <p class="place-name">to sie zrobi</p>
-            </div>
-        </section>
     </div>
 </template>
 

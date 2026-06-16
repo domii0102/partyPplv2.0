@@ -1,7 +1,7 @@
 <template>
     <div class="user-container">
         <div>
-            <img :src="props.user.profilePicture || defaultImage">
+            <img :src="props.user.avatar?.url || defaultImage">
             <span>{{ props.user.nickname }}</span>
         </div>
         <button class="btn btn-none" :class="{ invited: added }" @click="inviteUser">
@@ -23,21 +23,12 @@
     });
     const emit = defineEmits(['invite'])
 
-
-    // Krzysiu jezeeli Ci te dwiee funkcje już nie beda potrzebne to je usun pls <3
-    function handleClick() {
-        added.value = !added.value
-        isAnimating.value = true
-    }
-
-    function onAnimationEnd() {
-        isAnimating.value = false
-    }
-
     function inviteUser() {
         added.value = true;
         emit('invite', props.user.userId);
     }
+
+    console.log(props.user.avatar);
 
 </script>
 

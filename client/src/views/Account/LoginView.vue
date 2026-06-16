@@ -20,6 +20,7 @@
             <span v-if="errors.email" class="error-text">{{
               errors.email
             }}</span>
+            <span v-if="errors.backend" class="error-text backend-error mb-1">{{ errors.backend }}</span>
           </div>
 
           <div class="form-group">
@@ -33,6 +34,7 @@
             <span v-if="errors.password" class="error-text">{{
               errors.password
             }}</span>
+            <span v-if="errors.backend" class="error-text backend-error mb-1">{{ errors.backend }}</span>
           </div>
 
           <div class="options-row">
