@@ -56,7 +56,7 @@ export async function getEvents(req, res) {
     : [];
   const date = req.query.date ? new Date(req.query.date) : null;
   const orderBy = req.query.sortBy || "default";
-  const userId =req.user.userId;
+
   let prismaOrderBy = undefined;
 
   switch (orderBy) {
@@ -151,59 +151,11 @@ export async function getEvents(req, res) {
         data: events,
       });
     } else if (visibility === "mine") {
-       const [organizedEvents, participatingEvents] = await prisma.$transaction([
-    prisma.event.findMany({
-      where: {
-        deletedAt: null,
-        organizerId: userId,
-      },
-      orderBy: prismaOrderBy,
-      include: {
-        image: true,
-        hashtags: true,
-      },
-    }),
-
-    prisma.event.findMany({
-      where: {
-        deletedAt: null,
-
-        // żeby nie pokazywało drugi raz eventów, które sama utworzyłaś
-        organizerId: {
-          not: userId,
-        },
-
-        // tutaj używamy relacji do EventGuest
-        eventGuests: {
-          some: {
-            userId: userId,
-
-            // daj to tylko jeśli "confirmedArrival: true"
-            // oznacza, że użytkownik faktycznie bierze udział
-            confirmedArrival: true,
-          },
-        },
-      },
-      orderBy: prismaOrderBy,
-      include: {
-        image: true,
-        hashtags: true,
-        eventGuests:{
-          where:{
-            userId: userId,
-          }
-        }
-      },
-    }),
-  ]);
-
-  return res.status(200).json({
-    success: true,
-    data: {
-      organizedEvents,
-      participatingEvents,
-    },
-  });
+      events = await prisma.event.findMany({
+        where: { deletedAt: null, organizerId: userId },
+        include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy
+      });
+      return res.status(200).json({ success: true, data: events });
     }
   } catch (err) {
     console.error(err);
