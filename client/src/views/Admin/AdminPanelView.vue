@@ -63,15 +63,46 @@
         </p>
 
         <p>
-          <strong>Event ID:</strong>
-          {{ report.eventId }}
-        </p>
+  <strong>Report type:</strong>
+  {{ getReportType(report) }}
+</p>
+
+<p v-if="report.eventId">
+  <strong>Event ID:</strong>
+  {{ report.eventId }}
+</p>
+
+<p v-if="report.postId">
+  <strong>Post ID:</strong>
+  {{ report.postId }}
+</p>
+
+<p v-if="report.commentId">
+  <strong>Comment ID:</strong>
+  {{ report.commentId }}
+</p>
 
         <div v-if="report.event" class="details">
           <p><strong>Event name:</strong> {{ report.event.eventName|| "No name" }}</p>
           <p><strong>Organizer ID:</strong> {{ report.event.organizerId || "No organizer" }}</p>
           <p><strong>Event deleted:</strong> {{ report.event.deletedAt ? "Yes" : "No" }}</p>
-        </div>
+        </div><div v-if="report.post" class="details">
+  <p><strong>Post text:</strong> {{ report.post.textContent || "No text" }}</p>
+  <p><strong>Post author ID:</strong> {{ report.post.authorId }}</p>
+  <p>
+    <strong>Post author email:</strong>
+    {{ report.post.userCredentials?.email || "No email" }}
+  </p>
+</div>
+
+<div v-if="report.comment" class="details">
+  <p><strong>Comment text:</strong> {{ report.comment.textContent || "No text" }}</p>
+  <p><strong>Comment author ID:</strong> {{ report.comment.authorId }}</p>
+  <p>
+    <strong>Comment author email:</strong>
+    {{ report.comment.userCredentials?.email || "No email" }}
+  </p>
+</div>
 
         <div v-if="report.userCredentials" class="details">
           <p><strong>Sender email:</strong> {{ report.userCredentials.email }}</p>
@@ -86,13 +117,35 @@
             Mark as examined
           </button>
 
-          <button @click="softDeleteEvent(report.eventId)">
-            Soft delete event
-          </button>
+          <button
+  v-if="report.eventId"
+  @click="softDeleteEvent(report.eventId)"
+>
+  Soft delete event
+</button>
 
-          <button v-if="report.event?.organizerId" @click="softDeleteUser(report.event.organizerId)">
-            Soft delete organizer
-          </button>
+<button
+  v-if="report.event?.organizerId"
+  @click="softDeleteUser(report.event.organizerId)"
+>
+  Soft delete organizer
+</button>
+
+<button
+  v-if="report.postId"
+  @click="deletePostAdmin(report.postId)"
+>
+  Delete post
+</button>
+
+<button
+  v-if="report.commentId"
+  @click="deleteCommentAdmin(report.commentId)"
+>
+  Delete comment
+</button>
+
+
 
         </div>
       </div>
@@ -163,6 +216,14 @@ const events = ref([]);
 
 const loading = ref(false);
 const error = ref("");
+//rozpoznawanie rodzaju zgloszenia
+
+const getReportType = (report) => {
+  if (report.eventId) return "Event";
+  if (report.postId) return "Post";
+  if (report.commentId) return "Comment";
+  return "Unknown";
+};
 
 const formatDate = (date) => {
   if (!date) return "";
@@ -304,6 +365,40 @@ const changeUserRole = async (userId, role) => {
     console.log("CHANGE USER ROLE ERROR:", err);
   }
 };
+const deletePostAdmin = async (postId) => {
+  const confirmed = confirm("Are you sure you want to delete this post?");
+  if (!confirmed) return;
+
+  try {
+    const response = await service.delete(`/api/admin/posts/${postId}`);
+
+    console.log("DELETE POST:", response);
+
+    if (response.success) {
+      await loadReports();
+    }
+  } catch (err) {
+    console.log("DELETE POST ERROR:", err);
+  }
+};
+
+const deleteCommentAdmin = async (commentId) => {
+  const confirmed = confirm("Are you sure you want to delete this comment?");
+  if (!confirmed) return;
+
+  try {
+    const response = await service.delete(`/api/admin/comments/${commentId}`);
+
+    console.log("DELETE COMMENT:", response);
+
+    if (response.success) {
+      await loadReports();
+    }
+  } catch (err) {
+    console.log("DELETE COMMENT ERROR:", err);
+  }
+};
+
 
 watch(activeTab, async (tab) => {
   if (tab === "reports") {

@@ -1,12 +1,10 @@
-
-
 <template>
   <div class="popup-overlay" @click.self="close">
     <div class="report-popup">
-      <h2>Report event</h2>
+      <h2>{{ title }}</h2>
 
       <p class="popup-desc">
-        Describe why you want to report this event.
+        {{ description }}
       </p>
 
       <textarea
@@ -40,9 +38,21 @@ import { ref } from "vue";
 import { service } from "../../services/requestService.js";
 
 const props = defineProps({
-  eventId: {
+  targetType: {
+    type: String,
+    required: true,
+  },
+  targetId: {
     type: [String, Number],
     required: true,
+  },
+  title: {
+    type: String,
+    default: "Report",
+  },
+  description: {
+    type: String,
+    default: "Describe why you want to report this content.",
   },
 });
 
@@ -74,9 +84,12 @@ const submitReport = async () => {
   loading.value = true;
 
   try {
-    const response = await service.post(`/api/report/event/${props.eventId}`, {
-      textContent: reportText.value,
-    });
+    const response = await service.post(
+      `/api/report/${props.targetType}/${props.targetId}`,
+      {
+        textContent: reportText.value,
+      }
+    );
 
     console.log("REPORT RESPONSE:", response);
 
