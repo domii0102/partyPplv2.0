@@ -366,6 +366,14 @@ onMounted(async () => {
   margin-bottom: 1rem;
   background: rgba(0, 0, 0, 0.25);
 }
+.card p strong,
+.details p strong {
+  color: orange;
+}
+.card p,
+.details p {
+  color: #fff;
+}
 
 .card-header {
   display: flex;
