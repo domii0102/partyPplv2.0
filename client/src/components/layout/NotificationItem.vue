@@ -46,16 +46,14 @@ const generatedMessage = computed(() => {
     switch (n.type) {
         case 'invite':
             return `New Invitation: ${eventName}`;
-        case 'invite_accepted':
-            return `${senderName} accepted your invitation to: ${eventName}`;
-        case 'reaction':
+        case 'new_like':
             return `${senderName} reacted to your post in: ${eventName}`;
-        case 'comment':
+        case 'new_comment':
             return `${senderName} commented on your post in: ${eventName}`;
+        case 'new_reply':
+            return `${senderName} replied to your comment in: ${eventName}`;
         case 'new_post':
             return `${senderName} added a new post in: ${eventName}`;
-        case 'reminder':
-            return `Reminder for event: ${eventName}`;
         default:
             return 'You have a new notification';
     }
