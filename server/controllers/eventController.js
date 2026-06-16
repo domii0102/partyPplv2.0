@@ -150,6 +150,11 @@ export async function getEvents(req, res) {
         data: events,
       });
     } else if (visibility === "mine") {
+      const userId = req.user.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: "Unauthorized" });
+      }
+
       events = await prisma.event.findMany({
         where: { deletedAt: null, organizerId: userId },
         include: { image: true, hashtags: true }, //tutaj jeszcze dodać te, w których uczestniczymy

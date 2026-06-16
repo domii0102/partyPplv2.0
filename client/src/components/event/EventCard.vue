@@ -12,6 +12,7 @@
       -->
     </div>
 
+    <!--
     <button 
       class="like-btn" 
       :class="{ 'is-liked': isLiked, 'animate': clicked }" 
@@ -19,6 +20,7 @@
     >
       <i :class="isLiked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
     </button>
+  -->
   </div>
 </template>
 
