@@ -32,10 +32,17 @@ export async function getEvent(req, res) {
         },
       },
     });
+
     if (!event) {
       return res.status(404).json({ success: false, error: "Event not found" });
     }
-    return res.status(200).json({ success: true, data: {...event, isOrganizer: String(event.organizerId)===String(userId), }});
+
+    const isGuest = userId ? await prisma.eventGuest.findUnique({
+      where: { userId_eventId: { userId: String(userId), eventId } },
+      select: { confirmedArrival: true }
+    }) : null;
+
+    return res.status(200).json({ success: true, data: {...event, isOrganizer: String(event.organizerId)===String(userId), isGuest: !!isGuest, confirmedArrival: isGuest?.confirmedArrival ?? null}});
   } catch (err) {
     console.error(err);
     return res
@@ -638,7 +645,9 @@ export async function setConfirmedArrival(req, res) {
 
     await prisma.eventGuest.update({
       where: { userId_eventId: { userId, eventId } },
-      data: { confirmedArrival: confirmedArrival }
+      data: { 
+        confirmedArrival: confirmedArrival === null ? null : confirmedArrival
+      }
     });
 
     return res.status(200).json({ success: true, message: "Arrival status updated." });
