@@ -1,6 +1,16 @@
 <template>
   <div class="posts-section">
 
+     <ReportPopup
+      v-if="reportPopup.show"
+      :target-type="reportPopup.type"
+      :target-id="reportPopup.id"
+      :title="reportPopup.title"
+      :description="reportPopup.description"
+      @close="closeReportPopup"
+      @reported="onReported"
+    />
+    
     <div v-if="accessDenied" class="access-denied">
       <i class="bi bi-lock"></i>
       <p>Join the event to see the posts and join the conversation!</p>
@@ -42,7 +52,7 @@
               </button>
             </template>
 
-            <button class="flag-btn" title="Zgłoś">
+            <button class="flag-btn" title="Zgłoś" @click="openReportPopup('post',post.id)">
               <i class="bi bi-flag"></i>
             </button>
 
@@ -190,7 +200,7 @@
                             </template>
                           </div>
                           
-                          <button class="flag-btn" title="Zgłoś">
+                          <button class="flag-btn" title="Zgłoś" @click="openReportPopup('comment',comment.id)">
                               <i class="bi bi-flag"></i>
                           </button>
                     </div>
@@ -210,7 +220,7 @@
                 </div>
               </div>
 
-                <button class="flag-btn" title="Zgłoś">
+                <button class="flag-btn" title="Zgłoś" @click="openReportPopup('comment', comment.id)">
                   <i class="bi bi-flag"></i>
                 </button>
             </div>
@@ -235,6 +245,7 @@ import { mapPost } from '../../mappers/postMapper';
 import { useForumSocket } from '../../composables/useForumSocket';
 import defaultImage from "../../assets/pfp.jpg";
 
+import ReportPopup from "./ReportPopup.vue";
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -242,7 +253,13 @@ const userStore = useUserStore();
 const eventId = route.params.id;
 const posts = ref([]);
 const newPostText = ref('');
-
+const reportPopup = ref({
+  show: false,
+  type: null,
+  id: null,
+  title: "",
+  description: "",
+});
 const currentPage = ref(1);
 const limit = 10;
 const loadingMore = ref(false);
@@ -298,6 +315,27 @@ async function loadPosts(reset=false) {
       }
     } finally { loadingMore.value = false; }
 
+}
+
+function openReportPopup(type, id) {
+  reportPopup.value = {
+    show: true,
+    type,
+    id,
+    title: type === "post" ? "Report post" : "Report comment",
+    description:
+      type === "post"
+        ? "Describe why you want to report this post."
+        : "Describe why you want to report this comment.",
+  };
+}
+
+function closeReportPopup() {
+  reportPopup.value.show = false;
+}
+
+function onReported(data) {
+  console.log("REPORT SENT:", data);
 }
 
 async function submitPost() {

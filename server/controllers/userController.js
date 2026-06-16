@@ -69,8 +69,8 @@ export async function createProfile(req, res) {
         return res.status(400).json({ success: false, error: z.flattenError(result.error) });
     };
 
-    const { email, nickname, name, surname, dateOfBirth } = result.data;
-
+    const {email, nickname, name, surname, dateOfBirth } = result.data;
+    
 
     const accountData = await prisma.userCredentials.findUnique({
         where: { email: email },

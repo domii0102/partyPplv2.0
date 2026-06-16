@@ -33,6 +33,13 @@ class CommentService {
             `/api/events/${eventId}/forum/posts/${postId}/comments/${commentId}`
         );
     }
+
+    async reportComment(commentId, body){
+        return service.post(
+            `/api/report/comment/${commentId}`,
+            body
+        );
+    }
 }
 
 export default new CommentService();

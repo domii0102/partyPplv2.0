@@ -10,7 +10,7 @@ model Comment {
   userCredentials UserCredentials @relation(fields: [authorId], references: [userId])
   parent      Comment?            @relation("CommentReplies", fields: [parentId], references: [commentId])
   replies     Comment[]           @relation("CommentReplies")
-
+  reports     Report[]
   @@index([postId])
   @@index([authorId])
 

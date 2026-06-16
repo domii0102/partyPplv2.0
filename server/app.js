@@ -15,6 +15,8 @@ import commentRouter from './routes/comment.js';
 import notificationRouter from './routes/notification.js';
 import { Server } from "socket.io";
 import jwt from 'jsonwebtoken';
+import adminRoutes from "./routes/admin.js";
+import reportRoutes from "./routes/report.js";
 
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL
 const PORT = parseInt(process.env.PORT);
@@ -95,6 +97,10 @@ app.get(["/","/home"], (req, res) => {
 app.use("/api/account", accountRouter);
 app.use("/api/user", userRouter);
 app.use("/api/public", invitationRouter);
+
+//admin+report
+app.use("/api/admin", adminRoutes);
+app.use("/api/report", reportRoutes);
 
 app.use(authMiddleware); 
 

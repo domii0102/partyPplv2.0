@@ -8,6 +8,7 @@ import cloudinary from "cloudinary";
 
 export async function getEvent(req, res) {
   const eventId = parseInt(req.params.id);
+  const userId = req.user?.userId || null;
 
   try {
     const event = await prisma.event.findUnique({
@@ -34,7 +35,7 @@ export async function getEvent(req, res) {
     if (!event) {
       return res.status(404).json({ success: false, error: "Event not found" });
     }
-    return res.status(200).json({ success: true, data: event });
+    return res.status(200).json({ success: true, data: {...event, isOrganizer: String(event.organizerId)===String(userId), }});
   } catch (err) {
     console.error(err);
     return res
@@ -404,12 +405,13 @@ export async function updateEvent(req, res) {
 
     return res.status(200).json({ success: true, data: transactionResult });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      error: "An attempt to save changes in the database was unsuccessful",
-    });
-  }
+  console.error("UPDATE EVENT DATABASE ERROR:", err);
+
+  return res.status(500).json({
+    success: false,
+    error: err.message,
+  });
+}
 }
 
 export async function updateImage(req, res) {

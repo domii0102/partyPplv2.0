@@ -1,12 +1,16 @@
 model Report {
   reportId    Int      @id @default(autoincrement())
-  eventId     Int
+  eventId     Int?
+  postId      Int?
+  commentId   Int?
   senderId    String
   createdAt   DateTime @default(now())
   textContent String?  @db.VarChar(256)
-  isExamined  Boolean
+  isExamined  Boolean  @default(false)
 
-  event            Event           @relation(fields: [eventId], references: [eventId])
+  event            Event?           @relation(fields: [eventId], references: [eventId])
+  post             Post?            @relation(fields:[postId], references: [postId])
+  comment          Comment?         @relation(fields: [commentId], references: [commentId])
   userCredentials  UserCredentials @relation(fields: [senderId], references: [userId])
 
   @@map("Report")

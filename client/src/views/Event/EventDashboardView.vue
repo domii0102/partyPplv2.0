@@ -1,5 +1,11 @@
 <template>
     <event-invite-create v-show="showPopup" @close="showPopup = false"></event-invite-create>
+
+    <event-report-popup
+      v-if="showReportPopup"
+      :event-id="route.params.id"
+      @close="showReportPopup = false"
+    ></event-report-popup>  
     <div class="event-dashboard">
         <div class="event-header">
             <img class="event-cover" :src="event?.image?.url || defaultImage"/>
@@ -8,9 +14,36 @@
                     {{ eventDate }}
                 </div>
 
-                <h1 class="event-title">
-                    {{ eventName }}
-                </h1>
+               <div class="event-title-row">
+                    <h1 class="event-title">
+                        {{ eventName }}
+                    </h1>
+
+                    <button
+                        v-if="isOrganizer"
+                        class="edit-title-button"
+                        type="button"
+                        @click="goToUpdateEvent"
+                        title="Edit event"
+                    >
+                        <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    </button>
+                </div>
+
+
 
                 <div class="event-author">
                     by: <span>
@@ -63,6 +96,12 @@
                         <button @click="showPopup = true"><i class="bi bi-share-fill"></i> Invite</button>
                         <div class="gradient-line"></div>
                     </div>
+                    <div class="event-tab">
+                    <button @click="showReportPopup = true">
+                        <i class="bi bi-flag-fill"></i> Report
+                    </button>
+                    <div class="gradient-line"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -75,7 +114,7 @@
 
 <script setup>
     import { ref, computed, onMounted } from 'vue';
-    import { useRoute } from 'vue-router';
+    import { useRoute, useRouter } from 'vue-router';
     import { SERVER_BASE_URL } from '../../config/env';
 
     import defaultImage from '../../assets/user-form-bg.jpg';
@@ -84,13 +123,16 @@
     import EventPlaylist from '../../components/event/EventPlaylist.vue';
     import EventPosts from '../../components/event/EventPosts.vue';
     import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
+    import EventReportPopup from '../../components/event/EventReportPopup.vue';
 
     import postService from '../../services/forum/postService';
 
     const route = useRoute();
+    const router = useRouter();
     const loading = ref(false);
     const error = ref(null);
     const event = ref(null);
+    const currentUser =ref(null);
     const showPopup = ref(false);
     const organizerId = ref(null);
 
@@ -100,6 +142,7 @@
     function selectAttendance(sel) {
         confirmedAttendance.value = sel;
     }
+    const showReportPopup =ref(false);
 
     const fetchEvent = async () => {
         loading.value = true;
@@ -128,6 +171,29 @@
             loading.value = false;
         }
     };
+    const fetchCurrentUser = async () => {
+    try {
+        const res = await fetch(`${SERVER_BASE_URL}/api/user/me`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const serverData = await res.json();
+
+        if (!res.ok) {
+            throw new Error(serverData.error || "Failed to fetch current user.");
+        }
+
+        currentUser.value = serverData.data.user;
+    } catch (err) {
+        console.error("CURRENT USER ERROR:", err);
+    }
+};
+    
+    onMounted(async () => {
+    await fetchCurrentUser();
+    await fetchEvent();
+});
 
     const eventDate = computed(() => {
         if (!event.value?.eventDateTime) return '';
@@ -145,6 +211,16 @@
 
         return event.value.organizerId || null;
     });
+
+    //funkcja do sprawdzania czy dany uzytkownik jest organizatorem
+   const isOrganizer = computed(() => {
+    const currentUserId = currentUser.value?.userId;
+    const organizerId = event.value?.organizerId;
+
+    if (!currentUserId || !organizerId) return false;
+
+    return String(currentUserId).trim() === String(organizerId).trim();
+});
 
     const activeTab = ref('Posts')
 
@@ -187,6 +263,10 @@
         await fetchEvent();
         await fetchAccess();
     });
+    function goToUpdateEvent() {
+    router.push(`/event/${route.params.id}/update`);
+}
+
 
 </script>
 
@@ -336,5 +416,25 @@
 
 .leave-btn{
     color: var(--text-muted);
+.event-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.edit-title-button {
+    background: transparent;
+    border: none;
+    color: var(--accent-orange);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.edit-title-button:hover {
+    opacity: 0.8;
 }
 </style>
