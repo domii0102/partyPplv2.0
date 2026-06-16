@@ -4,13 +4,13 @@
       <div class="row align-items-center">
         <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
           <div class="avatar-container mx-auto mx-md-0">
-            <img class="avatar-img" :src="user?.avatar?.url" alt="Avatar" />
+            <img class="avatar-img" :src="profilePicture" alt="Avatar" />
           </div>
         </div>
         <div class="col-md">
           <div class="profile-info text-center text-md-start ms-md-4">
-            <h1>{{ user?.name }}</h1>
-            <div class="nickname">{{ user?.nickname }}</div>
+            <h1>{{ profileUser?.name }} {{ profileUser?.surname }}</h1>
+            <div class="nickname">{{ profileUser?.nickname }}</div>
             <a class="btn btn-edit-profile"> Edit profile </a>
             <button class="btn btn-none log-out" @click="logOut">
               <i class="bi bi-box-arrow-right"></i>
@@ -65,21 +65,57 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import defaultImage from "../../assets/horsegiirl.jpg";
+import defaultImage from "../../assets/pfp.jpg";
 import { useUserStore } from "../../stores/user.js";
 import { storeToRefs } from "pinia";
 import { service } from "../../services/requestService.js";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import EventCard from "../../components/event/EventCard.vue";
 import { SERVER_BASE_URL } from "../../config/env";
 
 const router = useRouter();
+const route = useRoute();
 const store = useUserStore();
-const { user } = storeToRefs(store);
+const { user: loggedInUser } = storeToRefs(store);
 
+const userId = computed(() => route.params.id);
+const profileUser = ref(null);
 const loading = ref(false);
+const profilePicture = ref(null);
+
+const fetchProfile = async () => {
+  loading.value = true;
+
+  try {
+    if (userId.value) {
+      const res = await fetch(`${SERVER_BASE_URL}/api/user/${userId.value}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      profileUser.value = data.data.profile;
+    } else {
+      profileUser.value = loggedInUser.value;
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+  profilePicture.value = profileUser.value.avatar?.url || defaultImage;
+};
+
+watch(
+  userId,
+  () => {
+    fetchProfile();
+  },
+  { immediate: true }
+);
+
 const userEvents = ref([]);
 const status = reactive({
   error: null,
@@ -119,7 +155,9 @@ const fetchUserEvents = async () => {
   }
 };
 
+onMounted(fetchProfile);
 onMounted(fetchUserEvents);
+
 
 const logOut = async () => {
   store.logout();

@@ -87,6 +87,12 @@ const routes = [
     meta: { requiresAuth: true, requiresVerification: true },
   },
 
+    {
+    path: "/profile/:id",
+    component: ProfileView,
+    meta: { requiresAuth: true, requiresVerification: true },
+  },
+
   {
     path: "/notifications",
     component: NotificationsView,
