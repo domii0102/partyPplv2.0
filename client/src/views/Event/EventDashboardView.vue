@@ -20,8 +20,8 @@
                     </span>
                 </div>
 
-                <div v-if="accessDenied">
-                    <button class="btn active">
+                <div v-if="accessDenied" class="join-container">
+                    <button class="join-btn">
                         Join Event
                     </button>
                 </div>
@@ -39,6 +39,9 @@
                             <i class="bi bi-x"></i>
                         </button>
                     </span>
+                    <button class="btn leave-btn">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
                 </div>
 
                 <div class="event-tabs">
@@ -300,5 +303,38 @@
     backdrop-filter: blur(10px);
     filter: drop-shadow(0px 0px 15px var(--accent-orange));
     border: solid color-mix(in srgb, var(--accent-orange) 50%, transparent) 1px;
+}
+
+.join-container{
+    padding: 0.5rem;
+}
+
+.join-btn {
+    background-color: color-mix(in srgb, var(--accent-orange) 40%, transparent);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent-orange) 67%, white);
+    
+    box-shadow: 0 0 0 transparent;
+    transform: translateY(0) scale(1);
+
+    transition: 
+        transform 0.2s ease,
+        box-shadow 0.3s ease,
+        background-color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.join-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent-orange) 60%, transparent);
+}
+
+.join-btn:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent-orange) 40%, transparent);
+}
+
+.leave-btn{
+    color: var(--text-muted);
 }
 </style>
