@@ -25,7 +25,7 @@
         class="post-card"
       >
         <div class="post-header">
-          <img :src="post.avatar" :alt="post.author" class="avatar" />
+          <img :src="post.avatar || defaultImage" :alt="post.author" class="avatar" />
           <div class="post-meta">
             <span class="author-name">{{ post.author }}</span>
             <span class="post-time">{{ post.time }}</span>
@@ -115,7 +115,7 @@
               :key="comment.id"
               class="comment-item"
             >
-              <img :src="comment.avatar" :alt="comment.author" class="avatar avatar--sm" />
+              <img :src="comment.avatar || defaultImage" :alt="comment.author" class="avatar avatar--sm" />
               <div class="comment-content">
                 <div class="comment-header">
                   <span class="author-name author-name--sm">{{ comment.author }}</span>
@@ -153,7 +153,7 @@
                       v-for="reply in comment.replies"
                       :key="reply.id"
                       class="reply-item">
-                        <img :src="reply.author.avatar" class="avatar avatar--xs" />
+                        <img :src="reply.author.avatar || defaultImage" class="avatar avatar--xs" />
                         
                           <div class="reply-content">
                             <div class="comment-header">
@@ -233,6 +233,7 @@ import postService from '../../services/forum/postService';
 import commentService from '../../services/forum/commentService';
 import { mapPost } from '../../mappers/postMapper';
 import { useForumSocket } from '../../composables/useForumSocket';
+import defaultImage from "../../assets/pfp.jpg";
 
 
 const route = useRoute();
@@ -382,7 +383,6 @@ async function loadComments(post) {
             eventId,
             post.id
         );
-
         post.comments = response.data.map(comment => ({
             id: comment.commentId,
             authorId: comment.authorId,

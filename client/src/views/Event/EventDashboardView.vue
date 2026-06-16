@@ -20,7 +20,13 @@
                     </span>
                 </div>
 
-                <div class="event-attendance">
+                <div v-if="accessDenied">
+                    <button class="btn active">
+                        Join Event
+                    </button>
+                </div>
+
+                <div v-else class="event-attendance">
                     Your attendance:
                     <span class="attendance-radio">
                         <button class="btn" @click="selectAttendance('accept')" :class="{ active: confirmedAttendance === 'accept' }" :disabled="confirmedAttendance === 'accept' ">
@@ -76,6 +82,8 @@
     import EventPosts from '../../components/event/EventPosts.vue';
     import EventInviteCreate from '../../components/event/EventInviteCreate.vue';
 
+    import postService from '../../services/forum/postService';
+
     const route = useRoute();
     const loading = ref(false);
     const error = ref(null);
@@ -117,8 +125,6 @@
             loading.value = false;
         }
     };
-    
-    onMounted(fetchEvent);
 
     const eventDate = computed(() => {
         if (!event.value?.eventDateTime) return '';
@@ -151,6 +157,33 @@
     function select(tab){
         activeTab.value = tab;
     }
+
+    //nie chce mi sie robic sprawdzania czy jestes czlonkiem wydarzenia w madrzejszy sposob wybaczcie czas goni
+    const accessDenied = ref(false);
+    const fetchAccess = async () => {
+        const eventId = route.params.id;
+
+        try{
+            const response = await postService.getPosts(
+            eventId,
+            1,
+            1
+            );
+        } catch (err){
+            if (err.status === 403) {
+                accessDenied.value = true;
+            } else {
+                console.error(err);
+            }
+        }
+        console.log(accessDenied);
+        console.log("chuj");
+    };
+
+    onMounted(async () => {
+        await fetchEvent();
+        await fetchAccess();
+    });
 
 </script>
 
