@@ -10,6 +10,7 @@ model Post {
   images          Image[]
   comments        Comment[]
   postLikes       PostLike[]
+  reports         Report[]
 
   @@index([forumId])
   @@index([authorId])

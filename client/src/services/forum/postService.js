@@ -38,6 +38,13 @@ class PostService {
             `/api/events/${eventId}/forum/posts/${postId}/like`
         );
     }
+
+    async reportPost(postId,body){
+        return service.post(
+            `/api/report/post/${postId}`,
+            body
+        );
+    }
 }
 
 export default new PostService();

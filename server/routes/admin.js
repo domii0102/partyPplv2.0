@@ -10,6 +10,8 @@ import {
   changeUserRole,
   getEvents,
   softDeleteEvent,
+  deletePostAdmin,
+  deleteCommentAdmin,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -30,4 +32,7 @@ router.patch("/users/:userId/role", changeUserRole);
 router.get("/events", getEvents);
 router.patch("/events/:eventId/soft-delete", softDeleteEvent);
 
+//comm delete
+router.delete("/posts/:postId", deletePostAdmin);
+router.delete("/comments/:commentId", deleteCommentAdmin);
 export default router;
