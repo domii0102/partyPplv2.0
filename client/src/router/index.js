@@ -20,7 +20,7 @@ import ProfileView from "../views/Profile/ProfileView.vue";
 import NotificationsView from "../views/Profile/NotificationsView.vue";
 
 import { getActivePinia, setActivePinia, createPinia } from "pinia";
-
+import AdminPanelView from "../views/Admin/AdminPanelView.vue";
 const pinia = getActivePinia() || createPinia();
 setActivePinia(pinia);
 
@@ -92,6 +92,12 @@ const routes = [
     component: NotificationsView,
     meta: { requiresAuth: true, requiresVerification: true },
   },
+
+  {
+    path: "/admin",
+    component: AdminPanelView,
+    meta: {requiresAuth:true, requiresVerification:true, requiresAdmin:true},
+  }
 ];
 
 const router = createRouter({
@@ -109,6 +115,19 @@ router.beforeEach(async (to, from) => {
   const isAuthenticated = store.user != null;
   const isVerified = localStorage.getItem("user_verified") === "true";
 
+  //do admina
+const token = localStorage.getItem("token");
+
+let userRole = null;
+
+if (token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    userRole = payload.userRole;
+  } catch (err) {
+    console.log("Błąd odczytu tokena:", err);
+  }
+}
   if (to.meta.requiresAuth && !isAuthenticated) {
     return '/login';
   } 
@@ -120,6 +139,10 @@ router.beforeEach(async (to, from) => {
       return '/verify-email';
     }
   } 
+
+   else if (to.meta.requiresAdmin && userRole !== "admin") {
+    return "/event/feed";
+  }
 
   //zaproszenia moga byc wyswietlane przez uzytkownikow zalogowanych i niezalogowanych
   else if (to.meta.isInvite){

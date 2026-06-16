@@ -130,11 +130,7 @@ const handleLogin = async () => {
       }
       localStorage.setItem("user_verified", "true");
 
-      if (serverData.data.hasProfile === false) {
-        console.log("Przekierowanie na profile/create");
-        router.push("/create");
-        return;
-      }
+      
 
       try {
         const response = await service.post("/api/account/login", {
@@ -153,6 +149,20 @@ const handleLogin = async () => {
           );
 
           console.log("Logowanie udane: ", response);
+          const token = response.token || response.data?.token;
+
+if (token) {
+  localStorage.setItem("token", token);
+  console.log("Token zapisany:", localStorage.getItem("token"));
+} else {
+  console.log("Brak tokena w odpowiedzi:", response);
+}
+
+if (serverData.data.hasProfile === false) {
+  console.log("Przekierowanie na profile/create");
+  router.push("/create");
+  return;
+}
           await store.loadUser();
           console.log("User store: ", store.getUser);
           console.log("Przekierowanie na profile:");
