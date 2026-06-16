@@ -79,7 +79,12 @@ const routes = [
     component: EventInviteView, 
     meta: { hideHeader: true, isInvite: true }
   },
-
+ {
+  path: '/event/:id/update',
+  name: 'event-update',
+  component: () => import('../views/Event/UpdateEvent.vue'),
+  meta: { requiresAuth: true, requiresVerification: true },
+},
   // Profile
   {
     path: "/profile",
