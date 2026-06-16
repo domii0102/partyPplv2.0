@@ -130,7 +130,6 @@ export async function inviteUser(req, res) {
 
         let age = today.getFullYear() - birth.getFullYear();
         const notYetHadBirthday = today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
-        
         if (notYetHadBirthday) age--;
 
         return age < event.ageRestriction;
@@ -578,4 +577,67 @@ export async function rejectInvite(req, res) {
       .status(500)
       .json({ success: false, error: "A database error has occurred" });
   }
+}
+
+
+export async function searchUsers(req, res) {
+    
+    const eventId = parseInt(req.params.eventId);
+    const input = (req.query.query || "").trim();
+
+    try {
+        const event = await prisma.event.findUnique({  
+            where: { eventId: eventId },
+            select: { organizerId: true }
+        });
+        
+        if (!event) { return res.status(404).json({ success: false, error: "Event not found, can't search for users to invite." }); }
+
+        const guests = await prisma.eventGuest.findMany({  
+            where: { eventId: eventId },
+            select: { userId: true }
+        });
+
+        const invited = await prisma.invitation.findMany({
+            where: { eventId: eventId },
+            select: { receiverId: true }
+        })
+
+        const skip = [
+            event.organizerId,
+            ...invited.map(i => i.receiverId),
+            ...guests.map(g => g.userId)
+        ].filter(id => typeof id === "string" && id !== null);
+
+        const searchResult = await prisma.userProfile.findMany({
+            where: {
+                userId: { notIn: skip },
+                nickname: {
+                    contains: input || "",
+                    mode: "insensitive"
+                }
+            },
+            select: {
+                userId: true,
+                nickname: true,
+                name: true,
+                surname: true,
+                avatar: { select: { url: true } }
+            },
+            take: 100
+        });
+
+        return res.status(200).json({ 
+            success: true, 
+            message: `Pomyślnie zebrano i wyświetlono wszystkich użytkowników dopasowanych do frazy ${input}`,
+            data: searchResult });
+
+        } catch (err) {
+            console.error("SEARCH USERS ERROR:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message,
+                code: err.code
+            });
+        }
 }

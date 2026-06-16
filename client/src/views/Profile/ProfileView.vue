@@ -11,7 +11,9 @@
           <div class="profile-info text-center text-md-start ms-md-4">
             <h1>{{ profileUser?.name }} {{ profileUser?.surname }}</h1>
             <div class="nickname">{{ profileUser?.nickname }}</div>
-            <a class="btn btn-edit-profile"> Edit profile </a>
+            <router-link class="btn btn-edit-profile" to="/profile/edit">
+  Edit profile
+</router-link>
             <button class="btn btn-none log-out" @click="logOut">
               <i class="bi bi-box-arrow-right"></i>
               Log out
@@ -74,6 +76,7 @@ import { service } from "../../services/requestService.js";
 import { useRouter, useRoute } from "vue-router";
 import EventCard from "../../components/event/EventCard.vue";
 import { SERVER_BASE_URL } from "../../config/env";
+import EditProfileView from './EditProfileView.vue';
 
 const router = useRouter();
 const route = useRoute();

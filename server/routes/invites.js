@@ -1,6 +1,6 @@
 import express from 'express';
 import { canCreateInvites,  canManageInvites} from '../middleware/userPermissionsMiddleware.js';
-import { showEventInvites, inviteUser, inviteViaLink, changeExpirationDate, deleteInvite, showUserInvites, showInvite, acceptInvite, rejectInvite } from '../controllers/invitationController.js';
+import { showEventInvites, inviteUser, inviteViaLink, changeExpirationDate, deleteInvite, showUserInvites, showInvite, acceptInvite, rejectInvite, searchUsers } from '../controllers/invitationController.js';
 
 
 const router = express.Router({ mergeParams: true });
@@ -72,6 +72,29 @@ router.post('/users', canCreateInvites, inviteUser);
     URL:    /api/events/:eventId/invites/link
 */
 router.post('/link', canCreateInvites, inviteViaLink);
+
+
+/*
+    Wyszukiwanie listy użytkowników
+    PARAMS:
+        * eventId
+    QUERY:
+        * query *opcjonalne*
+    OUTPUT: success: true, message,
+            data: [
+                {   
+                    * userId,
+                    * nickname,
+                    * name,
+                    * surname,
+                    * avatar
+                }, ...
+            ] 
+    OUTPUT: success: false, error
+    URL:    /api/events/:eventId/invites/search
+*/
+router.get('/search', canCreateInvites, searchUsers);
+
 
 /*
     Wyświetlenie listy zaproszeń DANEGO UŻYTKOWNIKA

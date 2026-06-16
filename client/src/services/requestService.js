@@ -15,9 +15,18 @@ export class requestService {
         if (contentType?.includes('application/json')) { data = await response.json(); }
 
         if (!response.ok) {
-        const error = new Error(data?.error || 'Request failed');
-        error.status = response.status;
-        throw error;
+            console.error('Status:', response.status);
+            console.error('Response:', data);
+
+            const error = new Error(
+                data?.error ||
+                data?.message ||
+                JSON.stringify(data) ||
+                'Request failed'
+            );
+
+            error.status = response.status;
+            throw error;
         }
 
         return data;
