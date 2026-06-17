@@ -25,8 +25,8 @@ export const eventSchema = z.object({
         const num = parseFloat(val);
         return Number.isNaN(num) ? undefined : num;
     }, z.number().gte(-180).lte(180).optional()),
-    locationName: z.string().max(64).optional(),
-    locationAddress: z.string().max(128).optional(),
+    locationName: z.string().max(64).nullable().optional(),
+    locationAddress: z.string().max(128).nullable().optional(),
     guestLimit: z.preprocess(val => {
         const num = parseInt(val);
         return Number.isNaN(num) ? undefined : num;

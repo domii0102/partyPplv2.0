@@ -75,31 +75,32 @@
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
+                <div class="tabs-wrapper">
+                    <div class="event-tabs">
+                        <div class="event-tab">
+                            <button @click="select('Posts')">Posts</button>
+                            <div class="gradient-line" :class="{ active: activeTab === 'Posts' }"></div>
+                        </div>
 
-                <div class="event-tabs">
-                    <div class="event-tab">
-                        <button @click="select('Posts')">Posts</button>
-                        <div class="gradient-line" :class="{ active: activeTab === 'Posts' }"></div>
-                    </div>
+                        <div class="event-tab">
+                            <button @click="select('Guests')">Guests</button>
+                            <div class="gradient-line" :class="{ active: activeTab === 'Guests' }"></div>
+                        </div>
 
-                    <div class="event-tab">
-                        <button @click="select('Guests')">Guests</button>
-                        <div class="gradient-line" :class="{ active: activeTab === 'Guests' }"></div>
-                    </div>
-
-                    <div class="event-tab">
-                        <button @click="select('About')">About</button>
-                        <div class="gradient-line" :class="{ active: activeTab === 'About' }"></div>
-                    </div>
-                    <div class="event-tab">
-                        <button @click="showPopup = true"><i class="bi bi-share-fill"></i> Invite</button>
+                        <div class="event-tab">
+                            <button @click="select('About')">About</button>
+                            <div class="gradient-line" :class="{ active: activeTab === 'About' }"></div>
+                        </div>
+                        <div class="event-tab">
+                            <button @click="showPopup = true"><i class="bi bi-share-fill"></i> Invite</button>
+                            <div class="gradient-line"></div>
+                        </div>
+                        <div class="event-tab">
+                        <button @click="showReportPopup = true">
+                            <i class="bi bi-flag-fill"></i> Report
+                        </button>
                         <div class="gradient-line"></div>
-                    </div>
-                    <div class="event-tab">
-                    <button @click="showReportPopup = true">
-                        <i class="bi bi-flag-fill"></i> Report
-                    </button>
-                    <div class="gradient-line"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -293,10 +294,17 @@
 .event-author span a:hover{
     text-decoration: underline;
 }
-.event-tabs{
+
+.tabs-wrapper{
     display: flex;
     justify-content: center;
+}
+
+.event-tabs{
+    display: flex;
+    justify-content: flex-start;
     gap: 2rem;
+    overflow-x: auto;
 }
 
 .event-tab button{

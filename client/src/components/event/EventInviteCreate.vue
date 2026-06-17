@@ -23,9 +23,10 @@
                 </div>
                 <h2>...or send them an invitation link!</h2>
                 <div class="link-container">
-                    <div ref="inviteLink" class="invite-link">
-                        {{ generatedLink || "Click generate to create a link" }}
-                    </div>
+                    <input type="text" readonly 
+                    :value="generatedLink || 'Click generate to create a link'" 
+                    ref="inviteLink" 
+                    class="invite-link" @focus="$event.target.select()">
                     <button
                         v-if="!generatedLink"
                         class="copy-btn"
@@ -61,11 +62,30 @@
     const inviteLink = ref(null);
     const generatedLink = ref('');
 
-    const copyLink = async () => {
-        await navigator.clipboard.writeText(inviteLink.value.innerText);
-        isLinkCopied.value = true;
-        setTimeout(() => isLinkCopied.value = false, 2000);
+const copyLink = async () => {
+  if (!generatedLink.value) return;
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(generatedLink.value);
+    } else {
+    // fallback dla http, bo navigator.clipboard dziala tylko na https
+      const textarea = document.createElement('textarea');
+      textarea.value = generatedLink.value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
     }
+
+    isLinkCopied.value = true;
+    setTimeout(() => isLinkCopied.value = false, 2000);
+  } catch (err) {
+    console.error('Copy failed:', err);
+  }
+}
 
     async function searchUsers() {
         try {
@@ -117,8 +137,8 @@
     align-items: center;
 }
 main{
-    min-width: 600px;
     max-width: 720px;
+    min-width: 35vw;
     max-height: calc(100vh - var(--header-height) - 2rem);
     align-items: center;
     justify-content: center;
@@ -206,6 +226,7 @@ main > h2 {
     align-content: center;
     margin-right: 1rem;
     font-size: 1.25rem;
+    overflow-x: auto;
 }
 .copy-btn{
     color: var(--bg-main);

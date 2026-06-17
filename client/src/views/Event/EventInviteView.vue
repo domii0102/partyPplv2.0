@@ -19,13 +19,16 @@
                 </div>
                 <br>
                 <h3>Accept?</h3>
-                <div>
+                <div v-if="isLoggedIn">
                     <button class="accept btn" @click="handleAccept">
                         <i class="bi bi-check"></i>
                     </button>
                     <button class="decline btn" @click="handleReject">
                         <i class="bi bi-x"></i>
                     </button>
+                </div>
+                <div v-else>
+                    <h3>Sign In to accept this invitation</h3>
                 </div>
             </div>
             <div class="gradient"></div>
@@ -42,7 +45,11 @@ import { SERVER_BASE_URL } from '../../config/env';
 import { requestService } from '../../services/requestService.js';
 import defaultImage from '../../assets/horsegiirl.jpg';
 import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '../../stores/user.js';
+import { computed } from 'vue';
 
+const userStore = useUserStore();
+const isLoggedIn = computed(() => !!userStore.user);
 
 const route = useRoute();
 const router = useRouter();
@@ -82,21 +89,23 @@ async function getInvite() {
 }
 
 async function handleAccept() {
-    const invitationId = route.params.invitationId;
+    const invitationId = invite.value?.invitationId;
+    if (!invitationId) return;
+
     try {
-        await service.post(`/api/invites/${invitationId}/accept`, { invitationId: invitationId });
+        await service.post(`/api/invites/${invitationId}/accept`, { invitationId });
         router.push(`/event/dashboard/${invite.value.eventId}`);
     } catch (err) { console.error(err); }
-    
 }
 
 async function handleReject() {
-    const invitationId = route.params.invitationId;
+    const invitationId = invite.value?.invitationId;
+    if (!invitationId) return;
+
     try {
-        await service.post(`/api/invites/${invitationId}/reject`, { invitationId: invitationId });
+        await service.post(`/api/invites/${invitationId}/reject`, { invitationId });
         router.push('/event/feed');
     } catch (err) { console.error(err); }
- 
 }
 
 onMounted(() => getInvite());

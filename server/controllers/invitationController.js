@@ -255,7 +255,7 @@ export async function inviteViaLink(req, res) {
     });
 
     const clientURL = process.env.CLIENT_BASE_URL || 'http://localhost:5173';
-    const link = `${clientURL}/invite?token=${token}`;
+    const link = `${clientURL}/event/invite/link/${token}`;
 
     return res.status(201).json({ 
         success: true, 
@@ -421,16 +421,16 @@ export async function showInvite(req, res) {
                     locationName: true,
                     locationAddress: true,
                     eventStatus: true,
-                    image: { select: { url: true } }
-                }
-            },
-            userCredentials: {
-                select: {
-                    userProfile: {
+                    image: { select: { url: true } },
+                    userCredentials: {
                         select: {
-                            nickname: true,
-                            name: true,
-                            surname: true
+                            userProfile: {
+                                select: {
+                                    nickname: true,
+                                    name: true,
+                                    surname: true
+                                }
+                            }
                         }
                     }
                 }
@@ -459,9 +459,9 @@ export async function showInvite(req, res) {
         locationName: invitation.event.locationName,
         locationAddress: invitation.event.locationAddress,
         eventStatus: invitation.event.eventStatus,
-        organizerName: invitation.userCredentials.userProfile.name,
-        organizerSurname: invitation.userCredentials.userProfile.surname,
-        organizerNickname: invitation.userCredentials.userProfile.nickname,
+        organizerName: invitation.event.userCredentials.userProfile.name,
+        organizerSurname: invitation.event.userCredentials.userProfile.surname,
+        organizerNickname: invitation.event.userCredentials.userProfile.nickname,
         eventImage: invitation.event.image?.url || null
     };
 

@@ -24,33 +24,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSocketStore } from '../../stores/socket';
 import { SERVER_BASE_URL } from '../../config/env';
+
+import { onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useSocketStore } from '../../stores/socket';
+import { useNotificationStore } from '../../stores/notifications.js';
 import NotificationItem from './NotificationItem.vue';
-import { fetchNotifications, markNotificationRead, deleteNotification  } from '../../services/notificationService.js';
 
 const emit = defineEmits(['close']);
 const router = useRouter();
 const socketStore = useSocketStore();
+const notifStore = useNotificationStore();
 
-const notifications = ref([]);
-const loading = ref(false);
+const { notifications, loading } = storeToRefs(notifStore);
 
 onMounted(async () => {
-    loading.value = true;
-    try {
-        const data = await fetchNotifications();
-        notifications.value = data.map(n => ({ ...n, id: n.notificationId }));
-    } catch (err) {
-        console.error(err);
-    } finally {
-        loading.value = false;
+    if (notifications.value.length === 0) {
+        await notifStore.loadNotifications();
     }
 
     socketStore.onNotificationReceived((notification) => {
-        notifications.value.unshift({ ...notification, id: notification.notificationId });
+        notifStore.addNotification(notification);
     });
 });
 
@@ -60,8 +56,7 @@ onUnmounted(() => {
 
 async function handleOpen(notification) {
     if (!notification.isRead) {
-        markNotificationRead(notification.notificationId).catch(err => console.error(err));
-        notification.isRead = true;
+        notifStore.markAsRead(notification.id);
     }
 
     if (notification.type === 'invite') {
@@ -90,21 +85,14 @@ async function handleAction(payload) {
             method: 'POST',
             credentials: 'include'
         });
-        notifications.value = notifications.value.filter(n => n.id !== payload.id);
+        notifStore.notifications = notifStore.notifications.filter(n => n.id !== payload.id);
     } catch (err) {
         console.error(err);
     }
 }
 
 async function handleDelete(id) {
-    const snapshot = notifications.value;
-    notifications.value = notifications.value.filter(n => n.id !== id);
-    try {
-        await deleteNotification(id);
-    } catch (err) {
-        console.error(err);
-        notifications.value = snapshot;
-    }
+    await notifStore.removeNotification(id);
 }
 </script>
 

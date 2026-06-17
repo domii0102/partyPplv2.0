@@ -103,13 +103,6 @@
                 <input v-model="formData.hashtags" name="hashtags" class="event-input" maxlength="200"
                   placeholder="e.g. #birthday #party #friends" />
               </div>
-
-              <div class="col-md-6">
-                <!--Jak ogarniemy spotify to ewentualnie sie zmieni to bo 
-                                nwm jeszcze jak ma dzialac integracja ze spotify-->
-                <label class="event-label">Playlist link</label>
-                <input name="playlistUrl" class="event-input" maxlength="256" placeholder="(TBA)" disabled />
-              </div>
             </div>
 
             <div class="mt-3">

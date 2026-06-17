@@ -47,12 +47,18 @@
     import { useUserStore } from '../../stores/user.js';
     import { storeToRefs } from 'pinia';
     import NotificationSidebar from '../layout/NotificationSidebar.vue'; 
+    import { onMounted } from 'vue';
+    import { useNotificationStore } from '../../stores/notifications.js';
 
     const store = useUserStore();
     const { user } = storeToRefs(store);
 
     const isNotificationsOpen = ref(false);
-    const unreadCount = ref(1); 
+    const notifStore = useNotificationStore();
+    const { unreadCount } = storeToRefs(notifStore);
+
+    onMounted(() => notifStore.loadNotifications());
+    
 </script>
 
 <style scoped>
